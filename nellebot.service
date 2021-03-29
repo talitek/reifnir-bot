@@ -1,0 +1,11 @@
+[Unit]
+Description=Nellebot
+
+[Service]
+Type=notify
+ExecStart=/usr/nellebot/Nellebot
+WorkingDirectory=/usr/nellebot
+Environment=DOTNET_ENVIRONMENT=Production
+
+[Install]
+WantedBy=multi-user.target

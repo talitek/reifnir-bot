@@ -1,0 +1,54 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31112.23
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nellebot", "Nellebot\Nellebot.csproj", "{C072EE01-ABD9-4876-A9C7-E80FD757D911}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{46E6985D-7B94-42DC-BD41-45D45FA78A66}"
+	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		Directory.Build.props = Directory.Build.props
+		nellebot-backup-db.sh = nellebot-backup-db.sh
+		nellebot-deploy.sh = nellebot-deploy.sh
+		nellebot.service = nellebot.service
+		Readme.md = Readme.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nellebot.Data", "Nellebot.Data\Nellebot.Data.csproj", "{7AC0389F-E3F1-406D-BE35-A47F631922E5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nellebot.Common", "Nellebot.Common\Nellebot.Common.csproj", "{BB76810F-584A-446C-8D20-48FB0682835A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nellebot.Data.Migrations", "Nellebot.Data.Migrations\Nellebot.Data.Migrations.csproj", "{5B80295A-DC92-4C64-966A-5A634D3EFC6C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C072EE01-ABD9-4876-A9C7-E80FD757D911}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C072EE01-ABD9-4876-A9C7-E80FD757D911}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C072EE01-ABD9-4876-A9C7-E80FD757D911}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C072EE01-ABD9-4876-A9C7-E80FD757D911}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7AC0389F-E3F1-406D-BE35-A47F631922E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7AC0389F-E3F1-406D-BE35-A47F631922E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7AC0389F-E3F1-406D-BE35-A47F631922E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7AC0389F-E3F1-406D-BE35-A47F631922E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB76810F-584A-446C-8D20-48FB0682835A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB76810F-584A-446C-8D20-48FB0682835A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB76810F-584A-446C-8D20-48FB0682835A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB76810F-584A-446C-8D20-48FB0682835A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B80295A-DC92-4C64-966A-5A634D3EFC6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B80295A-DC92-4C64-966A-5A634D3EFC6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B80295A-DC92-4C64-966A-5A634D3EFC6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B80295A-DC92-4C64-966A-5A634D3EFC6C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {658B134A-CADB-4447-85A7-048070C93996}
+	EndGlobalSection
+EndGlobal
