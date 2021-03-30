@@ -31,6 +31,7 @@ namespace Nellebot
 
                     services.AddSingleton<SharedCache>();
 
+                    services.AddTransient<AuthorizationService>();
                     services.AddTransient<DiscordErrorLogger>();
 
                     services.AddDbContext<BotDbContext>(builder =>

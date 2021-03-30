@@ -3,6 +3,7 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Nellebot.Attributes;
 using Nellebot.Helpers;
 using Nellebot.Services;
 using Nellebot.Utils;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Nellebot.CommandModules
 {
-    [RequireOwner]
+    [RequireOwnerOrAdmin]
     [Group("admin")]
     [ModuleLifespan(ModuleLifespan.Transient)]
     public class AdminModule : BaseCommandModule
@@ -36,11 +37,15 @@ namespace Nellebot.CommandModules
         }
 
         [Command("error-test")]
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        public async Task ErrorTest(CommandContext ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        public void ErrorTest(CommandContext ctx)
         {
             throw new Exception("Test error");
+        }
+
+        [Command("access-test")]
+        public async Task AccessTest(CommandContext ctx)
+        {
+            await ctx.RespondAsync("Nice!");
         }
     }
 }

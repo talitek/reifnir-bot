@@ -13,37 +13,26 @@ namespace Nellebot.Attributes
 {
     public class RequireOwnerOrAdmin : CheckBaseAttribute
     {
-        //public override Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
-        //{
-        //    var botOptionsService = ctx.Services.GetService(typeof(IOptions<BotOptions>));
-
-        //    if (botOptionsService == null)
-        //        throw new Exception("Could not fetch BotOptions service");
-
-        //    var botOptions = ((IOptions<BotOptions>)botOptionsService).Value;
-
-        //    var adminRoleId = botOptions.AdminRoleId;
-
-        //    var currentMember = ctx.Member;
-
-        //    var botApp = ctx.Client.CurrentApplication;
-
-        //    var isBotOwner = botApp.Owners.Any(o => o.Id == currentMember.Id);
-
-        //    if (isBotOwner)
-        //        return Task.FromResult(true);
-
-        //    var isAdmin = currentMember.Roles.Any(r => r.Id == adminRoleId);
-
-        //    return Task.FromResult(isAdmin);
-        //}
-
-        public override Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
+        public override async Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
         {
             var authorizationServiceObj = ctx.Services.GetService(typeof(AuthorizationService));
 
-            if (authorizationServiceObj == null)
-                throw new Exception("Could not fetch AuthorizationService");
+            if (authorizationServiceObj == null) {
+                var error = "Could not fetch AuthorizationService";
+
+                var discordErrorLoggerObj = ctx.Services.GetService(typeof(DiscordErrorLogger));
+
+                if(discordErrorLoggerObj == null)
+                {
+                    throw new Exception("Could not fetch DiscordErrorLogger");
+                }
+
+                var discordErrorLogger = (DiscordErrorLogger)discordErrorLoggerObj;
+
+                await discordErrorLogger.LogDiscordError(error);
+
+                return false;
+            }
 
             var authorizationService = (AuthorizationService)authorizationServiceObj;
 
@@ -52,7 +41,7 @@ namespace Nellebot.Attributes
 
             var result = authorizationService.IsOwnerOrAdmin(appMember, appApplication);
 
-            return Task.FromResult(result);
+            return result;
         }
     }
 }
