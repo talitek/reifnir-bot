@@ -13,7 +13,10 @@ namespace Nellebot
         public string CommandPrefix { get; set; } = null!;
         public string ConnectionString { get; set; } = null!;
         public string BotToken { get; set; } = null!;
-        public ulong? ErrorLogGuildId { get; set; }
-        public ulong? ErrorLogChannelId { get; set; }
+        public ulong NelleGuildId { get; set; }
+        public ulong CommandsChannelId { get; set; }
+        public ulong LogChannelId { get; set; }
+        public ulong ErrorLogChannelId { get; set; }
+        public ulong AdminRoleId { get; set; }
     }
 }

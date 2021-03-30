@@ -12,4 +12,8 @@
     <ProjectReference Include="..\Nellebot.Common\Nellebot.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Repositories\" />
+  </ItemGroup>
+
 </Project>

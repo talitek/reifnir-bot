@@ -51,6 +51,6 @@ namespace Nellebot.Services
 
     public static class SharedCacheKeys
     {
-        public static string BotChannel => "BotChannel_%d_%s";
+       
     }
 }

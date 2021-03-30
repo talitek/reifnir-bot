@@ -20,19 +20,16 @@ namespace Nellebot.EventHandlers
         private readonly BotOptions _options;
         private readonly ILogger<CommandEventHandler> _logger;
         private readonly DiscordErrorLogger _discordErrorLogger;
-        private readonly GuildSettingsService _guildSettingsService;
 
         public CommandEventHandler(
             IOptions<BotOptions> options,
             ILogger<CommandEventHandler> logger,
-            DiscordErrorLogger discordErrorLogger,
-            GuildSettingsService guildSettingsService
+            DiscordErrorLogger discordErrorLogger
             )
         {
             _options = options.Value;
             _logger = logger;
             _discordErrorLogger = discordErrorLogger;
-            _guildSettingsService = guildSettingsService;
         }
 
         public void RegisterHandlers(CommandsNextExtension commands)
@@ -67,14 +64,13 @@ namespace Nellebot.EventHandlers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "OnMessageReceived");
+                _logger.LogError(ex, "OnCommandExecuted");
             }
         }
 
         private async Task OnCommandErrored(CommandsNextExtension sender, CommandErrorEventArgs e)
         {
             var ctx = e.Context;
-            var guildId = ctx.Guild.Id;
             var channelId = ctx.Channel.Id;
             var message = ctx.Message;
             var errorMessage = e.Exception.Message;
@@ -89,11 +85,11 @@ namespace Nellebot.EventHandlers
 
             var isCommandConfigError = e.Exception is DuplicateCommandException
                                     || e.Exception is DuplicateOverloadException
-                                    || e.Exception is InvalidOverloadException;
+                                    || e.Exception is InvalidOverloadException;            
 
-            var botCommandsChannel = await _guildSettingsService.GetBotChannelId(guildId, BotChannelMap.Commands);
+            var botCommandsChannelId = _options.CommandsChannelId;
 
-            var isCommandInBotChannel = botCommandsChannel != null && botCommandsChannel.Value == channelId;
+            var isCommandInBotChannel = botCommandsChannelId == channelId;
 
             if (isCommandInBotChannel)
             {

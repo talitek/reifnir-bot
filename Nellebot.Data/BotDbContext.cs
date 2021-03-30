@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Nellebot.Common.Models;
 
 namespace Nellebot.Data
 {
@@ -11,9 +10,8 @@ namespace Nellebot.Data
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            
+
         }
 
-        public DbSet<GuildSetting> GuildSettings { get; set; } = null!;
     }
 }

@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nellebot.Data;
-using Nellebot.Data.Repositories;
 using Nellebot.EventHandlers;
 using Nellebot.Services;
 using System;
@@ -32,10 +31,7 @@ namespace Nellebot
 
                     services.AddSingleton<SharedCache>();
 
-                    services.AddTransient<GuildSettingsService>();
                     services.AddTransient<DiscordErrorLogger>();
-
-                    services.AddTransient<GuildSettingsRepository>();
 
                     services.AddDbContext<BotDbContext>(builder =>
                     {
