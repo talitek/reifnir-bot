@@ -36,13 +36,14 @@ namespace Nellebot.Services
             if (existingRole != null)
                 throw new ArgumentException("User role already exists");
 
-            var userRole = await _userRoleRepo.CreateRole(role.Id, name.ToLower());
+            var userRole = await _userRoleRepo.CreateRole(role.Id, name.Trim());
 
             var newAliases = new List<UserRoleAlias>();
 
             foreach (var alias in aliases)
             {
-                var newAlias = await _userRoleRepo.CreateRoleAlias(userRole.Id, alias);
+                var aliasName = alias.Trim().ToLower();
+                var newAlias = await _userRoleRepo.CreateRoleAlias(userRole.Id, aliasName);
                 newAliases.Add(newAlias);
             }
 
@@ -61,7 +62,7 @@ namespace Nellebot.Services
             if (userRole == null)
                 throw new ArgumentException("User role doesn't exist");
 
-            await _userRoleRepo.UpdateRole(userRole.Id, name);
+            await _userRoleRepo.UpdateRole(userRole.Id, name.Trim());
 
             return userRole;
         }
@@ -101,12 +102,14 @@ namespace Nellebot.Services
             if (userRole == null)
                 throw new ArgumentException("User role doesn't exist");
 
-            var existingRoleAlias = await _userRoleRepo.GetRoleAlias(alias);
+            var aliasName = alias.Trim().ToLower();
+
+            var existingRoleAlias = await _userRoleRepo.GetRoleAlias(aliasName);
 
             if (existingRoleAlias != null)
                 throw new ArgumentException("Alias already exists");
 
-            var roleAlias = await _userRoleRepo.CreateRoleAlias(userRole.Id, alias.ToLower());
+            var roleAlias = await _userRoleRepo.CreateRoleAlias(userRole.Id, aliasName);
 
             return roleAlias;
         }

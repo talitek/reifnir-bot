@@ -12,11 +12,11 @@ namespace Nellebot.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             builder.Entity<UserRole>()
-                    .HasIndex(x => new { x.RoleId, x.Name })
+                    .HasIndex(x => x.RoleId)
                     .IsUnique();
 
             builder.Entity<UserRoleAlias>()
-                    .HasIndex(x => new { x.Alias })
+                    .HasIndex(x => x.Alias)
                     .IsUnique();
         }
 

@@ -54,14 +54,18 @@ namespace Nellebot.Data.Repositories
 
         public async Task<UserRole> GetRoleByDiscordRoleId(ulong roleId)
         {
-            var role = await _dbContext.UserRoles.SingleOrDefaultAsync(r => r.RoleId == roleId);
+            var role = await _dbContext.UserRoles
+                .Include(x => x.UserRoleAliases)
+                .SingleOrDefaultAsync(r => r.RoleId == roleId);
 
             return role;
         }
 
         public async Task<IEnumerable<UserRole>> GetRoleList()
         {
-            var roles = await _dbContext.UserRoles.ToListAsync();
+            var roles = await _dbContext.UserRoles
+                .Include(x => x.UserRoleAliases)
+                .ToListAsync();
 
             return roles;
         }
