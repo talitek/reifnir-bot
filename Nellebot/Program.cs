@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nellebot.Data;
+using Nellebot.Data.Repositories;
 using Nellebot.EventHandlers;
 using Nellebot.Services;
 using System;
@@ -33,6 +34,9 @@ namespace Nellebot
 
                     services.AddTransient<AuthorizationService>();
                     services.AddTransient<DiscordErrorLogger>();
+                    services.AddTransient<UserRoleService>();
+
+                    services.AddTransient<IUserRoleRepository, UserRoleRepository>();
 
                     services.AddDbContext<BotDbContext>(builder =>
                     {
