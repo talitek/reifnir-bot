@@ -1,4 +1,7 @@
-﻿## Database
+﻿# reifnir-bot
+Source code for the discord bot Reifnir, made for the Norwegian-English Language Learning Exchange (NELLE).
+
+## Database
 
 #install ef-tools
 dotnet tool install dotnet-ef -g
