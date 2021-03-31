@@ -1,4 +1,5 @@
-﻿using Nellebot.Common.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using Nellebot.Common.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,19 +8,6 @@ using System.Threading.Tasks;
 
 namespace Nellebot.Data.Repositories
 {
-    public interface IUserRoleRepository
-    {
-        Task<UserRole> CreateRole(ulong roleId, string name);
-        Task<UserRoleAlias> CreateRoleAlias(Guid userRoleId, string alias);
-        Task DeleteRole(Guid userRoleId);
-        Task DeleteRoleAlias(Guid userRoleId, string alias);
-        Task<UserRole> GetRole(ulong roleId);
-        Task<UserRoleAlias> GetRoleAlias(string alias);
-        Task<IEnumerable<UserRole>> GetRoleList();
-        Task<UserRole> UpdateRole(Guid userRoleId, string name);
-        Task UpdateRoleGroup(Guid userRoleId, uint? groupNumber);
-    }
-
     public class UserRoleRepository : IUserRoleRepository
     {
         private readonly BotDbContext _dbContext;
@@ -31,47 +19,93 @@ namespace Nellebot.Data.Repositories
 
         public async Task<UserRole> CreateRole(ulong roleId, string name)
         {
-            throw new NotImplementedException();
+            var userRole = new UserRole()
+            {
+                RoleId = roleId,
+                Name = name
+            };
+
+            await _dbContext.AddAsync(userRole);
+
+            await _dbContext.SaveChangesAsync();
+
+            return userRole;
         }
 
-        public async Task<UserRole> UpdateRole(Guid userRoleId, string name)
+        public async Task<UserRole> UpdateRole(Guid id, string name)
         {
-            throw new NotImplementedException();
+            var role = await _dbContext.UserRoles.SingleOrDefaultAsync(r => r.Id == id);
+
+            role.Name = name;
+
+            await _dbContext.SaveChangesAsync();
+
+            return role;
         }
 
-        public async Task DeleteRole(Guid userRoleId)
+        public async Task DeleteRole(Guid id)
         {
-            throw new NotImplementedException();
+            var role = await _dbContext.UserRoles.SingleOrDefaultAsync(r => r.Id == id);
+
+            _dbContext.Remove(role);
+
+            await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<UserRole> GetRole(ulong roleId)
+        public async Task<UserRole> GetRoleByDiscordRoleId(ulong roleId)
         {
-            throw new NotImplementedException();
+            var role = await _dbContext.UserRoles.SingleOrDefaultAsync(r => r.RoleId == roleId);
+
+            return role;
         }
 
         public async Task<IEnumerable<UserRole>> GetRoleList()
         {
-            throw new NotImplementedException();
+            var roles = await _dbContext.UserRoles.ToListAsync();
+
+            return roles;
         }
 
         public async Task<UserRoleAlias> GetRoleAlias(string alias)
         {
-            throw new NotImplementedException();
+            var roleAlias = await _dbContext.UserRoleAliases.SingleOrDefaultAsync(ra => ra.Alias == alias);
+
+            return roleAlias;
         }
 
         public async Task<UserRoleAlias> CreateRoleAlias(Guid userRoleId, string alias)
         {
-            throw new NotImplementedException();
+            var roleAlias = new UserRoleAlias()
+            {
+                UserRoleId = userRoleId,
+                Alias = alias
+            };
+
+            await _dbContext.AddAsync(roleAlias);
+
+            await _dbContext.SaveChangesAsync();
+
+            return roleAlias;
         }
 
         public async Task DeleteRoleAlias(Guid userRoleId, string alias)
         {
-            throw new NotImplementedException();
+            var roleAlias = await _dbContext.UserRoleAliases.SingleOrDefaultAsync(ra => ra.Alias == alias);
+
+            _dbContext.Remove(roleAlias);
+
+            await _dbContext.SaveChangesAsync();
         }
 
-        public async Task UpdateRoleGroup(Guid userRoleId, uint? groupNumber)
+        public async Task<UserRole> UpdateRoleGroup(Guid id, uint? groupNumber)
         {
-            throw new NotImplementedException();
+            var role = await _dbContext.UserRoles.SingleOrDefaultAsync(r => r.Id == id);
+
+            role.GroupNumber = groupNumber;
+
+            await _dbContext.SaveChangesAsync();
+
+            return role;
         }
     }
 }

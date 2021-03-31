@@ -31,7 +31,7 @@ namespace Nellebot.Services
             if (aliases.Count == 0)
                 throw new ArgumentException("Alias list cannot be empty");
 
-            var existingRole = await _userRoleRepo.GetRole(role.Id);
+            var existingRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
 
             if (existingRole != null)
                 throw new ArgumentException("User role already exists");
@@ -56,7 +56,7 @@ namespace Nellebot.Services
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Role name cannot be empty");
 
-            var userRole = await _userRoleRepo.GetRole(role.Id);
+            var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
 
             if (userRole == null)
                 throw new ArgumentException("User role doesn't exist");
@@ -68,7 +68,7 @@ namespace Nellebot.Services
 
         public async Task DeleteRole(AppDiscordRole role)
         {
-            var userRole = await _userRoleRepo.GetRole(role.Id);
+            var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
 
             if (userRole == null)
                 throw new ArgumentException("User role doesn't exist");
@@ -78,7 +78,7 @@ namespace Nellebot.Services
 
         public async Task<UserRole> GetRole(AppDiscordRole role)
         {
-            var userRole = await _userRoleRepo.GetRole(role.Id);
+            var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
 
             if (userRole == null)
                 throw new ArgumentException("User role doesn't exist");
@@ -96,7 +96,7 @@ namespace Nellebot.Services
             if (string.IsNullOrWhiteSpace(alias))
                 throw new ArgumentException("Alias cannot be empty");
 
-            var userRole = await _userRoleRepo.GetRole(role.Id);
+            var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
 
             if (userRole == null)
                 throw new ArgumentException("User role doesn't exist");
@@ -113,7 +113,7 @@ namespace Nellebot.Services
 
         public async Task RemoveRoleAlias(AppDiscordRole role, string alias)
         {
-            var userRole = await _userRoleRepo.GetRole(role.Id);
+            var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
 
             if (userRole == null)
                 throw new ArgumentException("User role doesn't exist");
@@ -126,7 +126,7 @@ namespace Nellebot.Services
 
         public async Task SetRoleGroup(AppDiscordRole role, uint groupNumber)
         {
-            var userRole = await _userRoleRepo.GetRole(role.Id);
+            var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
 
             if (userRole == null)
                 throw new ArgumentException("User role doesn't exist");
@@ -136,7 +136,7 @@ namespace Nellebot.Services
 
         public async Task UnsetRoleGroup(AppDiscordRole role)
         {
-            var userRole = await _userRoleRepo.GetRole(role.Id);
+            var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
 
             if (userRole == null)
                 throw new ArgumentException("User role doesn't exist");
