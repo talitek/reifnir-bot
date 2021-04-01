@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
 using Nellebot.DiscordModelMappers;
 using Nellebot.Services;
+using Nellebot.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,6 +41,34 @@ namespace Nellebot.CommandModules
             await ctx.RespondAsync($"Created user role with name {name} for {role.Name}");
         }
 
+        [Command("create-role")]
+        public async Task CreateRole(CommandContext ctx, ulong roleId, string name, string aliasList)
+        {
+            ctx.Guild.Roles.TryGetValue(roleId, out var discordRole);
+
+            if (discordRole == null)
+            {
+                await ctx.RespondAsync($"A role with id {roleId} doesn't exist.");
+                return;
+            }
+
+            await CreateRole(ctx, discordRole, name, aliasList);
+        }
+
+        [Command("create-role")]
+        public async Task CreateRole(CommandContext ctx, string discordRoleName, string name, string aliasList)
+        {
+            var result = DiscordRoleResolver.TryResolveByName(ctx.Guild, discordRoleName, out var discordRole);
+
+            if (!result.Resolved)
+            {
+                await ctx.RespondAsync(result.ErrorMessage);
+                return;
+            }
+
+            await CreateRole(ctx, discordRole, name, aliasList);
+        }
+
         [Command("update-role")]
         public async Task UpdateRole(CommandContext ctx, DiscordRole role, string name)
         {
@@ -50,6 +79,34 @@ namespace Nellebot.CommandModules
             await ctx.RespondAsync($"Changed user role name to {name} for {role.Name}");
         }
 
+        [Command("update-role")]
+        public async Task UpdateRole(CommandContext ctx, uint roleId, string name)
+        {
+            ctx.Guild.Roles.TryGetValue(roleId, out var discordRole);
+
+            if (discordRole == null)
+            {
+                await ctx.RespondAsync($"A role with id {roleId} doesn't exist.");
+                return;
+            }
+
+            await UpdateRole(ctx, discordRole, name);
+        }
+
+        [Command("update-role")]
+        public async Task UpdateRole(CommandContext ctx, string discordRoleName, string name)
+        {
+            var result = DiscordRoleResolver.TryResolveByName(ctx.Guild, discordRoleName, out var discordRole);
+
+            if (!result.Resolved)
+            {
+                await ctx.RespondAsync(result.ErrorMessage);
+                return;
+            }
+
+            await UpdateRole(ctx, discordRole, name);
+        }
+
         [Command("delete-role")]
         public async Task DeleteRole(CommandContext ctx, DiscordRole role)
         {
@@ -58,6 +115,34 @@ namespace Nellebot.CommandModules
             await _userRoleService.DeleteRole(appDiscordRole);
 
             await ctx.RespondAsync($"Deleted user role for {role.Name}");
+        }
+
+        [Command("delete-role")]
+        public async Task DeleteRole(CommandContext ctx, ulong roleId)
+        {
+            ctx.Guild.Roles.TryGetValue(roleId, out var discordRole);
+
+            if (discordRole == null)
+            {
+                await ctx.RespondAsync($"A role with id {roleId} doesn't exist.");
+                return;
+            }
+
+            await DeleteRole(ctx, discordRole);
+        }
+
+        [Command("delete-role")]
+        public async Task DeleteRole(CommandContext ctx, string discordRoleName)
+        {
+            var result = DiscordRoleResolver.TryResolveByName(ctx.Guild, discordRoleName, out var discordRole);
+
+            if (!result.Resolved)
+            {
+                await ctx.RespondAsync(result.ErrorMessage);
+                return;
+            }
+
+            await DeleteRole(ctx, discordRole);
         }
 
         [Command("get-role")]
@@ -80,6 +165,34 @@ namespace Nellebot.CommandModules
             var message = sb.ToString();
 
             await ctx.RespondAsync(message);
+        }
+
+        [Command("get-role")]
+        public async Task GetRole(CommandContext ctx, ulong roleId)
+        {
+            ctx.Guild.Roles.TryGetValue(roleId, out var discordRole);
+
+            if (discordRole == null)
+            {
+                await ctx.RespondAsync($"A role with id {roleId} doesn't exist.");
+                return;
+            }
+
+            await GetRole(ctx, discordRole);
+        }
+
+        [Command("get-role")]
+        public async Task GetRole(CommandContext ctx, string discordRoleName)
+        {
+            var result = DiscordRoleResolver.TryResolveByName(ctx.Guild, discordRoleName, out var discordRole);
+
+            if (!result.Resolved)
+            {
+                await ctx.RespondAsync(result.ErrorMessage);
+                return;
+            }
+
+            await GetRole(ctx, discordRole);
         }
 
         [Command("list-roles")]
@@ -125,6 +238,34 @@ namespace Nellebot.CommandModules
             await ctx.RespondAsync($"Added alias {alias} for {role.Name}");
         }
 
+        [Command("add-alias")]
+        public async Task AddRoleAlias(CommandContext ctx, ulong roleId, string alias)
+        {
+            ctx.Guild.Roles.TryGetValue(roleId, out var discordRole);
+
+            if (discordRole == null)
+            {
+                await ctx.RespondAsync($"A role with id {roleId} doesn't exist.");
+                return;
+            }
+
+            await AddRoleAlias(ctx, discordRole, alias);
+        }
+
+        [Command("add-alias")]
+        public async Task AddRoleAlias(CommandContext ctx, string discordRoleName, string alias)
+        {
+            var result = DiscordRoleResolver.TryResolveByName(ctx.Guild, discordRoleName, out var discordRole);
+
+            if (!result.Resolved)
+            {
+                await ctx.RespondAsync(result.ErrorMessage);
+                return;
+            }
+
+            await AddRoleAlias(ctx, discordRole, alias);
+        }
+
         [Command("remove-alias")]
         public async Task RemoveRoleAlias(CommandContext ctx, DiscordRole role, string alias)
         {
@@ -133,6 +274,34 @@ namespace Nellebot.CommandModules
             await _userRoleService.RemoveRoleAlias(appDiscordRole, alias);
 
             await ctx.RespondAsync($"Removed alias {alias} for {role.Name}");
+        }
+
+        [Command("remove-alias")]
+        public async Task RemoveRoleAlias(CommandContext ctx, ulong roleId, string alias)
+        {
+            ctx.Guild.Roles.TryGetValue(roleId, out var discordRole);
+
+            if (discordRole == null)
+            {
+                await ctx.RespondAsync($"A role with id {roleId} doesn't exist.");
+                return;
+            }
+
+            await RemoveRoleAlias(ctx, discordRole, alias);
+        }
+
+        [Command("remove-alias")]
+        public async Task RemoveRoleAlias(CommandContext ctx, string discordRoleName, string alias)
+        {
+            var result = DiscordRoleResolver.TryResolveByName(ctx.Guild, discordRoleName, out var discordRole);
+
+            if (!result.Resolved)
+            {
+                await ctx.RespondAsync(result.ErrorMessage);
+                return;
+            }
+
+            await RemoveRoleAlias(ctx, discordRole, alias);
         }
 
         [Command("set-group")]
@@ -145,6 +314,34 @@ namespace Nellebot.CommandModules
             await ctx.RespondAsync($"Set group number {groupNumber} for {role.Name}");
         }
 
+        [Command("set-group")]
+        public async Task SetRoleGroup(CommandContext ctx, ulong roleId, uint groupNumber)
+        {
+            ctx.Guild.Roles.TryGetValue(roleId, out var discordRole);
+
+            if (discordRole == null)
+            {
+                await ctx.RespondAsync($"A role with id {roleId} doesn't exist.");
+                return;
+            }
+
+            await SetRoleGroup(ctx, discordRole, groupNumber);
+        }
+
+        [Command("set-group")]
+        public async Task SetRoleGroup(CommandContext ctx, string discordRoleName, uint groupNumber)
+        {
+            var result = DiscordRoleResolver.TryResolveByName(ctx.Guild, discordRoleName, out var discordRole);
+
+            if (!result.Resolved)
+            {
+                await ctx.RespondAsync(result.ErrorMessage);
+                return;
+            }
+
+            await SetRoleGroup(ctx, discordRole, groupNumber);
+        }
+
         [Command("unset-group")]
         public async Task UnsetRoleGroup(CommandContext ctx, DiscordRole role)
         {
@@ -153,6 +350,34 @@ namespace Nellebot.CommandModules
             await _userRoleService.UnsetRoleGroup(appDiscordRole);
 
             await ctx.RespondAsync($"Unset group number for {role.Name}");
+        }
+
+        [Command("unset-group")]
+        public async Task UnsetRoleGroup(CommandContext ctx, ulong roleId)
+        {
+            ctx.Guild.Roles.TryGetValue(roleId, out var discordRole);
+
+            if (discordRole == null)
+            {
+                await ctx.RespondAsync($"A role with id {roleId} doesn't exist.");
+                return;
+            }
+
+            await UnsetRoleGroup(ctx, discordRole);
+        }
+
+        [Command("unset-group")]
+        public async Task UnsetRoleGroup(CommandContext ctx, string discordRoleName)
+        {
+            var result = DiscordRoleResolver.TryResolveByName(ctx.Guild, discordRoleName, out var discordRole);
+
+            if (!result.Resolved)
+            {
+                await ctx.RespondAsync(result.ErrorMessage);
+                return;
+            }
+
+            await UnsetRoleGroup(ctx, discordRole);
         }
 
         [Command("help")]
@@ -176,11 +401,10 @@ namespace Nellebot.CommandModules
 
             sb.AppendLine();
             sb.AppendLine($"Command arguments:");
-            sb.AppendLine($"`role           .. Discord role @mention, Discord role id or Discord role name`");
-            sb.AppendLine($"`                  (Only supports role @mention atm)`");
+            sb.AppendLine($"`role           .. Discord role name, Discord role Id or Discord role @mention`");
             sb.AppendLine($"`role-name      .. Friendly role name (e.g. used in #log)`");
             sb.AppendLine($"`alias-name     .. User role alias (used when assigning role)`");
-            sb.AppendLine($"`alias-list     .. Comma separated value of alias names`");            
+            sb.AppendLine($"`alias-list     .. Comma separated value of alias names`");
             sb.AppendLine($"`group-number   .. User role group number (positive whole number)`");
 
             var message = sb.ToString();
