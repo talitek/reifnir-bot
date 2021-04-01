@@ -1,16 +1,9 @@
-﻿using DSharpPlus;
-using DSharpPlus.CommandsNext;
+﻿using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Exceptions;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
-using Nellebot.Helpers;
 using Nellebot.Services;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Nellebot.Attributes;
 
@@ -51,15 +44,22 @@ namespace Nellebot.EventHandlers
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// Try to find a suitable error message to return to the user.
+        /// Log error to discord logger
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <returns></returns>
         private async Task OnCommandErrored(CommandsNextExtension sender, CommandErrorEventArgs e)
         {
             var ctx = e.Context;
             var message = ctx.Message;
+            var exception = e.Exception;
 
             var commandPrefix = _options.CommandPrefix;
             var commandHelpText = $"Type \"{commandPrefix}help\" to get some help.";
 
-            // Try to find a suitable error message to return to the user
             string errorMessage = string.Empty;
 
             // Flag unknown commands and not return any error message in this case
@@ -68,15 +68,20 @@ namespace Nellebot.EventHandlers
             bool appendHelpText = false;
 
             const string unknownSubcommandErrorString = "No matching subcommands were found, and this group is not executable.";
+            const string unknownOverloadErrorString = "Could not find a suitable overload for the command.";
 
-            var isChecksFailedException = e.Exception is ChecksFailedException;
+            var isChecksFailedException = exception is ChecksFailedException;
 
-            var isUnknownCommandException = e.Exception is CommandNotFoundException;
-            var isUnknownSubcommandException = e.Exception.Message == unknownSubcommandErrorString;
+            var isUnknownCommandException = exception is CommandNotFoundException;
+            var isUnknownSubcommandException = exception.Message == unknownSubcommandErrorString;
+            var isUnknownOverloadException = exception.Message == unknownOverloadErrorString;
 
-            var isCommandConfigException = e.Exception is DuplicateCommandException
-                                    || e.Exception is DuplicateOverloadException
-                                    || e.Exception is InvalidOverloadException;
+            var isCommandConfigException = exception is DuplicateCommandException
+                                    || exception is DuplicateOverloadException
+                                    || exception is InvalidOverloadException;
+
+            // TODO: If this isn't enough, create a custom exception class for validation errors
+            var isPossiblyValidationException = exception is ArgumentException;
 
             if (isUnknownCommandException)
             {
@@ -89,6 +94,11 @@ namespace Nellebot.EventHandlers
                 errorMessage = $"I do not recognize your command.";
                 appendHelpText = true;
             }
+            else if (isUnknownOverloadException)
+            {
+                errorMessage = $"Command arguments are (probably) incorrect.";
+                appendHelpText = true;
+            }
             else if (isCommandConfigException)
             {
                 errorMessage = $"Something's not quite right.";
@@ -96,27 +106,28 @@ namespace Nellebot.EventHandlers
             }
             else if (isChecksFailedException)
             {
-                var checksFailedException = (ChecksFailedException)e.Exception;
+                var checksFailedException = (ChecksFailedException)exception;
 
                 var failedCheck = checksFailedException.FailedChecks[0];
 
                 if (failedCheck is BaseCommandCheck)
                 {
-                    errorMessage = "I do not care for Bot commands or DM commands";
+                    errorMessage = "I do not care for DM commands.";
                 }
                 else if (failedCheck is RequireOwnerOrAdmin)
                 {
-                    errorMessage = "You do not have permission to do that";
+                    errorMessage = "You do not have permission to do that.";
                 }
                 else
                 {
-                    errorMessage = "Preexecution check failed";
+                    errorMessage = "Preexecution check failed.";
                 }
             }
-            //else
-            //{
-            //    errorMessage = $"Hmm. Your command suffers from a case of **{exceptionMessage}**";
-            //}
+            else if (isPossiblyValidationException)
+            {
+                errorMessage = $"{exception.Message}.";
+                appendHelpText = true;
+            }
 
             if (!isUnknownCommand)
             {
@@ -125,7 +136,7 @@ namespace Nellebot.EventHandlers
                     errorMessage = "Something went wrong.";
                 }
 
-                if(appendHelpText)
+                if (appendHelpText)
                 {
                     errorMessage += $" {commandHelpText}";
                 }
@@ -138,16 +149,17 @@ namespace Nellebot.EventHandlers
                    !isUnknownCommandException
                 && !isUnknownSubcommandException
                 && !isCommandConfigException
-                && !isChecksFailedException;
+                && !isChecksFailedException
+                && !isPossiblyValidationException;
 
             if (shouldLogDiscordError)
             {
-                var escapedError = DiscordErrorLogger.ReplaceTicks(e.Exception.ToString());
+                var escapedError = DiscordErrorLogger.ReplaceTicks(exception.ToString());
                 var escapedMessage = DiscordErrorLogger.ReplaceTicks(message.Content);
                 await _discordErrorLogger.LogDiscordError($"Message: `{escapedMessage}`\r\nCommand failed: `{escapedError}`)");
             }
 
-            _logger.LogWarning($"Message: {message.Content}\r\nCommand failed: {e.Exception})");
+            _logger.LogWarning($"Message: {message.Content}\r\nCommand failed: {exception})");
         }
     }
 }

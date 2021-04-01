@@ -37,8 +37,12 @@ namespace Nellebot.CommandModules
         }
 
         [Command("error-test")]
-        public void ErrorTest(CommandContext ctx)
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        public async Task ErrorTest(CommandContext ctx)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
+            //await ctx.RespondAsync("Error test command executed");
+
             throw new Exception("Test error");
         }
 

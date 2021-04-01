@@ -12,7 +12,6 @@ using System.Threading.Tasks;
 namespace Nellebot.Attributes
 {
     /// <summary>
-    /// Reject commands coming from Bot and System users
     /// Reject commands coming from DM or from other guild (if it exists)
     /// </summary>
     public class BaseCommandCheck : CheckBaseAttribute
@@ -43,33 +42,13 @@ namespace Nellebot.Attributes
 
             var guildId = botOptions.NelleGuildId;
 
-            var message = ctx.Message;
             var channel = ctx.Channel;
-
-            if (!IsUserMessage(message))
-                return false;
 
             if (IsPrivateMessageChannel(channel))
                 return false;
 
             if (!IsGuildChannel(channel, guildId))
                 return false;
-
-            return true;
-        }
-
-        /// <summary>
-        /// User is not bot or system account
-        /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
-        private bool IsUserMessage(DiscordMessage message)
-        {
-            // Only care about messages from users
-            if (message.Author.IsBot || (message.Author.IsSystem ?? false))
-            {
-                return false;
-            }
 
             return true;
         }

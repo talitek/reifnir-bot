@@ -31,6 +31,11 @@ namespace Nellebot.CommandModules
 
             var userRole = await _roleService.GetUserRoleByAlias(alias);
 
+            if(userRole == null)
+            {
+                await ctx.RespondAsync($"{alias} role does not exist");
+            }
+
             // Check if user already has role
             var existingDiscordRole = member.Roles.SingleOrDefault(r => r.Id == userRole.RoleId);
 
