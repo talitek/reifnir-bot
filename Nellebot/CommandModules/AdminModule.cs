@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Nellebot.CommandModules
 {
-    [RequireOwnerOrAdmin]
+    [BaseCommandCheck, RequireOwnerOrAdmin]
     [Group("admin")]
     [ModuleLifespan(ModuleLifespan.Transient)]
     public class AdminModule : BaseCommandModule
@@ -46,6 +46,12 @@ namespace Nellebot.CommandModules
         public async Task AccessTest(CommandContext ctx)
         {
             await ctx.RespondAsync("Nice!");
+        }
+
+        [Command("say")]
+        public async Task AccessTest(CommandContext ctx, string message)
+        {
+            await ctx.RespondAsync(message);
         }
     }
 }

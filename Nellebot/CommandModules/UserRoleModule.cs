@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Nellebot.CommandModules
 {
-    [RequireOwnerOrAdmin]
+    [BaseCommandCheck, RequireOwnerOrAdmin]
     [Group("user-role")]
     [ModuleLifespan(ModuleLifespan.Transient)]
     public class UserRoleModule : BaseCommandModule

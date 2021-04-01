@@ -5,6 +5,7 @@ using DSharpPlus.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Nellebot.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,7 @@ using System.Threading.Tasks;
 
 namespace Nellebot.CommandModules
 {
+    [BaseCommandCheck]
     [Group("utils")]
     public class UtilsModule : BaseCommandModule
     {

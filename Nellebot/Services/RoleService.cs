@@ -27,7 +27,7 @@ namespace Nellebot.Services
             return role;
         }
 
-        public async Task<List<UserRole>> GetUserRoleByGroup(uint groupNumber)
+        public async Task<List<UserRole>> GetUserRolesByGroup(uint groupNumber)
         {
             var roles = await _userRoleRepo.GetRolesByGroup(groupNumber);
 

@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace Nellebot.CommandModules
 {
+    [BaseCommandCheck]
     [ModuleLifespan(ModuleLifespan.Transient)]
     public class RoleModule : BaseCommandModule
     {
@@ -50,7 +51,7 @@ namespace Nellebot.CommandModules
             // If user role has group, get all roles from the same group
             if (userRole.GroupNumber.HasValue)
             {
-                var rolesInGroup = await _roleService.GetUserRoleByGroup(userRole.GroupNumber.Value);
+                var rolesInGroup = await _roleService.GetUserRolesByGroup(userRole.GroupNumber.Value);
 
                 // If user has a discord role from this group, remove it
                 var discordRoleInGroup = member.Roles

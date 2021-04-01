@@ -12,10 +12,11 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Nellebot.Attributes;
 
 namespace Nellebot.EventHandlers
 {
-    public class CommandEventHandler : BaseEventHandler
+    public class CommandEventHandler
     {
         private readonly BotOptions _options;
         private readonly ILogger<CommandEventHandler> _logger;
@@ -38,93 +39,106 @@ namespace Nellebot.EventHandlers
             commands.CommandErrored += OnCommandErrored;
         }
 
-        private async Task OnCommandExecuted(CommandsNextExtension sender, CommandExecutionEventArgs e)
+        private Task OnCommandExecuted(CommandsNextExtension sender, CommandExecutionEventArgs e)
         {
-            try
-            {
-                var commandPrefix = _options.CommandPrefix;
+            var message = e.Context.Message;
 
-                var socketMessage = e.Context.Message;
+            var messageContent = message.Content;
+            var username = message.Author.Username;
 
-                if (!IsReleventMessage(socketMessage))
-                    return;
+            _logger.LogDebug($"Command: {username} -> {messageContent}");
 
-                if (IsPrivateMessageChannel(socketMessage.Channel))
-                {
-                    await socketMessage.Channel.SendMessageAsync(":eyes:");
-                    return;
-                }
-
-                var message = socketMessage;
-
-                var messageContent = message.Content;
-                var username = message.Author.Username;
-
-                _logger.LogDebug($"Command: {username} -> {messageContent}");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "OnCommandExecuted");
-            }
+            return Task.CompletedTask;
         }
 
         private async Task OnCommandErrored(CommandsNextExtension sender, CommandErrorEventArgs e)
         {
             var ctx = e.Context;
-            var channelId = ctx.Channel.Id;
             var message = ctx.Message;
-            var errorMessage = e.Exception.Message;
 
             var commandPrefix = _options.CommandPrefix;
             var commandHelpText = $"Type \"{commandPrefix}help\" to get some help.";
 
+            // Try to find a suitable error message to return to the user
+            string errorMessage = string.Empty;
+
+            // Flag unknown commands and not return any error message in this case
+            // as it's easy for users to accidentally trigger commands using the prefix
+            bool isUnknownCommand = false;
+            bool appendHelpText = false;
+
             const string unknownSubcommandErrorString = "No matching subcommands were found, and this group is not executable.";
 
-            var isUnknownCommandError = e.Exception is CommandNotFoundException;
-            var isUnknownSubcommandError = e.Exception.Message == unknownSubcommandErrorString;
+            var isChecksFailedException = e.Exception is ChecksFailedException;
 
-            var isCommandConfigError = e.Exception is DuplicateCommandException
+            var isUnknownCommandException = e.Exception is CommandNotFoundException;
+            var isUnknownSubcommandException = e.Exception.Message == unknownSubcommandErrorString;
+
+            var isCommandConfigException = e.Exception is DuplicateCommandException
                                     || e.Exception is DuplicateOverloadException
-                                    || e.Exception is InvalidOverloadException;            
+                                    || e.Exception is InvalidOverloadException;
 
-            var botCommandsChannelId = _options.CommandsChannelId;
-
-            var isCommandInBotChannel = botCommandsChannelId == channelId;
-
-            if (isCommandInBotChannel)
+            if (isUnknownCommandException)
             {
-                if (isUnknownCommandError)
+                errorMessage = $"I do not recognize your command.";
+                isUnknownCommand = true;
+                appendHelpText = true;
+            }
+            else if (isUnknownSubcommandException)
+            {
+                errorMessage = $"I do not recognize your command.";
+                appendHelpText = true;
+            }
+            else if (isCommandConfigException)
+            {
+                errorMessage = $"Something's not quite right.";
+                appendHelpText = true;
+            }
+            else if (isChecksFailedException)
+            {
+                var checksFailedException = (ChecksFailedException)e.Exception;
+
+                var failedCheck = checksFailedException.FailedChecks[0];
+
+                if (failedCheck is BaseCommandCheck)
                 {
-                    var commandErrorText = $"I do not recognize your command. {commandHelpText}";
-                    await ctx.Channel.SendMessageAsync(commandErrorText);
+                    errorMessage = "I do not care for Bot commands or DM commands";
                 }
-                else if (isUnknownSubcommandError)
+                else if (failedCheck is RequireOwnerOrAdmin)
                 {
-                    var commandErrorText = $"I do not recognize your command. {commandHelpText}";
-                    await ctx.Channel.SendMessageAsync(commandErrorText);
-                }
-                else if (isCommandConfigError)
-                {
-                    var commandErrorText = $"Something's not quite right. {commandHelpText}";
-                    await ctx.Channel.SendMessageAsync(commandErrorText);
+                    errorMessage = "You do not have permission to do that";
                 }
                 else
                 {
-                    var commandErrorText = $"Hmm. Your command suffers from a case of **{errorMessage}** {commandHelpText}";
-                    await ctx.Channel.SendMessageAsync(commandErrorText);
+                    errorMessage = "Preexecution check failed";
                 }
             }
-            else
+            //else
+            //{
+            //    errorMessage = $"Hmm. Your command suffers from a case of **{exceptionMessage}**";
+            //}
+
+            if (!isUnknownCommand)
             {
-                // It's easy to trigger a bad command using the prefix
-                // So we're not going to react at all if it's not the bot channel
-                if (!isUnknownCommandError)
+                if (string.IsNullOrWhiteSpace(errorMessage))
                 {
-                    await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.RedX));
+                    errorMessage = "Something went wrong.";
                 }
+
+                if(appendHelpText)
+                {
+                    errorMessage += $" {commandHelpText}";
+                }
+
+                await message.RespondAsync(errorMessage);
             }
 
-            var shouldLogDiscordError = !isUnknownCommandError && !isUnknownSubcommandError && !isCommandConfigError;
+            // Log any unhandled exception
+            var shouldLogDiscordError =
+                   !isUnknownCommandException
+                && !isUnknownSubcommandException
+                && !isCommandConfigException
+                && !isChecksFailedException;
 
             if (shouldLogDiscordError)
             {

@@ -16,6 +16,7 @@ namespace Nellebot
         public ulong NelleGuildId { get; set; }
         public ulong CommandsChannelId { get; set; }
         public ulong LogChannelId { get; set; }
+        public ulong ErrorLogGuildId { get; set; }
         public ulong ErrorLogChannelId { get; set; }
         public ulong AdminRoleId { get; set; }
     }

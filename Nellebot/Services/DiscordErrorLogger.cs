@@ -25,10 +25,10 @@ namespace Nellebot.Services
 
         public async Task LogDiscordError(string error)
         {
-            var guildId = _options.NelleGuildId;
+            var errorLogGuilId = _options.ErrorLogGuildId;
             var errorLogChannelId = _options.ErrorLogChannelId;
 
-            var errorLogChannel = await ResolveErrorLogChannel(guildId, errorLogChannelId);
+            var errorLogChannel = await ResolveErrorLogChannel(errorLogGuilId, errorLogChannelId);
 
             if (errorLogChannel != null)
             {
