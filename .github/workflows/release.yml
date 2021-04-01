@@ -51,7 +51,7 @@ jobs:
         port: ${{secrets.VPS_PORT}}
         username: ${{secrets.VPS_USER}}
         password: ${{secrets.VPS_PASSWORD}}        
-        source: "/home/runner/work/Nellebot/Nellebot/deploy/"
+        source: "/home/runner/work/reifnir-bot/reifnir-bot/deploy/"
         target: "/usr/nellebot-deploy"
         rm: true
     
