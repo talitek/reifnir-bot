@@ -35,6 +35,7 @@ namespace Nellebot
                     services.AddTransient<AuthorizationService>();
                     services.AddTransient<DiscordErrorLogger>();
                     services.AddTransient<UserRoleService>();
+                    services.AddTransient<RoleService>();
 
                     services.AddTransient<IUserRoleRepository, UserRoleRepository>();
 
