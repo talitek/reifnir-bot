@@ -1,10 +1,13 @@
 ﻿using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
 using Nellebot.Common.Models;
 using Nellebot.Helpers;
 using Nellebot.Services;
+using Nellebot.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,10 +21,18 @@ namespace Nellebot.CommandModules
     public class RoleModule : BaseCommandModule
     {
         private readonly RoleService _roleService;
+        private readonly ILogger<RoleModule> _logger;
+        private readonly BotOptions _options;
 
-        public RoleModule(RoleService roleService)
+        public RoleModule(
+            RoleService roleService,
+            IOptions<BotOptions> options,
+            ILogger<RoleModule> logger
+            )
         {
             _roleService = roleService;
+            _logger = logger;
+            _options = options.Value;
         }
 
         [Command("role")]
@@ -34,6 +45,7 @@ namespace Nellebot.CommandModules
             if(userRole == null)
             {
                 await ctx.RespondAsync($"{alias} role does not exist");
+                return;
             }
 
             // Check if user already has role
@@ -41,7 +53,7 @@ namespace Nellebot.CommandModules
 
             if (existingDiscordRole != null)
             {
-                await RemoveDiscordRole(ctx, existingDiscordRole);
+                await RemoveDiscordRole(ctx, existingDiscordRole, userRole.Name);
             }
             else
             {
@@ -52,6 +64,13 @@ namespace Nellebot.CommandModules
         private async Task AddDiscordRole(CommandContext ctx, UserRole userRole)
         {
             var member = ctx.Member;
+            var guild = ctx.Guild;
+
+            // Check that the role exists in the guild
+            if (!ctx.Guild.Roles.ContainsKey(userRole.RoleId))
+            {
+                throw new ArgumentException($"Role Id {userRole.RoleId} does not exist");
+            }
 
             // If user role has group, get all roles from the same group
             if (userRole.GroupNumber.HasValue)
@@ -67,32 +86,65 @@ namespace Nellebot.CommandModules
 
                 if (discordRoleInGroup != null)
                 {
+                    // Get the user role matching this discord role
+                    var userRoleToRemove = rolesInGroup.Single(r => r.RoleId == discordRoleInGroup.Id);
+
                     await member.RevokeRoleAsync(discordRoleInGroup);
+
+                    await LogRoleRemoved(guild, userRoleToRemove.Name, member);
                 }
             }
 
             // Assign new role
-            if (ctx.Guild.Roles.ContainsKey(userRole.RoleId))
-            {
-                var guildRole = ctx.Guild.Roles[userRole.RoleId];
+            var guildRole = ctx.Guild.Roles[userRole.RoleId];
 
-                await member.GrantRoleAsync(guildRole);
+            await member.GrantRoleAsync(guildRole);
 
-                await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.WhiteCheckmark));
-            }
-            else
-            {
-                await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.RedX));
-            }
+            await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.WhiteCheckmark));
+
+            await LogRoleAdded(guild, userRole.Name, member);
         }
 
-        private static async Task RemoveDiscordRole(CommandContext ctx, DiscordRole existingDiscordRole)
+        private async Task RemoveDiscordRole(CommandContext ctx, DiscordRole existingDiscordRole, string userRoleName)
         {
             var member = ctx.Member;
+            var guild = ctx.Guild;
 
             await member.RevokeRoleAsync(existingDiscordRole);
 
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.WhiteCheckmark));
+
+            await LogRoleRemoved(guild, userRoleName, member);
+        }
+
+        private async Task LogRoleAdded(DiscordGuild guild, string roleName, DiscordMember member)
+        {
+            var logChannelId = _options.LogChannelId;
+
+            var logChannel = guild.Channels[logChannelId];
+
+            if(logChannel == null)
+            {
+                _logger.LogError($"Could not fetch log channel {logChannelId} from guild");
+                return;
+            }
+
+            await logChannel.SendMessageAsync($"Added role **{roleName}** to **{member.GetNicknameOrDisplayName()}**");
+        }
+
+        private async Task LogRoleRemoved(DiscordGuild guild, string roleName, DiscordMember member)
+        {
+            var logChannelId = _options.LogChannelId;
+
+            var logChannel = guild.Channels[logChannelId];
+
+            if (logChannel == null)
+            {
+                _logger.LogError($"Could not fetch log channel {logChannelId} from guild");
+                return;
+            }
+
+            await logChannel.SendMessageAsync($"Removed role **{roleName}** from **{member.GetNicknameOrDisplayName()}**");
         }
     }
 }
