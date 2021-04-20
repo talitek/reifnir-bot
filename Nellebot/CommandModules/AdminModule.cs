@@ -1,13 +1,18 @@
-﻿using DSharpPlus.CommandsNext;
+﻿using DSharpPlus;
+using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
 using Nellebot.Helpers;
 using Nellebot.Services;
 using Nellebot.Utils;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Nellebot.CommandModules
@@ -18,11 +23,14 @@ namespace Nellebot.CommandModules
     public class AdminModule : BaseCommandModule
     {
         private readonly ILogger<AdminModule> _logger;
+        private readonly BotOptions _options;
 
         public AdminModule(
-            ILogger<AdminModule> logger)
+            ILogger<AdminModule> logger,
+            IOptions<BotOptions> options)
         {
             _logger = logger;
+            _options = options.Value;
         }
 
         [Command("nickname")]
@@ -56,6 +64,40 @@ namespace Nellebot.CommandModules
         public async Task AccessTest(CommandContext ctx, string message)
         {
             await ctx.RespondAsync(message);
+        }
+
+        [Command("cookie-channels")]
+        public async Task ListCookieChannels(CommandContext ctx)
+        {
+            var groupIds = _options.AwardVoteGroupIds;
+
+            if (groupIds == null) return;
+
+            var sb = new StringBuilder();
+
+            var guildChannels = await ctx.Guild.GetChannelsAsync();
+
+            var channelGroups = new List<Tuple<string, List<DiscordChannel>>>();
+
+            var categoryChannels = guildChannels
+                .Where(c => c.Type == ChannelType.Category
+                            && groupIds.Contains(c.Id));
+
+            foreach (var category in categoryChannels)
+            {
+                sb.AppendLine($"**{category.Name}**");
+
+                var textChannelsForCategory = guildChannels.Where(c => c.Type == ChannelType.Text && c.ParentId == category.Id);
+
+                foreach (var channel in textChannelsForCategory)
+                {
+                    sb.AppendLine($"#{channel.Name}");
+                }
+
+                sb.AppendLine();
+            }
+
+            await ctx.RespondAsync(sb.ToString());
         }
     }
 }

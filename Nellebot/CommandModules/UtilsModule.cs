@@ -53,7 +53,7 @@ namespace Nellebot.CommandModules
         {
             var isUnicodeEmoji = emoji.Id == 0;
 
-            if (isUnicodeEmoji)
+            if (!isUnicodeEmoji)
             {
                 await ctx.RespondAsync($"Not a unicode emoji");
                 return;

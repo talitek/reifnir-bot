@@ -8,6 +8,7 @@ using Nellebot.Data;
 using Nellebot.Data.Repositories;
 using Nellebot.EventHandlers;
 using Nellebot.Services;
+using Nellebot.Workers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,9 +29,13 @@ namespace Nellebot
                 {
                     services.Configure<BotOptions>(hostContext.Configuration.GetSection(BotOptions.OptionsKey));
 
+                    services.AddSingleton<SharedCache>();
+
                     services.AddHostedService<BotWorker>();
 
-                    services.AddSingleton<SharedCache>();
+                    services.AddHostedService<MessageAwardQueueWorker>();
+                    services.AddSingleton<MessageAwardQueue>();
+                    services.AddSingleton<AwardEventHandler>();
 
                     services.AddTransient<AuthorizationService>();
                     services.AddTransient<DiscordErrorLogger>();
