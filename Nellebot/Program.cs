@@ -37,12 +37,16 @@ namespace Nellebot
                     services.AddSingleton<MessageAwardQueue>();
                     services.AddSingleton<AwardEventHandler>();
 
+                    services.AddSingleton<CommandEventHandler>();
+
                     services.AddTransient<AuthorizationService>();
                     services.AddTransient<DiscordErrorLogger>();
                     services.AddTransient<UserRoleService>();
                     services.AddTransient<RoleService>();
+                    services.AddTransient<AwardMessageService>();
 
                     services.AddTransient<IUserRoleRepository, UserRoleRepository>();
+                    services.AddTransient<AwardMessageRepository>();
 
                     services.AddDbContext<BotDbContext>(builder =>
                     {
@@ -74,8 +78,6 @@ namespace Nellebot
 
                         return client;
                     });
-
-                    services.AddSingleton<CommandEventHandler>();
                 })
                 .UseSystemd();
     }

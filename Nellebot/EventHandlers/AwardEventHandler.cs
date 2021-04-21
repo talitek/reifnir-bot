@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot;
 using Nellebot.Helpers;
+using Nellebot.Services;
 using Nellebot.Workers;
 using System;
 using System.Collections.Generic;
@@ -22,50 +23,152 @@ namespace Nellebot.EventHandlers
         private readonly DiscordClient _client;
         private readonly ILogger<AwardEventHandler> _logger;
         private readonly MessageAwardQueue _awardQueue;
+        private readonly DiscordErrorLogger _discordErrorLogger;
         private readonly BotOptions _options;
 
         public AwardEventHandler(
             DiscordClient client,
             ILogger<AwardEventHandler> logger,
             MessageAwardQueue awardQueue,
-            IOptions<BotOptions> options)
+            IOptions<BotOptions> options,
+            DiscordErrorLogger discordErrorLogger)
         {
             _client = client;
             _logger = logger;
             _awardQueue = awardQueue;
+            _discordErrorLogger = discordErrorLogger;
             _options = options.Value;
         }
 
         public void RegisterHandlers()
         {
             _client.MessageReactionAdded += OnMessageReactionAdded;
+            _client.MessageReactionRemoved += OnMessageReactionRemoved;
+
+            _client.MessageUpdated += OnMessageUpdated;
+            _client.MessageDeleted += OnMessageDeleted;
         }
 
-        private Task OnMessageReactionAdded(DiscordClient client, MessageReactionAddEventArgs eventArgs)
+
+
+        private async Task OnMessageReactionAdded(DiscordClient client, MessageReactionAddEventArgs eventArgs)
+        {
+            var channel = eventArgs.Channel;
+            var message = eventArgs.Message;
+            var user = eventArgs.User;
+            var emoji = eventArgs.Emoji;
+
+            try
+            {
+                if (!ShouldHandleReaction(channel, user))
+                    return;
+
+                var isAwardEmoji = emoji.Name == EmojiMap.Cookie;
+
+                if (!IsAwardAllowedChannel(channel))
+                    return;
+
+                if (isAwardEmoji)
+                {
+                    _awardQueue.Enqueue(new MessageAwardQueueItem(message, MessageAwardQueueAction.ReactionChanged));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "OnMessageReactionAdded");
+                await _discordErrorLogger.LogDiscordError(ex.ToString());
+            }
+        }
+
+        private async Task OnMessageReactionRemoved(DiscordClient sender, MessageReactionRemoveEventArgs eventArgs)
+        {
+            var channel = eventArgs.Channel;
+            var message = eventArgs.Message;
+            var emoji = eventArgs.Emoji;
+
+            try
+            {
+                if (channel.IsPrivate)
+                    return;
+
+                var isAwardEmoji = emoji.Name == EmojiMap.Cookie;
+
+                if (!IsAwardAllowedChannel(channel))
+                    return;
+
+                if (isAwardEmoji)
+                {
+                    _awardQueue.Enqueue(new MessageAwardQueueItem(message, MessageAwardQueueAction.ReactionChanged));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "OnMessageReactionRemoved");
+                await _discordErrorLogger.LogDiscordError(ex.ToString());
+            }
+        }
+
+        private async Task OnMessageUpdated(DiscordClient sender, MessageUpdateEventArgs eventArgs)
         {
             try
             {
                 var channel = eventArgs.Channel;
                 var message = eventArgs.Message;
-                var user = eventArgs.User;
-                var emoji = eventArgs.Emoji;
+                var user = eventArgs.Author;
 
                 if (!ShouldHandleReaction(channel, user))
-                    return Task.CompletedTask;
+                    return;
 
-                var isAwardEmoji = emoji.Name == EmojiMap.Cookie;
+                if (!IsAwardAllowedChannel(channel))
+                    return;
 
-                if(isAwardEmoji)
-                {
-                    _awardQueue.Enqueue(new MessageAwardQueueItem(message));
-                }                
+                _awardQueue.Enqueue(new MessageAwardQueueItem(message, MessageAwardQueueAction.MessageUpdated));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "OnMessageReactionAdded");
+                await _discordErrorLogger.LogDiscordError(ex.ToString());
+            }
+        }
+
+        private async Task OnMessageDeleted(DiscordClient sender, MessageDeleteEventArgs eventArgs)
+        {
+            try
+            {
+                var channel = eventArgs.Channel;
+                var messageId = eventArgs.Message.Id;
+
+                if (channel.IsPrivate)
+                    return;
+
+                if (!IsAwardAllowedChannel(channel))
+                    return;
+
+                _awardQueue.Enqueue(new MessageAwardQueueItem(messageId, channel, MessageAwardQueueAction.MessageDeleted));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "OnMessageReactionAdded");
+                await _discordErrorLogger.LogDiscordError(ex.ToString());
+            }
+        }
+
+        private bool IsAwardAllowedChannel(DiscordChannel channel)
+        {
+            var allowedGroupIds = _options.AwardVoteGroupIds;
+
+            if (allowedGroupIds == null || allowedGroupIds.Length == 0)
+            {
+                _logger.LogDebug($"{nameof(_options.AwardVoteGroupIds)} is empty");
+                return false;
             }
 
-            return Task.CompletedTask;
+            var isAllowedChannel = allowedGroupIds.ToList().Contains(channel.ParentId!.Value);
+
+            if (!isAllowedChannel)
+                return false;
+
+            return true;
         }
 
         ///// <summary>

@@ -18,10 +18,19 @@ namespace Nellebot.Data
             builder.Entity<UserRoleAlias>()
                     .HasIndex(x => x.Alias)
                     .IsUnique();
+
+            builder.Entity<AwardMessage>()
+                .HasIndex(x => x.OriginalMessageId)
+                .IsUnique();
+
+            builder.Entity<AwardMessage>()
+                .HasIndex(x => x.AwardedMessageId)
+                .IsUnique();
         }
 
         public DbSet<UserRole> UserRoles { get; set; } = null!;
         public DbSet<UserRoleAlias> UserRoleAliases { get; set; } = null!;
+        public DbSet<AwardMessage> AwardMessages { get; set; } = null!;
 
     }
 }
