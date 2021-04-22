@@ -69,7 +69,7 @@ namespace Nellebot.Services
 
             var hasEnoughAwards = awardReactionCount >= _options.RequiredAwardCount;
 
-            var awardMessage = await _awardMessageRepo.GetAwardMessageByOriginalMessageId(message.Id);
+            var awardMessage = await _awardMessageRepo.GetAwardMessageByOriginalMessageId(awardChannel.Id, message.Id);
 
             if (awardMessage == null)
             {
@@ -83,7 +83,7 @@ namespace Nellebot.Services
 
                 var postedMessage = await PostAwardedMessage(awardChannel, message, messageAuthor, awardReactionCount);
 
-                await _awardMessageRepo.CreateAwardMessage(message.Id, postedMessage.Id, messageAuthor.Id, awardReactionCount);
+                await _awardMessageRepo.CreateAwardMessage(message.Id, postedMessage.Id, awardChannel.Id, messageAuthor.Id, awardReactionCount);
             }
             else
             {
@@ -149,7 +149,7 @@ namespace Nellebot.Services
                 return;
             }
 
-            var awardMessage = await _awardMessageRepo.GetAwardMessageByOriginalMessageId(message.Id);
+            var awardMessage = await _awardMessageRepo.GetAwardMessageByOriginalMessageId(awardChannel.Id, message.Id);
 
             if (awardMessage == null)
             {
@@ -168,19 +168,19 @@ namespace Nellebot.Services
             var channel = awardItem.DiscordChannel!;
             var guild = channel.Guild;
 
-            var awardMessage = await _awardMessageRepo.GetAwardMessageByOriginalMessageId(messageId);
-
-            if (awardMessage == null)
-            {
-                _logger.LogDebug($"Message ({messageId}) does not exist in award channel");
-                return;
-            }
-
             var awardChannel = await ResolveAwardChannel(guild, _options.AwardChannelId);
 
             if (awardChannel == null)
             {
                 _logger.LogDebug("Could not resolve awards channel");
+                return;
+            }
+
+            var awardMessage = await _awardMessageRepo.GetAwardMessageByOriginalMessageId(awardChannel.Id, messageId);
+
+            if (awardMessage == null)
+            {
+                _logger.LogDebug($"Message ({messageId}) does not exist in award channel");
                 return;
             }
 

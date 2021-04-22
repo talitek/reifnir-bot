@@ -17,21 +17,28 @@ namespace Nellebot.Data.Repositories
             _dbContext = dbContext;
         }
 
-        public async Task<AwardMessage> GetAwardMessageByOriginalMessageId(ulong originalMessageId)
+        public async Task<AwardMessage> GetAwardMessageByOriginalMessageId(ulong awardChannelId, ulong originalMessageId)
         {
             var awardMessage = await _dbContext.AwardMessages
-                                .SingleOrDefaultAsync(m => m.OriginalMessageId == originalMessageId);
+                                .SingleOrDefaultAsync(m => m.OriginalMessageId == originalMessageId
+                                                        && m.AwardChannelId == awardChannelId);
 
             return awardMessage;
         }
 
-        public async Task<AwardMessage> CreateAwardMessage(ulong originalMessageId, ulong awardedMessageId, ulong userId, uint awardCount)
+        public async Task<AwardMessage> CreateAwardMessage(
+            ulong originalMessageId, 
+            ulong awardedMessageId, 
+            ulong awardChannelId,
+            ulong userId, 
+            uint awardCount)
         {
             var awardMessage = new AwardMessage
             {
                 OriginalMessageId = originalMessageId,
                 UserId = userId,
                 AwardedMessageId = awardedMessageId,
+                AwardChannelId = awardChannelId,
                 AwardCount = awardCount,
                 DateTime = DateTime.UtcNow
             };
