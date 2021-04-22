@@ -21,7 +21,7 @@ namespace Nellebot.Services
         private readonly BotOptions _options;
 
         public AwardMessageService(
-            AwardMessageRepository awardMessageRepo, 
+            AwardMessageRepository awardMessageRepo,
             ILogger<AwardMessageService> logger,
             IOptions<BotOptions> options,
             DiscordErrorLogger discordErrorLogger
@@ -160,7 +160,7 @@ namespace Nellebot.Services
             await UpdateAwardedMessageEmbed(awardChannel, awardMessage.AwardedMessageId, message, messageAuthor);
         }
 
-        
+
         public async Task HandleAwardMessageDeleted(MessageAwardQueueItem awardItem)
         {
             var messageId = awardItem.DiscordMessageId;
@@ -173,7 +173,7 @@ namespace Nellebot.Services
             if (awardMessage == null)
             {
                 _logger.LogDebug($"Message ({messageId}) does not exist in award channel");
-                return;                
+                return;
             }
 
             var awardChannel = await ResolveAwardChannel(guild, _options.AwardChannelId);
@@ -246,15 +246,42 @@ namespace Nellebot.Services
 
             var messageLink = $"[**Jump to message!**]({message.JumpLink})";
 
-            var description = $"{messageLink}\r\n\r\n{message.Content}";
+            var messageContent = $"{messageLink}\r\n\r\n{message.Content}";
 
-            var embed = new DiscordEmbedBuilder()
+            var embedBuilder = new DiscordEmbedBuilder()
                 .WithAuthor(authorDisplayName, null, author.AvatarUrl)
-                .WithDescription(description)
                 .WithFooter($"#{channel}")
                 .WithTimestamp(message.Id)
-                .WithColor(9648895) // #933aff 
-                .Build();
+                .WithColor(9648895); // #933aff 
+
+            var attachment = message.Attachments.FirstOrDefault();
+
+            if (attachment != null)
+            {
+                embedBuilder = embedBuilder.WithImageUrl(attachment.Url);
+            }
+            else
+            {
+                // Try to fetch an image from message embed
+                var messageEmbed = message.Embeds.FirstOrDefault();
+
+                if (messageEmbed != null)
+                {
+                    if (messageEmbed.Thumbnail != null)
+                        embedBuilder = embedBuilder.WithImageUrl(messageEmbed.Thumbnail.Url.ToUri());
+
+                    if (!string.IsNullOrWhiteSpace(messageEmbed.Title) && messageEmbed.Url != null)
+                    {
+                        var embededLinkText = $"[{messageEmbed.Title}]({messageEmbed.Url})";
+
+                        messageContent += $"\r\n\r\n{embededLinkText}";
+                    }
+                }
+            }
+
+            embedBuilder = embedBuilder.WithDescription(messageContent);
+
+            var embed = embedBuilder.Build();
 
             return embed;
         }
