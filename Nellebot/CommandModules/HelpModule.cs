@@ -40,6 +40,9 @@ namespace Nellebot.CommandModules
             sb.AppendLine();
             sb.AppendLine("If you have any problems, you can always contact one of the moderators.");
 
+            sb.AppendLine();
+            sb.AppendLine("Reifnir source code: github.com/NELLE-reifnir-bot/reifnir-bot");
+
             var result = sb.ToString();
 
             return ctx.RespondAsync(result);

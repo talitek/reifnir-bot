@@ -44,29 +44,7 @@ namespace Nellebot.CommandModules
             });
         }
 
-        [Command("error-test")]
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        public async Task ErrorTest(CommandContext ctx)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-        {
-            //await ctx.RespondAsync("Error test command executed");
-
-            throw new Exception("Test error");
-        }
-
-        [Command("access-test")]
-        public async Task AccessTest(CommandContext ctx)
-        {
-            await ctx.RespondAsync("Nice!");
-        }
-
-        [Command("say")]
-        public async Task AccessTest(CommandContext ctx, string message)
-        {
-            await ctx.RespondAsync(message);
-        }
-
-        [Command("cookie-channels")]
+        [Command("list-award-channels")]
         public async Task ListCookieChannels(CommandContext ctx)
         {
             var groupIds = _options.AwardVoteGroupIds;
