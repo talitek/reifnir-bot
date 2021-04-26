@@ -92,22 +92,11 @@ namespace Nellebot.Services
                 // TODO keep track if message was removed from award channels
                 // so it's handled gracefully i.e. not throw an error
                 // when it tries to update a removed message
-                if (!hasEnoughAwards)
-                {
-                    //_logger.LogDebug($"Not enough awards. {awardReactionCount} / {_options.RequiredAwardCount}");
+                _logger.LogDebug($"Has enough awards. {awardReactionCount} / {_options.RequiredAwardCount}");
 
-                    //await DeleteAwardedMessage(awardChannel, awardMessage.AwardedMessageId);
+                await UpdateAwardedMessageText(awardChannel, awardMessage.AwardedMessageId, awardReactionCount);
 
-                    //await _awardMessageRepo.DeleteAwardMessage(awardMessage.Id);
-                }
-                else
-                {
-                    _logger.LogDebug($"Has enough awards. {awardReactionCount} / {_options.RequiredAwardCount}");
-
-                    await UpdateAwardedMessageText(awardChannel, awardMessage.AwardedMessageId, awardReactionCount);
-
-                    await _awardMessageRepo.UpdateAwardCount(awardMessage.Id, awardReactionCount);
-                }
+                await _awardMessageRepo.UpdateAwardCount(awardMessage.Id, awardReactionCount);
             }
         }
 
