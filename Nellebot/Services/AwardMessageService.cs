@@ -260,7 +260,7 @@ namespace Nellebot.Services
                 if (messageEmbed != null)
                 {
                     if (messageEmbed.Thumbnail != null)
-                        embedBuilder = embedBuilder.WithImageUrl(messageEmbed.Thumbnail.Url.ToUri());
+                        embedBuilder = embedBuilder.WithImageUrl(messageEmbed.Thumbnail.ProxyUrl.ToUri());
 
                     if (!string.IsNullOrWhiteSpace(messageEmbed.Title) && messageEmbed.Url != null)
                     {
