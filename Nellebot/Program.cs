@@ -8,6 +8,7 @@ using Nellebot.Data;
 using Nellebot.Data.Repositories;
 using Nellebot.EventHandlers;
 using Nellebot.Services;
+using Nellebot.Utils;
 using Nellebot.Workers;
 using System;
 using System.Collections.Generic;
@@ -44,6 +45,7 @@ namespace Nellebot
                     services.AddTransient<UserRoleService>();
                     services.AddTransient<RoleService>();
                     services.AddTransient<AwardMessageService>();
+                    services.AddTransient<DiscordResolver>();
 
                     services.AddTransient<IUserRoleRepository, UserRoleRepository>();
                     services.AddTransient<AwardMessageRepository>();

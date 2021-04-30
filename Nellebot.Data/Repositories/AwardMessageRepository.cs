@@ -27,15 +27,17 @@ namespace Nellebot.Data.Repositories
         }
 
         public async Task<AwardMessage> CreateAwardMessage(
-            ulong originalMessageId, 
-            ulong awardedMessageId, 
+            ulong originalMessageId,
+            ulong originalChannelId,
+            ulong awardedMessageId,
             ulong awardChannelId,
-            ulong userId, 
+            ulong userId,
             uint awardCount)
         {
             var awardMessage = new AwardMessage
             {
                 OriginalMessageId = originalMessageId,
+                OriginalChannelId = originalChannelId,
                 UserId = userId,
                 AwardedMessageId = awardedMessageId,
                 AwardChannelId = awardChannelId,
@@ -54,7 +56,7 @@ namespace Nellebot.Data.Repositories
         {
             var existingMessage = await _dbContext.AwardMessages.FindAsync(id);
 
-            if(existingMessage != null)
+            if (existingMessage != null)
             {
                 _dbContext.Remove(existingMessage);
 
@@ -72,6 +74,27 @@ namespace Nellebot.Data.Repositories
 
                 await _dbContext.SaveChangesAsync();
             }
+        }
+
+        public async Task<UserAwardStats> GetAwardStatsForUser(ulong userId)
+        {
+            var awardStats = new UserAwardStats();
+
+            awardStats.TotalAwardCount = (uint)await _dbContext.AwardMessages
+                .Where(m => m.UserId == userId)
+                .SumAsync(a => a.AwardCount);
+
+            awardStats.AwardMessageCount = (uint)await _dbContext.AwardMessages
+                .Where(m => m.UserId == userId)
+                .CountAsync();
+
+            awardStats.TopAwardedMessages = await _dbContext.AwardMessages
+                .Where(m => m.UserId == userId)
+                .OrderByDescending(m => m.AwardCount)
+                .Take(10)
+                .ToListAsync();
+
+            return awardStats;
         }
     }
 }

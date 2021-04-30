@@ -10,6 +10,7 @@ namespace Nellebot.Common.Models
     {
         public Guid Id { get; set; }
         public ulong OriginalMessageId { get; set; }
+        public ulong OriginalChannelId { get; set; }
 
         // Discord message id in awards channel
         public ulong AwardedMessageId { get; set; }

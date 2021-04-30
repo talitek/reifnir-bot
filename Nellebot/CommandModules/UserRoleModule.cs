@@ -21,14 +21,17 @@ namespace Nellebot.CommandModules
     {
         private readonly BotOptions _options;
         private readonly UserRoleService _userRoleService;
+        private readonly DiscordResolver _discordResolver;
 
         public UserRoleModule(
             IOptions<BotOptions> options,
-            UserRoleService userRoleService
+            UserRoleService userRoleService,
+            DiscordResolver discordResolver
             )
         {
             _options = options.Value;
             _userRoleService = userRoleService;
+            _discordResolver = discordResolver;
         }
 
         [Command("create-role")]
@@ -58,7 +61,7 @@ namespace Nellebot.CommandModules
         [Command("create-role")]
         public async Task CreateRole(CommandContext ctx, string discordRoleName, string name, string aliasList)
         {
-            var result = DiscordRoleResolver.TryResolveByName(ctx.Guild, discordRoleName, out var discordRole);
+            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName, out var discordRole);
 
             if (!result.Resolved)
             {
@@ -96,7 +99,7 @@ namespace Nellebot.CommandModules
         [Command("update-role")]
         public async Task UpdateRole(CommandContext ctx, string discordRoleName, string name)
         {
-            var result = DiscordRoleResolver.TryResolveByName(ctx.Guild, discordRoleName, out var discordRole);
+            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName, out var discordRole);
 
             if (!result.Resolved)
             {
@@ -134,7 +137,7 @@ namespace Nellebot.CommandModules
         [Command("delete-role")]
         public async Task DeleteRole(CommandContext ctx, string discordRoleName)
         {
-            var result = DiscordRoleResolver.TryResolveByName(ctx.Guild, discordRoleName, out var discordRole);
+            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName, out var discordRole);
 
             if (!result.Resolved)
             {
@@ -184,7 +187,7 @@ namespace Nellebot.CommandModules
         [Command("get-role")]
         public async Task GetRole(CommandContext ctx, string discordRoleName)
         {
-            var result = DiscordRoleResolver.TryResolveByName(ctx.Guild, discordRoleName, out var discordRole);
+            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName, out var discordRole);
 
             if (!result.Resolved)
             {
@@ -255,7 +258,7 @@ namespace Nellebot.CommandModules
         [Command("add-alias")]
         public async Task AddRoleAlias(CommandContext ctx, string discordRoleName, string alias)
         {
-            var result = DiscordRoleResolver.TryResolveByName(ctx.Guild, discordRoleName, out var discordRole);
+            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName, out var discordRole);
 
             if (!result.Resolved)
             {
@@ -293,7 +296,7 @@ namespace Nellebot.CommandModules
         [Command("remove-alias")]
         public async Task RemoveRoleAlias(CommandContext ctx, string discordRoleName, string alias)
         {
-            var result = DiscordRoleResolver.TryResolveByName(ctx.Guild, discordRoleName, out var discordRole);
+            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName, out var discordRole);
 
             if (!result.Resolved)
             {
@@ -331,7 +334,7 @@ namespace Nellebot.CommandModules
         [Command("set-group")]
         public async Task SetRoleGroup(CommandContext ctx, string discordRoleName, uint groupNumber)
         {
-            var result = DiscordRoleResolver.TryResolveByName(ctx.Guild, discordRoleName, out var discordRole);
+            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName, out var discordRole);
 
             if (!result.Resolved)
             {
@@ -369,7 +372,7 @@ namespace Nellebot.CommandModules
         [Command("unset-group")]
         public async Task UnsetRoleGroup(CommandContext ctx, string discordRoleName)
         {
-            var result = DiscordRoleResolver.TryResolveByName(ctx.Guild, discordRoleName, out var discordRole);
+            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName, out var discordRole);
 
             if (!result.Resolved)
             {

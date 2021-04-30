@@ -18,18 +18,21 @@ namespace Nellebot.Services
         private readonly AwardMessageRepository _awardMessageRepo;
         private readonly ILogger<AwardMessageService> _logger;
         private readonly DiscordErrorLogger _discordErrorLogger;
+        private readonly DiscordResolver _discordResolver;
         private readonly BotOptions _options;
 
         public AwardMessageService(
             AwardMessageRepository awardMessageRepo,
             ILogger<AwardMessageService> logger,
             IOptions<BotOptions> options,
-            DiscordErrorLogger discordErrorLogger
+            DiscordErrorLogger discordErrorLogger,
+            DiscordResolver discordResolver
             )
         {
             _awardMessageRepo = awardMessageRepo;
             _logger = logger;
             _discordErrorLogger = discordErrorLogger;
+            _discordResolver = discordResolver;
             _options = options.Value;
         }
 
@@ -38,7 +41,7 @@ namespace Nellebot.Services
             // TODO optimize by resolving full message only if it will be posted
             var partialMessage = awardItem.DiscordMessage;
 
-            var message = await ResolveMessage(partialMessage.Channel, partialMessage.Id);
+            var message = await _discordResolver.ResolveMessage(partialMessage.Channel, partialMessage.Id);
 
             if (message == null)
             {
@@ -49,7 +52,7 @@ namespace Nellebot.Services
             var channel = message.Channel;
             var guild = channel.Guild;
 
-            var messageAuthor = await ResolveGuildMember(guild, message.Author.Id);
+            var messageAuthor = await _discordResolver.ResolveGuildMember(guild, message.Author.Id);
 
             if (messageAuthor == null)
             {
@@ -57,7 +60,7 @@ namespace Nellebot.Services
                 return;
             }
 
-            var awardChannel = await ResolveAwardChannel(guild, _options.AwardChannelId);
+            var awardChannel = await _discordResolver.ResolveChannel(guild, _options.AwardChannelId);
 
             if (awardChannel == null)
             {
@@ -83,7 +86,7 @@ namespace Nellebot.Services
 
                 var postedMessage = await PostAwardedMessage(awardChannel, message, messageAuthor, awardReactionCount);
 
-                await _awardMessageRepo.CreateAwardMessage(message.Id, postedMessage.Id, awardChannel.Id, messageAuthor.Id, awardReactionCount);
+                await _awardMessageRepo.CreateAwardMessage(message.Id, message.ChannelId, postedMessage.Id, awardChannel.Id, messageAuthor.Id, awardReactionCount);
             }
             else
             {
@@ -104,7 +107,7 @@ namespace Nellebot.Services
         {
             var partialMessage = awardItem.DiscordMessage;
 
-            var message = await ResolveMessage(partialMessage.Channel, partialMessage.Id);
+            var message = await _discordResolver.ResolveMessage(partialMessage.Channel, partialMessage.Id);
 
             if (message == null)
             {
@@ -115,7 +118,7 @@ namespace Nellebot.Services
             var channel = message.Channel;
             var guild = channel.Guild;
 
-            var messageAuthor = await ResolveGuildMember(guild, message.Author.Id);
+            var messageAuthor = await _discordResolver.ResolveGuildMember(guild, message.Author.Id);
 
             if (messageAuthor == null)
             {
@@ -123,7 +126,7 @@ namespace Nellebot.Services
                 return;
             }
 
-            var awardChannel = await ResolveAwardChannel(guild, _options.AwardChannelId);
+            var awardChannel = await _discordResolver.ResolveChannel(guild, _options.AwardChannelId);
 
             if (awardChannel == null)
             {
@@ -160,7 +163,7 @@ namespace Nellebot.Services
             var channel = awardItem.DiscordChannel!;
             var guild = channel.Guild;
 
-            var awardChannel = await ResolveAwardChannel(guild, _options.AwardChannelId);
+            var awardChannel = await _discordResolver.ResolveChannel(guild, _options.AwardChannelId);
 
             if (awardChannel == null)
             {
@@ -196,7 +199,7 @@ namespace Nellebot.Services
 
         private async Task UpdateAwardedMessageText(DiscordChannel awardChannel, ulong awardedMessageId, uint awardCount)
         {
-            var awardedMessage = await ResolveMessage(awardChannel, awardedMessageId);
+            var awardedMessage = await _discordResolver.ResolveMessage(awardChannel, awardedMessageId);
 
             if (awardedMessage == null)
                 return;
@@ -212,7 +215,7 @@ namespace Nellebot.Services
         {
             var messageChannel = originalMessage.Channel;
 
-            var awardedMessage = await ResolveMessage(awardChannel, awardedMessageId);
+            var awardedMessage = await _discordResolver.ResolveMessage(awardChannel, awardedMessageId);
 
             if (awardedMessage == null)
                 return;
@@ -224,7 +227,7 @@ namespace Nellebot.Services
 
         private async Task DeleteAwardedMessage(DiscordChannel awardChannel, ulong awardedMessageId)
         {
-            var awardedMessage = await ResolveMessage(awardChannel, awardedMessageId);
+            var awardedMessage = await _discordResolver.ResolveMessage(awardChannel, awardedMessageId);
 
             if (awardedMessage == null)
                 return;
@@ -307,60 +310,6 @@ namespace Nellebot.Services
         }
 
 
-        private async Task<DiscordChannel?> ResolveAwardChannel(DiscordGuild guild, ulong channelId)
-        {
-            guild.Channels.TryGetValue(channelId, out var discordChannel);
 
-            if (discordChannel == null)
-            {
-                try
-                {
-                    discordChannel = guild.GetChannel(channelId);
-                }
-                catch (Exception ex)
-                {
-                    await _discordErrorLogger.LogDiscordError(ex.ToString());
-
-                    return null;
-                }
-            }
-
-            return discordChannel;
-        }
-
-        private async Task<DiscordMember?> ResolveGuildMember(DiscordGuild guild, ulong userId)
-        {
-            var memberExists = guild.Members.TryGetValue(userId, out DiscordMember? member);
-
-            if (memberExists)
-                return member;
-
-            try
-            {
-                return await guild.GetMemberAsync(userId);
-            }
-            catch (Exception ex)
-            {
-                await _discordErrorLogger.LogDiscordError(ex.ToString());
-
-                return null;
-            }
-        }
-
-        private async Task<DiscordMessage?> ResolveMessage(DiscordChannel channel, ulong messageId)
-        {
-            try
-            {
-                var message = await channel.GetMessageAsync(messageId);
-
-                return message;
-            }
-            catch (Exception ex)
-            {
-                await _discordErrorLogger.LogDiscordError(ex.ToString());
-
-                return null;
-            }
-        }
     }
 }

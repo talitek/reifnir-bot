@@ -21,23 +21,26 @@ namespace Nellebot.CommandModules
     {
         private readonly ILogger<UtilsModule> _logger;
         private readonly DiscordClient _client;
+        private readonly DiscordResolver _discordResolver;
         private readonly BotOptions _options;
 
         public UtilsModule(
             ILogger<UtilsModule> logger,
             DiscordClient client,
-            IOptions<BotOptions> options
+            IOptions<BotOptions> options,
+            DiscordResolver discordResolver
             )
         {
             _logger = logger;
             _client = client;
+            _discordResolver = discordResolver;
             _options = options.Value;
         }
 
         [Command("role-id")]
         public async Task GetRoleId(CommandContext ctx, string roleName)
         {
-            var result = DiscordRoleResolver.TryResolveByName(ctx.Guild, roleName, out var discordRole);
+            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, roleName, out var discordRole);
 
             if (!result.Resolved)
             {
