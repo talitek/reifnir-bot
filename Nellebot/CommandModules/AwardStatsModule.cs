@@ -93,6 +93,9 @@ namespace Nellebot.CommandModules
                         ? $"{message.Content.Substring(0, _maxMessageLength)}..."
                         : message.Content;
 
+                    if (string.IsNullOrWhiteSpace(shortenedMessage))
+                        shortenedMessage = "*no message text*";
+
                     sb.AppendLine($"[{shortenedMessage}]({message.JumpLink})");
                 }
                 else
