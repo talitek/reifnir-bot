@@ -289,30 +289,7 @@ namespace Nellebot.Services
             {
                 var cookieEmoji = DiscordEmoji.FromUnicode(EmojiMap.Cookie);
 
-                // Use a non default limit to attempt circumventing a bug in the discord api
-                //var cookieReactionUsers = await message.GetReactionsAsync(cookieEmoji, 100);
                 var cookieReactionUsers = await message.GetReactionsAsync(cookieEmoji);
-
-                var userCountTest = cookieReactionUsers.Count();
-                var userCountTest2 = (uint)cookieReactionUsers.Count();
-                var userCountTest3 = cookieReactionUsers.Count;
-
-                var userCountTest4 = cookieReactionUsers.Select(x => x.Id).Distinct().Count();
-
-                _logger.LogDebug($"Cookie reaction count 1: {userCountTest}");
-                _logger.LogDebug($"Cookie reaction count 2: {userCountTest2}");
-                _logger.LogDebug($"Cookie reaction count 3: {userCountTest3}");
-                _logger.LogDebug($"Cookie reaction count 4: {userCountTest4}");
-
-                //// Print out some random users
-                //if (cookieReactionUsers[0] != null)
-                //    _logger.LogDebug(cookieReactionUsers[0].Username);
-
-                //if (cookieReactionUsers[10] != null)
-                //    _logger.LogDebug(cookieReactionUsers[10].Username);
-
-                //if (cookieReactionUsers[50] != null)
-                //    _logger.LogDebug(cookieReactionUsers[50].Username);
 
                 if (cookieReactionUsers != null)
                 {
