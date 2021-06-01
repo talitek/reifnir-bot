@@ -39,9 +39,21 @@ namespace Nellebot.CommandModules
         }
 
         [Command("me")]
-        public async Task GetUserAwardStats(CommandContext ctx)
+        public async Task GetUserAwardStatsSelf(CommandContext ctx)
         {
             var member = ctx.Member;
+
+            await GetUserAwardStats(ctx, member);
+        }
+
+        [Command("user")]
+        public async Task GetUserAwardStatsOtherUser(CommandContext ctx, DiscordMember member)
+        {
+            await GetUserAwardStats(ctx, member);
+        }
+
+        private async Task GetUserAwardStats(CommandContext ctx, DiscordMember member)
+        {
             var userId = member.Id;
             var guild = ctx.Guild;
 
