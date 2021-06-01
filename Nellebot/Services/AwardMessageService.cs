@@ -74,6 +74,8 @@ namespace Nellebot.Services
 
             var awardMessage = await _awardMessageRepo.GetAwardMessageByOriginalMessageId(awardChannel.Id, message.Id);
 
+            _logger.LogDebug($"Message has {awardReactionCount} awards");
+
             if (awardMessage == null)
             {
                 _logger.LogDebug($"Message ({message.Id}) does not exist in the database");
@@ -95,8 +97,6 @@ namespace Nellebot.Services
                 // TODO keep track if message was removed from award channels
                 // so it's handled gracefully i.e. not throw an error
                 // when it tries to update a removed message
-                _logger.LogDebug($"Has enough awards. {awardReactionCount} / {_options.RequiredAwardCount}");
-
                 await UpdateAwardedMessageText(awardChannel, awardMessage.AwardedMessageId, awardReactionCount);
 
                 await _awardMessageRepo.UpdateAwardCount(awardMessage.Id, awardReactionCount);
@@ -290,6 +290,14 @@ namespace Nellebot.Services
                 var cookieEmoji = DiscordEmoji.FromUnicode(EmojiMap.Cookie);
 
                 var cookieReactionUsers = await message.GetReactionsAsync(cookieEmoji);
+
+                var userCountTest = cookieReactionUsers.Count();
+                var userCountTest2 = (uint)cookieReactionUsers.Count();
+                var userCountTest3 = cookieReactionUsers.Count;
+
+                _logger.LogDebug($"Cookie reaction count 1: {userCountTest}");
+                _logger.LogDebug($"Cookie reaction count 2: {userCountTest2}");
+                _logger.LogDebug($"Cookie reaction count 3: {userCountTest3}");
 
                 if (cookieReactionUsers != null)
                 {
