@@ -47,8 +47,16 @@ namespace Nellebot.CommandModules
         }
 
         [Command("user")]
-        public async Task GetUserAwardStatsOtherUser(CommandContext ctx, DiscordMember member)
+        public async Task GetUserAwardStatsOtherUser(CommandContext ctx, DiscordUser user)
         {
+            var member = await _discordResolver.ResolveGuildMember(ctx.Guild, user.Id);
+
+            if (member == null)
+            {
+                await ctx.RespondAsync("Could not fetch user");
+                return;
+            }
+
             await GetUserAwardStats(ctx, member);
         }
 
@@ -57,7 +65,7 @@ namespace Nellebot.CommandModules
             var userId = member.Id;
             var guild = ctx.Guild;
 
-            var mention = ctx.Member.GetNicknameOrDisplayName();
+            var mention = member.GetNicknameOrDisplayName();
 
             var userAwardStats = await _awardMessageRepo.GetAwardStatsForUser(userId);
 
