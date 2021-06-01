@@ -184,6 +184,32 @@ namespace Nellebot.Services
             await _awardMessageRepo.DeleteAwardMessage(awardMessage.Id);
         }
 
+        public async Task HandleAwardedMessageDeleted(MessageAwardQueueItem awardItem)
+        {
+            var messageId = awardItem.DiscordMessageId;
+
+            var channel = awardItem.DiscordChannel!;
+            var guild = channel.Guild;
+
+            var awardChannel = await _discordResolver.ResolveChannel(guild, _options.AwardChannelId);
+
+            if (awardChannel == null)
+            {
+                _logger.LogDebug("Could not resolve awards channel");
+                return;
+            }
+
+            var awardMessage = await _awardMessageRepo.GetAwardMessageByAwardedMessageId(awardChannel.Id, messageId);
+
+            if (awardMessage == null)
+            {
+                _logger.LogDebug($"Message ({messageId}) does not exist in award channel");
+                return;
+            }
+
+            await _awardMessageRepo.DeleteAwardMessage(awardMessage.Id);
+        }
+
         private async Task<DiscordMessage> PostAwardedMessage(DiscordChannel awardChannel, DiscordMessage originalMessage, DiscordMember author, uint awardCount)
         {
             var messageChannel = originalMessage.Channel;

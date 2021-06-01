@@ -49,8 +49,6 @@ namespace Nellebot.EventHandlers
             _client.MessageDeleted += OnMessageDeleted;
         }
 
-
-
         private async Task OnMessageReactionAdded(DiscordClient client, MessageReactionAddEventArgs eventArgs)
         {
             var channel = eventArgs.Channel;
@@ -126,7 +124,7 @@ namespace Nellebot.EventHandlers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "OnMessageReactionAdded");
+                _logger.LogError(ex, "OnMessageUpdated");
                 await _discordErrorLogger.LogDiscordError(ex.ToString());
             }
         }
@@ -141,14 +139,18 @@ namespace Nellebot.EventHandlers
                 if (channel.IsPrivate)
                     return;
 
-                if (!IsAwardAllowedChannel(channel))
-                    return;
-
-                _awardQueue.Enqueue(new MessageAwardQueueItem(messageId, channel, MessageAwardQueueAction.MessageDeleted));
+                if (IsAwardAllowedChannel(channel))
+                {
+                    _awardQueue.Enqueue(new MessageAwardQueueItem(messageId, channel, MessageAwardQueueAction.MessageDeleted));
+                }
+                else if (IsAwardChannel(channel))
+                {
+                    _awardQueue.Enqueue(new MessageAwardQueueItem(messageId, channel, MessageAwardQueueAction.AwardDeleted));
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "OnMessageReactionAdded");
+                _logger.LogError(ex, "OnMessageDeleted");
                 await _discordErrorLogger.LogDiscordError(ex.ToString());
             }
         }
@@ -169,6 +171,13 @@ namespace Nellebot.EventHandlers
                 return false;
 
             return true;
+        }
+
+        private bool IsAwardChannel(DiscordChannel channel)
+        {
+            var awardChannelId = _options.AwardChannelId;
+
+            return channel.Id == awardChannelId;
         }
 
         ///// <summary>

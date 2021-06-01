@@ -75,6 +75,9 @@ namespace Nellebot.Workers
                             case MessageAwardQueueAction.MessageDeleted:
                                 await awardMessageService.HandleAwardMessageDeleted(awardMessageQueueItem);
                                 break;
+                            case MessageAwardQueueAction.AwardDeleted:
+                                await awardMessageService.HandleAwardedMessageDeleted(awardMessageQueueItem);
+                                break;
                         }
 
                         nextDelay = BusyDelay;

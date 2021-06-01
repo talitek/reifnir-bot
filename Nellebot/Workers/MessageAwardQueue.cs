@@ -35,6 +35,7 @@ namespace Nellebot.Workers
     {
         ReactionChanged = 0,
         MessageUpdated = 1,
-        MessageDeleted = 2
+        MessageDeleted = 2,
+        AwardDeleted = 3
     }
 }
