@@ -300,6 +300,16 @@ namespace Nellebot.Services
                 _logger.LogDebug($"Cookie reaction count 2: {userCountTest2}");
                 _logger.LogDebug($"Cookie reaction count 3: {userCountTest3}");
 
+                // Print out some random users
+                if (cookieReactionUsers[0] != null)
+                    _logger.LogDebug(cookieReactionUsers[0].Username);
+
+                if (cookieReactionUsers[10] != null)
+                    _logger.LogDebug(cookieReactionUsers[10].Username);
+
+                if (cookieReactionUsers[50] != null)
+                    _logger.LogDebug(cookieReactionUsers[50].Username);
+
                 if (cookieReactionUsers != null)
                 {
                     var skipAuthor = false;
