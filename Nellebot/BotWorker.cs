@@ -21,6 +21,7 @@ namespace Nellebot
         private readonly IServiceProvider _serviceProvider;
         private readonly CommandEventHandler _commandEventHandler;
         private readonly AwardEventHandler _awardEventHandler;
+        private readonly BlacklistEventHandler _blacklistEventHandler;
 
         public BotWorker(
             IOptions<BotOptions> options,
@@ -28,7 +29,8 @@ namespace Nellebot
             DiscordClient client,
             IServiceProvider serviceProvider,
             CommandEventHandler commandEventHandler,
-            AwardEventHandler awardEventHandler
+            AwardEventHandler awardEventHandler,
+            BlacklistEventHandler blacklistEventHandler
             )
         {
             _options = options.Value;
@@ -37,6 +39,7 @@ namespace Nellebot
             _serviceProvider = serviceProvider;
             _commandEventHandler = commandEventHandler;
             _awardEventHandler = awardEventHandler;
+            _blacklistEventHandler = blacklistEventHandler;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -62,6 +65,7 @@ namespace Nellebot
 
             _commandEventHandler.RegisterHandlers(commands);
             _awardEventHandler.RegisterHandlers();
+            _blacklistEventHandler.RegisterHandlers();
         }
 
         private Task OnClientDisconnected(DiscordClient sender, SocketCloseEventArgs e)

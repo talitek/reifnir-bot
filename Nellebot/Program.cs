@@ -39,6 +39,7 @@ namespace Nellebot
                     services.AddSingleton<AwardEventHandler>();
 
                     services.AddSingleton<CommandEventHandler>();
+                    services.AddSingleton<BlacklistEventHandler>();
 
                     services.AddTransient<AuthorizationService>();
                     services.AddTransient<DiscordErrorLogger>();
@@ -73,7 +74,8 @@ namespace Nellebot
                         {
                             MinimumLogLevel = logLevel,
                             TokenType = TokenType.Bot,
-                            Token = botToken
+                            Token = botToken,
+                            Intents = DiscordIntents.All
                         };
 
                         var client = new DiscordClient(socketConfig);
