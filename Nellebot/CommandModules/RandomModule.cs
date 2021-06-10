@@ -14,6 +14,9 @@ namespace Nellebot.CommandModules
         {
             return ctx.RespondAsync("Oi!");
         }
+
+        [Command("ban")]
+        public Task Ban(CommandContext ctx) => ctx.RespondAsync("Do it yourself!");
     }
 
     
