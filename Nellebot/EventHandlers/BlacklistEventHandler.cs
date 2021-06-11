@@ -29,7 +29,9 @@ namespace Nellebot.EventHandlers
         // TODO fetch blacklist from db
         private readonly List<string> HardcodedBlacklist = new List<string>()
         {
-            "twitter.com/h0nde"
+            "twitter.com/h0nde",
+            "h0nda",
+            "h0nde"
         };
 
         public BlacklistEventHandler(
