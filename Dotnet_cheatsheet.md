@@ -36,4 +36,4 @@
 `dotnet user-secrets list`
 
 ### Set secrets for local development
-`dotnet user-secrets set "SECRET_NAME"" SECRET_VALUE"​`
+`dotnet user-secrets set "SECRET_NAME" "SECRET_VALUE"​`

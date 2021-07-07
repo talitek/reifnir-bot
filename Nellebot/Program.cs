@@ -1,9 +1,11 @@
 using DSharpPlus;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Nellebot.CommandHandlers;
 using Nellebot.Data;
 using Nellebot.Data.Repositories;
 using Nellebot.EventHandlers;
@@ -30,14 +32,21 @@ namespace Nellebot
                 {
                     services.Configure<BotOptions>(hostContext.Configuration.GetSection(BotOptions.OptionsKey));
 
+                    services.AddHttpClient<OrdbokHttpClient>();
+
+                    services.AddMediatR(typeof(Program));
+                    services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CommandRequestPipelineBehaviour<,>));
+
                     services.AddSingleton<SharedCache>();
 
                     services.AddHostedService<BotWorker>();
-
+                    services.AddHostedService<CommandQueueWorker>();
                     services.AddHostedService<MessageAwardQueueWorker>();
-                    services.AddSingleton<MessageAwardQueue>();
-                    services.AddSingleton<AwardEventHandler>();
 
+                    services.AddSingleton<CommandQueue>();
+                    services.AddSingleton<MessageAwardQueue>();
+
+                    services.AddSingleton<AwardEventHandler>();
                     services.AddSingleton<CommandEventHandler>();
                     services.AddSingleton<BlacklistEventHandler>();
 
