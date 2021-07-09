@@ -9,6 +9,7 @@ using Nellebot.CommandHandlers;
 using Nellebot.Data;
 using Nellebot.Data.Repositories;
 using Nellebot.EventHandlers;
+using Nellebot.ScribanTemplates;
 using Nellebot.Services;
 using Nellebot.Utils;
 using Nellebot.Workers;
@@ -56,6 +57,7 @@ namespace Nellebot
                     services.AddTransient<RoleService>();
                     services.AddTransient<AwardMessageService>();
                     services.AddTransient<DiscordResolver>();
+                    services.AddTransient<ScribanTemplateLoader>();
 
                     services.AddTransient<IUserRoleRepository, UserRoleRepository>();
                     services.AddTransient<AwardMessageRepository>();

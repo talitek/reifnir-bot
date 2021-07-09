@@ -37,6 +37,7 @@ namespace Nellebot.Common.Models.Ordbok
             // TODO do better
             vm.HgNo = lemma.HgNo switch
             {
+                0 => string.Empty,
                 1 => "I",
                 2 => "II",
                 3 => "III",
@@ -162,8 +163,12 @@ namespace Nellebot.Common.Models.Ordbok
                     .Where(x => x is api.EtymologyReferenceArticleRef)
                     .Cast<api.EtymologyReferenceArticleRef>();
 
-                vmEtymologyReference.Relation = apiEtymologyReferenceArticleRefs.FirstOrDefault()?.ArticleId
-                                                ?? string.Empty;
+                var referenceArticleRef = apiEtymologyReferenceArticleRefs.FirstOrDefault();
+
+                if(referenceArticleRef != null)
+                {
+                    vmEtymologyReference.Relation = referenceArticleRef.ArticleId.ToString();
+                }
 
                 vmResult.Add(vmEtymologyReference);
             }

@@ -22,6 +22,7 @@ namespace Nellebot.Common.Models.Ordbok.ViewModels
         public string Value { get; set; } = string.Empty;
         public string HgNo { get; set; } = string.Empty;
         public List<Paradigm> Paradigms { get; set; } = new List<Paradigm>();
+        public List<string> UniqueParadigmValues => Paradigms.Select(p => p.Value).Distinct().ToList();
     }
 
     public class Paradigm

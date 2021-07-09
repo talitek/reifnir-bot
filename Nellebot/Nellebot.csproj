@@ -14,10 +14,17 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="5.0.1" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.2" />
+    <PackageReference Include="Scriban" Version="4.0.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Nellebot.Common\Nellebot.Common.csproj" />
     <ProjectReference Include="..\Nellebot.Data\Nellebot.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="ScribanTemplates\OrdbokArticle.sbn">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

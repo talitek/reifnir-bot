@@ -1,0 +1,15 @@
+﻿**{{dictionary == "bob" ? "Bokmålsordboka" : "Nynorskordboka"}}**
+
+{{for lemma in article.lemmas-}}
+{{if !for.first; "; el. "; end}}{{lemma.hg_no != "" ? lemma.hg_no + " " : ""}}{{lemma.value}}
+{{-for paradigm in lemma.unique_paradigm_values}}
+{{- }} {{ paradigm }}
+{{-end}}
+{{-end}}
+
+{{for definition in article.definitions }}
+{{-for.index + 1}} {{ -}}
+{{for explanation in definition.explanations-}}
+{{explanation}}
+{{-end}}
+{{end}}

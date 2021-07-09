@@ -1,6 +1,9 @@
 ﻿using DSharpPlus.CommandsNext;
 using MediatR;
+using Nellebot.Common.Models.Ordbok;
+using Nellebot.ScribanTemplates;
 using Nellebot.Services;
+using Scriban;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,35 +29,47 @@ namespace Nellebot.CommandHandlers.Ordbok
         public class SearchOrdbokHandler : AsyncRequestHandler<SearchOrdbokRequest>
         {
             private readonly OrdbokHttpClient _ordbokClient;
+            private readonly ScribanTemplateLoader _templateLoader;
 
-            public SearchOrdbokHandler(OrdbokHttpClient ordbokClient)
+            public SearchOrdbokHandler(
+                OrdbokHttpClient ordbokClient,
+                ScribanTemplateLoader templateLoader
+                )
             {
                 _ordbokClient = ordbokClient;
+                _templateLoader = templateLoader;
             }
 
             protected override async Task Handle(SearchOrdbokRequest request, CancellationToken cancellationToken)
             {
                 var ctx = request.Ctx;
+                var query = request.Query;
+                var dictionary = request.Dictionary;
 
-                var searchResponse = await _ordbokClient.Search(request.Dictionary, request.Query);
+                var searchResponse = await _ordbokClient.Search(request.Dictionary, query);
 
                 if (searchResponse == null)
                 {
                     await ctx.RespondAsync($"no result");
+                    return;
                 }
-                else
+
+                var articles = searchResponse.Select(OrdbokModelMapper.MapArticle).ToList();
+
+                var article = articles.FirstOrDefault(x => x.Lemmas.Any(l => l.Value == query))
+                            ?? articles.FirstOrDefault();
+
+                if(article == null)
                 {
-                    var match = searchResponse.FirstOrDefault(x => x.Lemmas.Any(l => l.Value == request.Query));
-
-                    if(match == null)
-                    {
-                        match = searchResponse.FirstOrDefault();
-                    }
-
-                    var responseAsString = JsonSerializer.Serialize(match);
-
-                    await ctx.RespondAsync($"`{responseAsString.Substring(0, 1000)}`");
+                    await ctx.RespondAsync("No match");
+                    return;
                 }
+
+                var templateSource = await _templateLoader.LoadTemplate("OrdbokArticle");
+                var template = Template.Parse(templateSource);
+                var templateResult = template.Render(new { Article = article, Dictionary = dictionary });
+
+                await ctx.RespondAsync($"{templateResult.Substring(0, Math.Min(templateResult.Length, 2000))}");
             }
         }
     }

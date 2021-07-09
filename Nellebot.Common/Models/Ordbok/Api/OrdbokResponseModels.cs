@@ -167,7 +167,7 @@ namespace Nellebot.Common.Models.Ordbok.Api
     public class EtymologyReferenceArticleRef : EtymologyReferenceElement
     {
         [JsonPropertyName("article_id")]
-        public string ArticleId { get; set; } = string.Empty;
+        public int ArticleId { get; set; }
     }
 
     #endregion
