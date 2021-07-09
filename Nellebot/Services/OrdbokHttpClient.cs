@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
-using Nellebot.Common.Models.Ordbok;
+using Nellebot.Common.Models.Ordbok.Api;
 using System;
 using System.Net.Http;
 using System.Text.Json;

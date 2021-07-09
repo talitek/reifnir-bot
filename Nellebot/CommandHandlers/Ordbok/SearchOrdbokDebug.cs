@@ -1,38 +1,40 @@
 ﻿using DSharpPlus.CommandsNext;
+using DSharpPlus.Entities;
 using MediatR;
 using Nellebot.Services;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Nellebot.CommandHandlers.Ordbok
 {
-    public class SearchOrdbok
+    public class SearchOrdbokDebug
     {
-        public class SearchOrdbokRequest : CommandRequest
+        public class SearchOrdbokDebugRequest : CommandRequest
         {
             public string Query { get; set; } = string.Empty;
             public string Dictionary { get; set; } = string.Empty;
 
-            public SearchOrdbokRequest(CommandContext ctx) : base(ctx)
+            public SearchOrdbokDebugRequest(CommandContext ctx) : base(ctx)
             {
             }
         }
 
-        public class SearchOrdbokHandler : AsyncRequestHandler<SearchOrdbokRequest>
+        public class SearchOrdbokDebugHandler : AsyncRequestHandler<SearchOrdbokDebugRequest>
         {
             private readonly OrdbokHttpClient _ordbokClient;
 
-            public SearchOrdbokHandler(OrdbokHttpClient ordbokClient)
+            public SearchOrdbokDebugHandler(OrdbokHttpClient ordbokClient)
             {
                 _ordbokClient = ordbokClient;
             }
 
-            protected override async Task Handle(SearchOrdbokRequest request, CancellationToken cancellationToken)
+            protected override async Task Handle(SearchOrdbokDebugRequest request, CancellationToken cancellationToken)
             {
                 var ctx = request.Ctx;
 
@@ -51,9 +53,23 @@ namespace Nellebot.CommandHandlers.Ordbok
                         match = searchResponse.FirstOrDefault();
                     }
 
-                    var responseAsString = JsonSerializer.Serialize(match);
+                    using var memoryStream = new MemoryStream();
+                    using var jsonWriter = new JsonTextWriter(new StreamWriter(memoryStream));
 
-                    await ctx.RespondAsync($"`{responseAsString.Substring(0, 1000)}`");
+                    var jsonSerializer = new JsonSerializer() { Formatting = Formatting.Indented };
+
+                    jsonSerializer.Serialize(jsonWriter, match);
+
+                    await jsonWriter.FlushAsync();
+
+                    memoryStream.Position = 0;
+
+                    var responseBuilder = new DiscordMessageBuilder();
+
+                    responseBuilder
+                        .WithFile($"{request.Dictionary}-{request.Query}-api-output.txt", memoryStream);
+
+                    await ctx.RespondAsync(responseBuilder);
                 }
             }
         }

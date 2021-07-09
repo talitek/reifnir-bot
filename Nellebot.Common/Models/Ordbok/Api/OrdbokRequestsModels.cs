@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace Nellebot.Common.Models.Ordbok
+namespace Nellebot.Common.Models.Ordbok.Api
 {
     public class OrdbokSearchRequest
     {

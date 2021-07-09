@@ -1,13 +1,19 @@
-﻿using System;
+﻿using Nellebot.Common.Models.Ordbok.Converters;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace Nellebot.Common.Models.Ordbok
+namespace Nellebot.Common.Models.Ordbok.Api
 {
-    public class OrdbokSearchResponse: List<Article> { }
+    public interface ITypeElement
+    {
+        public string Type { get; set; }
+    }
+
+    public class OrdbokSearchResponse : List<Article> { }
 
     public class Article
     {
@@ -28,8 +34,10 @@ namespace Nellebot.Common.Models.Ordbok
         [JsonPropertyName("definitions")]
         public List<DefinitionGroup> DefinitionGroups { get; set; } = new List<DefinitionGroup>();
         [JsonPropertyName("etymology")]
-        public List<Etymology> Etymology { get; set; } = new List<Etymology>();
+        public List<EtymologyGroup> EtymologyGroups { get; set; } = new List<EtymologyGroup>();
     }
+
+    #region Definitions
 
     public class DefinitionGroup
     {
@@ -47,10 +55,6 @@ namespace Nellebot.Common.Models.Ordbok
         public List<DefinitionElement> DefinitionElements { get; set; } = new List<DefinitionElement>();
     }
 
-    public interface ITypeElement
-    {
-        public string Type { get; set; }
-    }
 
     [JsonConverter(typeof(DefinitionElementConverter))]
     public abstract class DefinitionElement : ITypeElement
@@ -59,7 +63,7 @@ namespace Nellebot.Common.Models.Ordbok
         public string Type { get; set; } = string.Empty;
     }
 
-    public class Explanation: DefinitionElement
+    public class Explanation : DefinitionElement
     {
         [JsonPropertyName("content")]
         public string Content { get; set; } = string.Empty;
@@ -87,7 +91,7 @@ namespace Nellebot.Common.Models.Ordbok
         public List<TextItem> Items { get; set; } = new List<TextItem>();
     }
 
-    public class Example: DefinitionElement
+    public class Example : DefinitionElement
     {
         [JsonPropertyName("quote")]
         public Quote Quote { get; set; } = null!;
@@ -95,16 +99,95 @@ namespace Nellebot.Common.Models.Ordbok
         public ExampleExplanation Explanation { get; set; } = null!;
     }
 
-    public class Etymology
+    #endregion
+
+    #region etymologies
+
+
+    [JsonConverter(typeof(EtymologyGroupConverter))]
+    public abstract class EtymologyGroup: ITypeElement
     {
+        [JsonPropertyName("type_")]
+        public string Type { get; set; } = string.Empty;
+
         [JsonPropertyName("content")]
         public string Content { get; set; } = string.Empty;
     }
 
-    public class Usage
+    public class EtymologyLanguage: EtymologyGroup
+    {
+        [JsonPropertyName("items")]
+        public List<EtymologyLanguageElement> EtymologyLanguageElements { get; set; } = new List<EtymologyLanguageElement>();
+    }
+
+    [JsonConverter(typeof(EtymologyLanguageElementConverter))]
+    public abstract class EtymologyLanguageElement : ITypeElement
+    {
+        [JsonPropertyName("type_")]
+        public string Type { get; set; } = string.Empty;
+    }
+
+    public class EtymologyLanguageLanguage : EtymologyLanguageElement
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = string.Empty;
+    }
+
+    public class EtymologyLanguageRelation : EtymologyLanguageElement
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = string.Empty;
+    }
+
+    public class EtymologyLanguageUsage : EtymologyLanguageElement
     {
         [JsonPropertyName("text")]
         public string Text { get; set; } = string.Empty;
+    }
+
+    public class EtymologyReference: EtymologyGroup
+    {
+        [JsonPropertyName("items")]
+        public List<EtymologyReferenceElement> EtymologyReferenceElements { get; set; } = new List<EtymologyReferenceElement>();
+    }
+
+    [JsonConverter(typeof(EtymologyReferenceElementConverter))]
+    public abstract class EtymologyReferenceElement: ITypeElement
+    {
+        [JsonPropertyName("type_")]
+        public string Type { get; set; } = string.Empty;
+    }
+
+    public class EtymologyReferenceRelation: EtymologyReferenceElement
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = string.Empty;
+    }
+
+    public class EtymologyReferenceArticleRef : EtymologyReferenceElement
+    {
+        [JsonPropertyName("article_id")]
+        public string ArticleId { get; set; } = string.Empty;
+    }
+
+    #endregion
+
+    #region lemmas
+
+    public class Lemma
+    {
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+        [JsonPropertyName("lemma")]
+        public string Value { get; set; } = string.Empty;
+        [JsonPropertyName("hgno")]
+        public int HgNo { get; set; }
+        [JsonPropertyName("initial_lexeme")]
+        public string InitialLexeme { get; set; } = string.Empty;
+        [JsonPropertyName("final_lexeme")]
+        public string FinalLexeme { get; set; } = string.Empty;
+        [JsonPropertyName("paradigm_info")]
+        public List<Paradigm> Paradigms { get; set; } = new List<Paradigm>();
     }
 
     public class Inflection
@@ -126,26 +209,13 @@ namespace Nellebot.Common.Models.Ordbok
         [JsonPropertyName("tags")]
         public List<string> Tags { get; set; } = new List<string>();
         [JsonPropertyName("from")]
-        public DateTime? From  { get; set; }
+        public DateTime? From { get; set; }
         [JsonPropertyName("to")]
         public DateTime? To { get; set; }
         [JsonPropertyName("inflection")]
         public List<Inflection> Inflection { get; set; } = new List<Inflection>();
     }
-    
-    public class Lemma
-    {
-        [JsonPropertyName("id")]
-        public int Id { get; set; }
-        [JsonPropertyName("lemma")]
-        public string Value { get; set; } = string.Empty;
-        [JsonPropertyName("hgno")]
-        public int HgNo { get; set; }
-        [JsonPropertyName("initial_lexeme")]
-        public string InitialLexeme { get; set; } = string.Empty;
-        [JsonPropertyName("final_lexeme")]
-        public string FinalLexeme { get; set; } = string.Empty;
-        [JsonPropertyName("paradigm_info")]
-        public List<Paradigm> Paradigm { get; set; } = new List<Paradigm>();
-    }
+
+    #endregion
+
 }
