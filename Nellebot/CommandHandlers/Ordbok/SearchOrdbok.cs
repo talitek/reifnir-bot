@@ -1,8 +1,7 @@
 ﻿using DSharpPlus.CommandsNext;
 using MediatR;
-using Nellebot.Common.Models.Ordbok;
-using Nellebot.ScribanTemplates;
 using Nellebot.Services;
+using Nellebot.Services.Ordbok;
 using Scriban;
 using Scriban.Parsing;
 using System;
@@ -30,14 +29,17 @@ namespace Nellebot.CommandHandlers.Ordbok
         public class SearchOrdbokHandler : AsyncRequestHandler<SearchOrdbokRequest>
         {
             private readonly OrdbokHttpClient _ordbokClient;
+            private readonly OrdbokModelMapper _ordbokModelMapper;
             private readonly ScribanTemplateLoader _templateLoader;
 
             public SearchOrdbokHandler(
                 OrdbokHttpClient ordbokClient,
+                OrdbokModelMapper ordbokModelMapper,
                 ScribanTemplateLoader templateLoader
                 )
             {
                 _ordbokClient = ordbokClient;
+                _ordbokModelMapper = ordbokModelMapper;
                 _templateLoader = templateLoader;
             }
 
@@ -55,7 +57,7 @@ namespace Nellebot.CommandHandlers.Ordbok
                     return;
                 }
 
-                var allArticles = searchResponse.Select(OrdbokModelMapper.MapArticle).ToList();
+                var allArticles = searchResponse.Select(_ordbokModelMapper.MapArticle).ToList();
 
                 if (allArticles.Count == 0)
                 {

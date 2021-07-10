@@ -3,12 +3,21 @@ using System.Linq;
 using vm = Nellebot.Common.Models.Ordbok.ViewModels;
 using api = Nellebot.Common.Models.Ordbok.Api;
 using Nellebot.Common.Extensions;
+using Nellebot.Common.Models.Ordbok;
+using System.Text.RegularExpressions;
 
-namespace Nellebot.Common.Models.Ordbok
+namespace Nellebot.Services.Ordbok
 {
-    public static class OrdbokModelMapper
+    public class OrdbokModelMapper
     {
-        public static vm.Article MapArticle(api.Article article)
+        private readonly LocalizationService _localizationService;
+
+        public OrdbokModelMapper(LocalizationService localizationService)
+        {
+            _localizationService = localizationService;
+        }
+
+        public vm.Article MapArticle(api.Article article)
         {
             var vmResult = new vm.Article();
 
@@ -24,7 +33,7 @@ namespace Nellebot.Common.Models.Ordbok
             return vmResult;
         }
 
-        public static vm.Lemma MapLemma(api.Lemma lemma)
+        public vm.Lemma MapLemma(api.Lemma lemma)
         {
             var vmResult = new vm.Lemma();
 
@@ -37,7 +46,7 @@ namespace Nellebot.Common.Models.Ordbok
             return vmResult;
         }
 
-        public static vm.Paradigm MapParadigm(api.Paradigm paradigm)
+        public vm.Paradigm MapParadigm(api.Paradigm paradigm)
         {
             var vmResult = new vm.Paradigm();
 
@@ -64,7 +73,7 @@ namespace Nellebot.Common.Models.Ordbok
             return vmResult;
         }
 
-        public static List<vm.Definition> MapDefinitions(List<api.DefinitionElement> definitionElements)
+        public List<vm.Definition> MapDefinitions(List<api.DefinitionElement> definitionElements)
         {
             var vmResult = new List<vm.Definition>();
 
@@ -93,7 +102,7 @@ namespace Nellebot.Common.Models.Ordbok
             return vmResult;
         }
 
-        public static vm.Definition MapDefinition(api.Definition definition)
+        public vm.Definition MapDefinition(api.Definition definition)
         {
             var vmResult = new vm.Definition();
 
@@ -107,13 +116,13 @@ namespace Nellebot.Common.Models.Ordbok
                 .Cast<api.Example>()
                 .ToList();
 
-            vmResult.Explanations = explanations.Select(e => ContentStringHelper.GetExplanationContent(e)).ToList();
+            vmResult.Explanations = explanations.Select(e => GetExplanationContent(e)).ToList();
             vmResult.Examples = examples.Select(e => e.Quote.Content).ToList();
 
             return vmResult;
         }
 
-        public static List<vm.EtymologyLanguage> MapEtymologyLanguages(List<api.EtymologyGroup> etymologyGroups)
+        public List<vm.EtymologyLanguage> MapEtymologyLanguages(List<api.EtymologyGroup> etymologyGroups)
         {
             var vmResult = new List<vm.EtymologyLanguage>();
 
@@ -154,7 +163,7 @@ namespace Nellebot.Common.Models.Ordbok
             return vmResult;
         }
 
-        public static List<vm.EtymologyReference> MapEtymologyReferences(List<api.EtymologyGroup> etymologyGroups)
+        public List<vm.EtymologyReference> MapEtymologyReferences(List<api.EtymologyGroup> etymologyGroups)
         {
             var vmResult = new List<vm.EtymologyReference>();
 
@@ -191,6 +200,62 @@ namespace Nellebot.Common.Models.Ordbok
             }
 
             return vmResult;
+        }
+
+        public string GetExplanationContent(api.Explanation explanation)
+        {
+            var contentString = explanation.Content;
+
+            var contentHasVariables = explanation.ExplanationItems.Any();
+
+            if (!contentHasVariables)
+                return contentString;
+
+            var regex = new Regex(Regex.Escape("$"));
+
+            foreach (var item in explanation.ExplanationItems)
+            {
+                switch (item)
+                {
+                    case api.ExplanationIdElement idElement:
+                        var localizedElementId = _localizationService.GetString(LocalizationResource.Ordbok, idElement.Id);
+
+                        // Temporarily mark elements that are missing from localization file
+                        if (localizedElementId == idElement.Id)
+                            localizedElementId = $"?{localizedElementId}?";
+
+                        contentString = regex.Replace(contentString, localizedElementId, 1);
+                        break;
+                    case api.ExplanationItemArticleRef articleRef:
+                        var firstLemma = articleRef.Lemmas.FirstOrDefault();
+                        if (firstLemma != null)
+                        {
+                            var value = firstLemma.Value;
+                            var hgNo = firstLemma.HgNo.ToRomanNumeral();
+                            var definitionOrder = articleRef.DefinitionOrder;
+
+                            var pValues = new List<string>();
+
+                            if (!string.IsNullOrWhiteSpace(hgNo))
+                                pValues.Add(hgNo);
+                            if (definitionOrder > 0)
+                                pValues.Add(definitionOrder.ToString());
+
+                            var displayValue = firstLemma.Value;
+
+                            if (pValues.Count > 0)
+                            {
+                                displayValue = $"{displayValue} ({string.Join(",", pValues)})";
+                            }
+
+                            contentString = regex.Replace(contentString, displayValue, 1);
+                        }
+
+                        break;
+                }
+            }
+
+            return contentString;
         }
     }
 }

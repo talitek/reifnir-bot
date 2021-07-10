@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="ScribanTemplates\OrdbokArticle.sbn">
+    <None Update="Resources\ScribanTemplates\OrdbokArticle.sbn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

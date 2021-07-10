@@ -1,7 +1,7 @@
 ﻿using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using MediatR;
-using Nellebot.Services;
+using Nellebot.Services.Ordbok;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;

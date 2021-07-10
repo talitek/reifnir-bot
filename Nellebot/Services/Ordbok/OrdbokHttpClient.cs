@@ -3,10 +3,9 @@ using Nellebot.Common.Models.Ordbok.Api;
 using System;
 using System.Net.Http;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace Nellebot.Services
+namespace Nellebot.Services.Ordbok
 {
     public class OrdbokHttpClient
     {
