@@ -17,23 +17,21 @@ namespace Nellebot.CommandModules
 {
     [BaseCommandCheck]
     [Group("cookie-stats")]
+    [ModuleLifespan(ModuleLifespan.Transient)]
     public class AwardStatsModule : BaseCommandModule
     {
         private readonly DiscordResolver _discordResolver;
-        private readonly BotOptions _options;
         private readonly AwardMessageRepository _awardMessageRepo;
         private readonly SharedCache _cache;
         private const int _maxMessageLength = 50;
 
         public AwardStatsModule(
             DiscordResolver discordResolver,
-            IOptions<BotOptions> options,
             AwardMessageRepository awardMessageRepo,
             SharedCache cache
             )
         {
             _discordResolver = discordResolver;
-            _options = options.Value;
             _awardMessageRepo = awardMessageRepo;
             _cache = cache;
         }

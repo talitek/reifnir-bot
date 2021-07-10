@@ -1,13 +1,16 @@
 using DSharpPlus;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Nellebot.CommandHandlers;
 using Nellebot.Data;
 using Nellebot.Data.Repositories;
 using Nellebot.EventHandlers;
 using Nellebot.Services;
+using Nellebot.Services.Ordbok;
 using Nellebot.Utils;
 using Nellebot.Workers;
 using System;
@@ -30,14 +33,22 @@ namespace Nellebot
                 {
                     services.Configure<BotOptions>(hostContext.Configuration.GetSection(BotOptions.OptionsKey));
 
+                    services.AddHttpClient<OrdbokHttpClient>();
+
+                    services.AddMediatR(typeof(Program));
+                    services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CommandRequestPipelineBehaviour<,>));
+
                     services.AddSingleton<SharedCache>();
+                    services.AddSingleton<ILocalizationService, LocalizationService>();
 
                     services.AddHostedService<BotWorker>();
-
+                    services.AddHostedService<CommandQueueWorker>();
                     services.AddHostedService<MessageAwardQueueWorker>();
-                    services.AddSingleton<MessageAwardQueue>();
-                    services.AddSingleton<AwardEventHandler>();
 
+                    services.AddSingleton<CommandQueue>();
+                    services.AddSingleton<MessageAwardQueue>();
+
+                    services.AddSingleton<AwardEventHandler>();
                     services.AddSingleton<CommandEventHandler>();
                     services.AddSingleton<BlacklistEventHandler>();
 
@@ -47,6 +58,8 @@ namespace Nellebot
                     services.AddTransient<RoleService>();
                     services.AddTransient<AwardMessageService>();
                     services.AddTransient<DiscordResolver>();
+                    services.AddTransient<ScribanTemplateLoader>();
+                    services.AddTransient<OrdbokModelMapper>();
 
                     services.AddTransient<IUserRoleRepository, UserRoleRepository>();
                     services.AddTransient<AwardMessageRepository>();

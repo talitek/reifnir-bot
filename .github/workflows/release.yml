@@ -28,6 +28,7 @@ jobs:
       env:
         CONNECTION_STRING: ${{secrets.DB_CONNECTION_STRING}}
         BOT_TOKEN: ${{secrets.BOT_TOKEN}}
+        ORDBOK_API_KEY: ${{secrets.ORDBOK_API_KEY}}
     
     - name: Test
       run: dotnet test

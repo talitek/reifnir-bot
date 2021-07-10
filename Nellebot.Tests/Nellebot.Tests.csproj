@@ -22,4 +22,16 @@
     <ProjectReference Include="..\Nellebot\Nellebot.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="TestFiles\test_vann.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="TestFiles\test_fly.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="TestFiles\test.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
