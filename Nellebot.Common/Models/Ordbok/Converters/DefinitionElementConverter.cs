@@ -15,6 +15,9 @@ namespace Nellebot.Common.Models.Ordbok.Converters
 
             switch (typeDiscriminator.ToLower())
             {
+                case "definition":
+                    result = JsonSerializer.Deserialize<Definition>(ref reader, options);
+                    break;
                 case "explanation":
                     result = JsonSerializer.Deserialize<Explanation>(ref reader, options);
                     break;
@@ -35,6 +38,9 @@ namespace Nellebot.Common.Models.Ordbok.Converters
         {
             switch (value)
             {
+                case Definition definition:
+                    JsonSerializer.Serialize(writer, definition);
+                    break;
                 case Explanation explanation:
                     JsonSerializer.Serialize(writer, explanation);
                     break;

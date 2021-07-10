@@ -2,6 +2,7 @@
 using System.Linq;
 using vm = Nellebot.Common.Models.Ordbok.ViewModels;
 using api = Nellebot.Common.Models.Ordbok.Api;
+using Nellebot.Common.Extensions;
 
 namespace Nellebot.Common.Models.Ordbok
 {
@@ -15,12 +16,7 @@ namespace Nellebot.Common.Models.Ordbok
             vmResult.Score = article.Score;
             vmResult.Lemmas = article.Lemmas.Select(MapLemma).ToList();
 
-            vmResult.Definitions = article.Body.DefinitionGroups
-                .FirstOrDefault()
-                ?.Definitions
-                .Select(MapDefinition)
-                .ToList()
-                ?? Enumerable.Empty<vm.Definition>().ToList();
+            vmResult.Definitions = MapDefinitions(article.Body.DefinitionElements);
 
             vmResult.EtymologyLanguages = MapEtymologyLanguages(article.Body.EtymologyGroups);
             vmResult.EtymologyReferences = MapEtymologyReferences(article.Body.EtymologyGroups);
@@ -30,55 +26,76 @@ namespace Nellebot.Common.Models.Ordbok
 
         public static vm.Lemma MapLemma(api.Lemma lemma)
         {
-            var vm = new vm.Lemma();
+            var vmResult = new vm.Lemma();
 
-            vm.Id = lemma.Id;
-            vm.Value = lemma.Value;
+            vmResult.Id = lemma.Id;
+            vmResult.Value = lemma.Value;
             // TODO do better
-            vm.HgNo = lemma.HgNo switch
-            {
-                0 => string.Empty,
-                1 => "I",
-                2 => "II",
-                3 => "III",
-                4 => "IV",
-                5 => "V",
-                _ => "??"
-            };
-            vm.Paradigms = lemma.Paradigms.Select(MapParadigm).ToList();
+            vmResult.HgNo = lemma.HgNo.ToRomanNumeral();
+            vmResult.Paradigms = lemma.Paradigms.Select(MapParadigm).ToList();
 
-            return vm;
+            return vmResult;
         }
 
         public static vm.Paradigm MapParadigm(api.Paradigm paradigm)
         {
-            var vm = new vm.Paradigm();
+            var vmResult = new vm.Paradigm();
 
             if (string.IsNullOrWhiteSpace(paradigm.InflectionGroup))
             {
-                vm.Value = paradigm.Standardisation ?? "??";
+                vmResult.Value = paradigm.Standardisation ?? "??";
             }
             else
             {
                 // TODO fix this
-                vm.Value = paradigm.InflectionGroup.ToLower() switch
+                vmResult.Value = paradigm.InflectionGroup.ToLower() switch
                 {
                     "verb" => "v2",
                     "adv" => "adv.",
                     // TODO figure out how to differentiate between n1/n2, etc.
-                    "noun" => $"{paradigm.Tags[1].ToLower()[0]}1",
+                    //"noun" => $"{paradigm.Tags[1].ToLower()[0]}?1?",
+                    "noun" => $"{paradigm.Tags[1].ToLower()[0]}",
                     "det_simple" => "det.",
                     "pron" => "pron.",
                     _ => "??"
                 };
             }
 
-            return vm;
+            return vmResult;
+        }
+
+        public static List<vm.Definition> MapDefinitions(List<api.DefinitionElement> definitionElements)
+        {
+            var vmResult = new List<vm.Definition>();
+
+            foreach (var definitionElement in definitionElements)
+            {
+                // Top level element is always a Definition (hopefully)
+                var definition = (api.Definition)definitionElement;
+
+                var containsDefinitions = definition.DefinitionElements.All(de => de is api.Definition);
+
+                if (containsDefinitions)
+                {
+                    var nestedDefinitions = definition.DefinitionElements.Cast<api.Definition>().ToList();
+
+                    foreach (var nestedDefinition in nestedDefinitions)
+                    {
+                        vmResult.Add(MapDefinition(nestedDefinition));
+                    }
+                }
+                else
+                {
+                    vmResult.Add(MapDefinition(definition));
+                }
+            }
+
+            return vmResult;
         }
 
         public static vm.Definition MapDefinition(api.Definition definition)
         {
-            var vm = new vm.Definition();
+            var vmResult = new vm.Definition();
 
             var explanations = definition.DefinitionElements
                 .Where(de => de is api.Explanation)
@@ -90,10 +107,10 @@ namespace Nellebot.Common.Models.Ordbok
                 .Cast<api.Example>()
                 .ToList();
 
-            vm.Explanations = explanations.Select(e => e.Content).ToList();
-            vm.Examples = examples.Select(e => e.Quote.Content).ToList();
+            vmResult.Explanations = explanations.Select(e => ContentStringHelper.GetExplanationContent(e)).ToList();
+            vmResult.Examples = examples.Select(e => e.Quote.Content).ToList();
 
-            return vm;
+            return vmResult;
         }
 
         public static List<vm.EtymologyLanguage> MapEtymologyLanguages(List<api.EtymologyGroup> etymologyGroups)
@@ -165,7 +182,7 @@ namespace Nellebot.Common.Models.Ordbok
 
                 var referenceArticleRef = apiEtymologyReferenceArticleRefs.FirstOrDefault();
 
-                if(referenceArticleRef != null)
+                if (referenceArticleRef != null)
                 {
                     vmEtymologyReference.Relation = referenceArticleRef.ArticleId.ToString();
                 }

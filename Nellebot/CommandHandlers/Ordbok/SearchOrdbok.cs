@@ -4,6 +4,7 @@ using Nellebot.Common.Models.Ordbok;
 using Nellebot.ScribanTemplates;
 using Nellebot.Services;
 using Scriban;
+using Scriban.Parsing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -54,20 +55,28 @@ namespace Nellebot.CommandHandlers.Ordbok
                     return;
                 }
 
-                var articles = searchResponse.Select(OrdbokModelMapper.MapArticle).ToList();
+                var allArticles = searchResponse.Select(OrdbokModelMapper.MapArticle).ToList();
 
-                var article = articles.FirstOrDefault(x => x.Lemmas.Any(l => l.Value == query))
-                            ?? articles.FirstOrDefault();
-
-                if(article == null)
+                if (allArticles.Count == 0)
                 {
                     await ctx.RespondAsync("No match");
                     return;
                 }
 
+                // Try to grab exact matches
+                var articles = allArticles.Where(x => x.Lemmas.Any(l => l.Value == query)).ToList();
+
+                if(articles.Count == 0)
+                {
+                    articles = allArticles.Take(5).ToList();
+                }
+
+                articles = articles.OrderBy(a => a.Lemmas.Max(l => l.HgNo)).ToList();
+
                 var templateSource = await _templateLoader.LoadTemplate("OrdbokArticle");
+
                 var template = Template.Parse(templateSource);
-                var templateResult = template.Render(new { Article = article, Dictionary = dictionary });
+                var templateResult = template.Render(new { Articles = articles, Dictionary = dictionary });
 
                 await ctx.RespondAsync($"{templateResult.Substring(0, Math.Min(templateResult.Length, 2000))}");
             }

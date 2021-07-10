@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Nellebot.Utils
+namespace Nellebot.Common.Extensions
 {
     public static class StringExtensions
     {
