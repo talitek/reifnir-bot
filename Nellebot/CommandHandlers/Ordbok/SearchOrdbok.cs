@@ -1,14 +1,11 @@
 ﻿using DSharpPlus.CommandsNext;
+using DSharpPlus.Entities;
 using MediatR;
 using Nellebot.Services;
 using Nellebot.Services.Ordbok;
 using Scriban;
-using Scriban.Parsing;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -68,7 +65,7 @@ namespace Nellebot.CommandHandlers.Ordbok
                 // Try to grab exact matches
                 var articles = allArticles.Where(x => x.Lemmas.Any(l => l.Value == query)).ToList();
 
-                if(articles.Count == 0)
+                if (articles.Count == 0)
                 {
                     articles = allArticles.Take(5).ToList();
                 }
@@ -77,10 +74,18 @@ namespace Nellebot.CommandHandlers.Ordbok
 
                 var templateSource = await _templateLoader.LoadTemplate("OrdbokArticle");
 
-                var template = Template.Parse(templateSource);
-                var templateResult = template.Render(new { Articles = articles, Dictionary = dictionary });
+                var queryUrl = $"https://ordbok.uib.no/?OPP={query}";
 
-                await ctx.RespondAsync($"{templateResult.Substring(0, Math.Min(templateResult.Length, 2000))}");
+                var template = Template.Parse(templateSource);
+                var templateResult = template.Render(new { Articles = articles, Dictionary = dictionary, QueryUrl = queryUrl });
+
+                var truncatedContent = templateResult.Substring(0, Math.Min(templateResult.Length, 2000));
+
+                var db = new DiscordMessageBuilder();
+
+                var message = await ctx.RespondAsync(truncatedContent);
+
+                await message.ModifyEmbedSuppressionAsync(true);
             }
         }
     }

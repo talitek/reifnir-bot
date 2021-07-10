@@ -18,6 +18,8 @@ namespace Nellebot.Common.Models.Ordbok.Api
         public string Content { get; set; } = string.Empty;
     }
 
+    // EtymologyLanguage
+
     public class EtymologyLanguage : EtymologyGroup
     {
         [JsonPropertyName("items")]
@@ -31,23 +33,25 @@ namespace Nellebot.Common.Models.Ordbok.Api
         public string Type { get; set; } = string.Empty;
     }
 
-    public class EtymologyLanguageLanguage : EtymologyLanguageElement
+    /// <summary>
+    /// Api types so far: language, grammar
+    /// </summary>
+    public class EtymologyLanguageIdElement : EtymologyLanguageElement
     {
         [JsonPropertyName("id")]
         public string Id { get; set; } = string.Empty;
     }
 
-    public class EtymologyLanguageRelation : EtymologyLanguageElement
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
-    }
-
-    public class EtymologyLanguageUsage : EtymologyLanguageElement
+    /// <summary>
+    /// Api types so far: usage
+    /// </summary>
+    public class EtymologyLanguageTextElement : EtymologyLanguageElement
     {
         [JsonPropertyName("text")]
         public string Text { get; set; } = string.Empty;
     }
+
+    // EtymologyReference
 
     public class EtymologyReference : EtymologyGroup
     {
@@ -62,7 +66,7 @@ namespace Nellebot.Common.Models.Ordbok.Api
         public string Type { get; set; } = string.Empty;
     }
 
-    public class EtymologyReferenceRelation : EtymologyReferenceElement
+    public class EtymologyReferenceIdElement : EtymologyReferenceElement
     {
         [JsonPropertyName("id")]
         public string Id { get; set; } = string.Empty;
@@ -72,5 +76,26 @@ namespace Nellebot.Common.Models.Ordbok.Api
     {
         [JsonPropertyName("article_id")]
         public int ArticleId { get; set; }
+    }
+
+    // Etymology litt?
+
+    public class EtymologyLitt: EtymologyGroup
+    {
+        [JsonPropertyName("items")]
+        public List<EtymologyLittElement> EtymologyLittElements { get; set; } = new List<EtymologyLittElement>();
+    }
+
+    [JsonConverter(typeof(EtymologyLittElementConverter))]
+    public abstract class EtymologyLittElement: ITypeElement
+    {
+        [JsonPropertyName("type_")]
+        public string Type { get; set; } = string.Empty;
+    }
+
+    public class EtymologyLittUsage : EtymologyLittElement
+    {
+        [JsonPropertyName("usage")]
+        public string Usage { get; set; } = string.Empty;
     }
 }

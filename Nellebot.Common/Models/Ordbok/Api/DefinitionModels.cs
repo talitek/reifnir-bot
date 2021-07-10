@@ -35,8 +35,7 @@ namespace Nellebot.Common.Models.Ordbok.Api
     }
 
     /// <summary>
-    /// Can be of various types, but they all just have an id property
-    /// Types noticed so far: relation, domain, entity, modifier
+    /// Api types so far: relation, domain, entity, modifier
     /// </summary>
     public class ExplanationIdElement: ExplanationItem
     {

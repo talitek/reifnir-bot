@@ -39,7 +39,7 @@ namespace Nellebot
                     services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CommandRequestPipelineBehaviour<,>));
 
                     services.AddSingleton<SharedCache>();
-                    services.AddSingleton<LocalizationService>();
+                    services.AddSingleton<ILocalizationService, LocalizationService>();
 
                     services.AddHostedService<BotWorker>();
                     services.AddHostedService<CommandQueueWorker>();

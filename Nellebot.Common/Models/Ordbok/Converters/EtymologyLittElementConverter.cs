@@ -5,22 +5,18 @@ using System.Text.Json.Serialization;
 
 namespace Nellebot.Common.Models.Ordbok.Converters
 {
-    public class EtymologyLanguageElementConverter : JsonConverter<EtymologyLanguageElement>
+    public class EtymologyLittElementConverter : JsonConverter<EtymologyLittElement>
     {
-        public override EtymologyLanguageElement? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override EtymologyLittElement? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             var typeDiscriminator = TypeElementConverterHelper.GetTypeDiscriminator(ref reader);
 
-            EtymologyLanguageElement? result;
+            EtymologyLittElement? result;
 
             switch (typeDiscriminator.ToLower())
             {
-                case "language":
-                case "grammar":
-                    result = JsonSerializer.Deserialize<EtymologyLanguageIdElement>(ref reader, options);
-                    break;
                 case "usage":
-                    result = JsonSerializer.Deserialize<EtymologyLanguageTextElement>(ref reader, options);
+                    result = JsonSerializer.Deserialize<EtymologyLittUsage>(ref reader, options);
                     break;
                 default:
                     // Read and throw away object so that the reader reaches EndObject token
@@ -32,14 +28,11 @@ namespace Nellebot.Common.Models.Ordbok.Converters
             return result;
         }
 
-        public override void Write(Utf8JsonWriter writer, EtymologyLanguageElement value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, EtymologyLittElement value, JsonSerializerOptions options)
         {
             switch (value)
             {
-                case EtymologyLanguageIdElement language:
-                    JsonSerializer.Serialize(writer, language);
-                    break;
-                case EtymologyLanguageTextElement usage:
+                case EtymologyLittUsage usage:
                     JsonSerializer.Serialize(writer, usage);
                     break;
                 default:

@@ -16,7 +16,7 @@ namespace Nellebot.Common.Models.Ordbok.Converters
             switch (typeDiscriminator.ToLower())
             {
                 case "relation":
-                    result = JsonSerializer.Deserialize<EtymologyReferenceRelation>(ref reader, options);
+                    result = JsonSerializer.Deserialize<EtymologyReferenceIdElement>(ref reader, options);
                     break;
                 case "article_ref":
                     result = JsonSerializer.Deserialize<EtymologyReferenceArticleRef>(ref reader, options);
@@ -35,7 +35,7 @@ namespace Nellebot.Common.Models.Ordbok.Converters
         {
             switch (value)
             {
-                case EtymologyReferenceRelation relation:
+                case EtymologyReferenceIdElement relation:
                     JsonSerializer.Serialize(writer, relation);
                     break;
                 case EtymologyReferenceArticleRef articleRef:

@@ -3,16 +3,15 @@ using System.Linq;
 using vm = Nellebot.Common.Models.Ordbok.ViewModels;
 using api = Nellebot.Common.Models.Ordbok.Api;
 using Nellebot.Common.Extensions;
-using Nellebot.Common.Models.Ordbok;
 using System.Text.RegularExpressions;
 
 namespace Nellebot.Services.Ordbok
 {
     public class OrdbokModelMapper
     {
-        private readonly LocalizationService _localizationService;
+        private readonly ILocalizationService _localizationService;
 
-        public OrdbokModelMapper(LocalizationService localizationService)
+        public OrdbokModelMapper(ILocalizationService localizationService)
         {
             _localizationService = localizationService;
         }
@@ -27,8 +26,7 @@ namespace Nellebot.Services.Ordbok
 
             vmResult.Definitions = MapDefinitions(article.Body.DefinitionElements);
 
-            vmResult.EtymologyLanguages = MapEtymologyLanguages(article.Body.EtymologyGroups);
-            vmResult.EtymologyReferences = MapEtymologyReferences(article.Body.EtymologyGroups);
+            vmResult.Etymologies = MapEtymologyLanguages(article.Body.EtymologyGroups);
 
             return vmResult;
         }
@@ -39,7 +37,6 @@ namespace Nellebot.Services.Ordbok
 
             vmResult.Id = lemma.Id;
             vmResult.Value = lemma.Value;
-            // TODO do better
             vmResult.HgNo = lemma.HgNo.ToRomanNumeral();
             vmResult.Paradigms = lemma.Paradigms.Select(MapParadigm).ToList();
 
@@ -77,6 +74,7 @@ namespace Nellebot.Services.Ordbok
         {
             var vmResult = new List<vm.Definition>();
 
+            // TODO go recursive if a new nested level is discovered
             foreach (var definitionElement in definitionElements)
             {
                 // Top level element is always a Definition (hopefully)
@@ -90,7 +88,17 @@ namespace Nellebot.Services.Ordbok
 
                     foreach (var nestedDefinition in nestedDefinitions)
                     {
-                        vmResult.Add(MapDefinition(nestedDefinition));
+                        var mappedNestedDefinition = MapDefinition(nestedDefinition);
+
+                        var innerDefinitions = nestedDefinition.DefinitionElements
+                            .Where(d => d is api.Definition)
+                            .Cast<api.Definition>()
+                            .Select(MapDefinition)
+                            .ToList();
+
+                        mappedNestedDefinition.InnerDefinitions.AddRange(innerDefinitions);
+
+                        vmResult.Add(mappedNestedDefinition);
                     }
                 }
                 else
@@ -122,9 +130,9 @@ namespace Nellebot.Services.Ordbok
             return vmResult;
         }
 
-        public List<vm.EtymologyLanguage> MapEtymologyLanguages(List<api.EtymologyGroup> etymologyGroups)
+        public List<vm.Etymology> MapEtymologyLanguages(List<api.EtymologyGroup> etymologyGroups)
         {
-            var vmResult = new List<vm.EtymologyLanguage>();
+            var vmResult = new List<vm.Etymology>();
 
             var apiEtymologyLanguages = etymologyGroups
                 .Where(x => x is api.EtymologyLanguage)
@@ -133,29 +141,15 @@ namespace Nellebot.Services.Ordbok
 
             foreach (var apiEtymologyLanguage in apiEtymologyLanguages)
             {
-                var vmEtymologyLanguage = new vm.EtymologyLanguage();
+                var vmEtymologyLanguage = new vm.Etymology();
 
                 vmEtymologyLanguage.Content = apiEtymologyLanguage.Content;
 
                 var apiEtymologyLanguageLanguages = apiEtymologyLanguage.EtymologyLanguageElements
-                    .Where(x => x is api.EtymologyLanguageLanguage)
-                    .Cast<api.EtymologyLanguageLanguage>();
+                    .Where(x => x is api.EtymologyLanguageIdElement)
+                    .Cast<api.EtymologyLanguageIdElement>();
 
-                vmEtymologyLanguage.Language = apiEtymologyLanguageLanguages.FirstOrDefault()?.Id
-                                                ?? string.Empty;
-
-                var apiEtymologyLanguageRelations = apiEtymologyLanguage.EtymologyLanguageElements
-                    .Where(x => x is api.EtymologyLanguageRelation)
-                    .Cast<api.EtymologyLanguageRelation>();
-
-                vmEtymologyLanguage.Relation = apiEtymologyLanguageRelations.FirstOrDefault()?.Id
-                                                ?? string.Empty;
-
-                var apiEtymologyLanguageUsages = apiEtymologyLanguage.EtymologyLanguageElements
-                    .Where(x => x is api.EtymologyLanguageUsage)
-                    .Cast<api.EtymologyLanguageUsage>();
-
-                vmEtymologyLanguage.Usages = apiEtymologyLanguageUsages.Select(x => x.Text).ToList();
+                vmEtymologyLanguage.Content = GetEtymologyLanguageContent(apiEtymologyLanguage);
 
                 vmResult.Add(vmEtymologyLanguage);
             }
@@ -163,46 +157,36 @@ namespace Nellebot.Services.Ordbok
             return vmResult;
         }
 
-        public List<vm.EtymologyReference> MapEtymologyReferences(List<api.EtymologyGroup> etymologyGroups)
+        private string GetEtymologyLanguageContent(api.EtymologyLanguage etymologyLanguage)
         {
-            var vmResult = new List<vm.EtymologyReference>();
+            var contentString = etymologyLanguage.Content;
 
-            var apiEtymologyReferences = etymologyGroups
-                .Where(x => x is api.EtymologyReference)
-                .Cast<api.EtymologyReference>()
-                .ToList();
+            var contentHasVariables = etymologyLanguage.EtymologyLanguageElements.Any();
 
-            foreach (var apiEtymologyReference in apiEtymologyReferences)
+            if (!contentHasVariables)
+                return contentString;
+
+            var regex = new Regex(Regex.Escape("$"));
+
+            foreach (var item in etymologyLanguage.EtymologyLanguageElements)
             {
-                var vmEtymologyReference = new vm.EtymologyReference();
-
-                vmEtymologyReference.Content = apiEtymologyReference.Content;
-
-                var apiEtymologyReferenceRelations = apiEtymologyReference.EtymologyReferenceElements
-                    .Where(x => x is api.EtymologyReferenceRelation)
-                    .Cast<api.EtymologyReferenceRelation>();
-
-                vmEtymologyReference.Relation = apiEtymologyReferenceRelations.FirstOrDefault()?.Id
-                                                ?? string.Empty;
-
-                var apiEtymologyReferenceArticleRefs = apiEtymologyReference.EtymologyReferenceElements
-                    .Where(x => x is api.EtymologyReferenceArticleRef)
-                    .Cast<api.EtymologyReferenceArticleRef>();
-
-                var referenceArticleRef = apiEtymologyReferenceArticleRefs.FirstOrDefault();
-
-                if (referenceArticleRef != null)
+                switch(item)
                 {
-                    vmEtymologyReference.Relation = referenceArticleRef.ArticleId.ToString();
-                }
+                    case api.EtymologyLanguageIdElement idElement:
+                        var localizedIdElement = _localizationService.GetString(LocalizationResource.Ordbok, idElement.Id);
 
-                vmResult.Add(vmEtymologyReference);
+                        contentString = regex.Replace(contentString, localizedIdElement, 1);
+                        break;
+                    case api.EtymologyLanguageTextElement textElement:
+                        contentString = regex.Replace(contentString, textElement.Text, 1);
+                        break;
+                }
             }
 
-            return vmResult;
+            return contentString;
         }
 
-        public string GetExplanationContent(api.Explanation explanation)
+        private string GetExplanationContent(api.Explanation explanation)
         {
             var contentString = explanation.Content;
 
@@ -219,10 +203,6 @@ namespace Nellebot.Services.Ordbok
                 {
                     case api.ExplanationIdElement idElement:
                         var localizedElementId = _localizationService.GetString(LocalizationResource.Ordbok, idElement.Id);
-
-                        // Temporarily mark elements that are missing from localization file
-                        if (localizedElementId == idElement.Id)
-                            localizedElementId = $"?{localizedElementId}?";
 
                         contentString = regex.Replace(contentString, localizedElementId, 1);
                         break;

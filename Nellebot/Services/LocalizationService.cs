@@ -8,7 +8,12 @@ using System.Threading.Tasks;
 
 namespace Nellebot.Services
 {
-    public class LocalizationService
+    public interface ILocalizationService
+    {
+        string GetString(LocalizationResource resource, string key);
+    }
+
+    public class LocalizationService : ILocalizationService
     {
         private Lazy<Dictionary<string, string>> _ordbokDictionary;
 
@@ -27,7 +32,8 @@ namespace Nellebot.Services
             if (dictionary.Value.ContainsKey(key))
                 return dictionary.Value[key];
 
-            return key;
+            // Temporarily mark elements that are missing from localization file
+            return $"?{key}?";
         }
 
         private Lazy<Dictionary<string, string>> GetResourceDictionary(LocalizationResource resource)
@@ -41,7 +47,8 @@ namespace Nellebot.Services
 
         private Dictionary<string, string> LoadDictionary(string filename)
         {
-            var fileContent = File.ReadAllText($"Resources/Localization/{filename}.json");
+            // TODO double check if Latin1 works on linux
+            var fileContent = File.ReadAllText($"Resources/Localization/{filename}.json", Encoding.Latin1);
 
             var dictionary = JsonSerializer.Deserialize<Dictionary<string, string>>(fileContent);
 
