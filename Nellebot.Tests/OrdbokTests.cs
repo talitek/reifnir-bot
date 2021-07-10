@@ -14,15 +14,15 @@ using System.Threading.Tasks;
 namespace Nellebot.Tests
 {
     [TestClass]
+    [Ignore]
     public class OrdbokTests
     {
-
         [TestMethod]
         public async Task TestDeserialization()
         {
             var directory = AppDomain.CurrentDomain.BaseDirectory;
 
-            var file = Path.Combine(directory, "test.json");
+            var file = Path.Combine(directory, "TestFiles/test.json");
 
             var json = await File.ReadAllTextAsync(file);
 
@@ -42,7 +42,7 @@ namespace Nellebot.Tests
         {
             var directory = AppDomain.CurrentDomain.BaseDirectory;
 
-            var file = Path.Combine(directory, "test.json");
+            var file = Path.Combine(directory, "TestFiles/test.json");
 
             var json = await File.ReadAllTextAsync(file);
 
