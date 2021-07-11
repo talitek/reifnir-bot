@@ -35,12 +35,21 @@ namespace Nellebot.Common.Models.Ordbok.Api
     }
 
     /// <summary>
-    /// Api types so far: relation, domain, entity, modifier
+    /// Api types so far: relation, domain, entity, modifier, grammar, rhetoric
     /// </summary>
     public class ExplanationIdElement: ExplanationItem
     {
         [JsonPropertyName("id")]
         public string Id { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Api types so far: usage
+    /// </summary>
+    public class ExplanationTextElement : ExplanationItem
+    {
+        [JsonPropertyName("text")]
+        public string Text { get; set; } = string.Empty;
     }
 
     public class ExplanationItemArticleRef : ExplanationItem

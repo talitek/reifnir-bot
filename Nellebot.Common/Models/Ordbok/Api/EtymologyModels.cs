@@ -34,7 +34,7 @@ namespace Nellebot.Common.Models.Ordbok.Api
     }
 
     /// <summary>
-    /// Api types so far: language, grammar
+    /// Api types so far: relation, language, grammar
     /// </summary>
     public class EtymologyLanguageIdElement : EtymologyLanguageElement
     {
@@ -76,6 +76,10 @@ namespace Nellebot.Common.Models.Ordbok.Api
     {
         [JsonPropertyName("article_id")]
         public int ArticleId { get; set; }
+        [JsonPropertyName("definition_id")]
+        public int? DefinitionId { get; set; }
+        [JsonPropertyName("lemmas")]
+        public List<SimpleLemma> Lemmas { get; set; } = new List<SimpleLemma>();
     }
 
     // Etymology litt?
@@ -93,9 +97,21 @@ namespace Nellebot.Common.Models.Ordbok.Api
         public string Type { get; set; } = string.Empty;
     }
 
-    public class EtymologyLittUsage : EtymologyLittElement
+    /// <summary>
+    /// Api types so far: entity
+    /// </summary>
+    public class EtymologyLittIdElement : EtymologyLittElement
     {
-        [JsonPropertyName("usage")]
-        public string Usage { get; set; } = string.Empty;
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Api types so far: usage
+    /// </summary>
+    public class EtymologyLittTextElement : EtymologyLittElement
+    {
+        [JsonPropertyName("text")]
+        public string Text { get; set; } = string.Empty;
     }
 }

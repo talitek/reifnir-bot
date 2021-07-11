@@ -10,21 +10,24 @@ namespace Nellebot.Services
 {
     public interface ILocalizationService
     {
-        string GetString(LocalizationResource resource, string key);
+        string GetString(string key, LocalizationResource resource, LocalizationLocale? locale);
+        string GetString(string key, LocalizationResource resource, string? locale);
     }
 
     public class LocalizationService : ILocalizationService
     {
-        private Lazy<Dictionary<string, string>> _ordbokDictionary;
+        private Lazy<Dictionary<string, string>> _ordbokConceptsDictionaryNb;
+        private Lazy<Dictionary<string, string>> _ordbokConceptsDictionaryNn;
 
         public LocalizationService()
         {
-            _ordbokDictionary = new Lazy<Dictionary<string, string>>(() => LoadDictionary("Ordbok"));
+            _ordbokConceptsDictionaryNb = new Lazy<Dictionary<string, string>>(() => LoadDictionary("OrdbokConcepts.no_nb"));
+            _ordbokConceptsDictionaryNn = new Lazy<Dictionary<string, string>>(() => LoadDictionary("OrdbokConcepts.no_nn"));
         }
 
-        public string GetString(LocalizationResource resource, string key)
+        public string GetString(string key, LocalizationResource resource, LocalizationLocale? locale)
         {
-            var dictionary = GetResourceDictionary(resource);
+            var dictionary = GetResourceDictionary(resource, locale);
 
             if (dictionary.Value == null)
                 return key;
@@ -36,11 +39,28 @@ namespace Nellebot.Services
             return $"?{key}?";
         }
 
-        private Lazy<Dictionary<string, string>> GetResourceDictionary(LocalizationResource resource)
+        public string GetString(string key, LocalizationResource resource, string? locale)
+        {
+            var localizationLocale = locale?.ToLower() switch
+            {
+                "bob" => LocalizationLocale.NoNb,
+                "nob" => LocalizationLocale.NoNn,
+                _ => LocalizationLocale.NoNb
+            };
+
+            return GetString(key, resource, localizationLocale);
+        }
+
+        private Lazy<Dictionary<string, string>> GetResourceDictionary(LocalizationResource resource, LocalizationLocale? locale)
         {
             return resource switch
             {
-                LocalizationResource.Ordbok => _ordbokDictionary,
+                LocalizationResource.OrdbokConcepts => locale switch 
+                {
+                    LocalizationLocale.NoNb => _ordbokConceptsDictionaryNb,
+                    LocalizationLocale.NoNn => _ordbokConceptsDictionaryNn,
+                    _ => _ordbokConceptsDictionaryNb
+                },
                 _ => throw new ArgumentException($"Unknown dictionary {resource}")
             };
         }
@@ -50,7 +70,12 @@ namespace Nellebot.Services
             // TODO double check if Latin1 works on linux
             var fileContent = File.ReadAllText($"Resources/Localization/{filename}.json", Encoding.Latin1);
 
-            var dictionary = JsonSerializer.Deserialize<Dictionary<string, string>>(fileContent);
+            var serializerOptions = new JsonSerializerOptions()
+            {
+                AllowTrailingCommas = true
+            };
+
+            var dictionary = JsonSerializer.Deserialize<Dictionary<string, string>>(fileContent, serializerOptions);
 
             if (dictionary == null)
                 throw new ArgumentException($"Could not load dictionary resource for {filename}");
@@ -61,6 +86,12 @@ namespace Nellebot.Services
 
     public enum LocalizationResource
     {
-        Ordbok
+        OrdbokConcepts
+    }
+
+    public enum LocalizationLocale
+    {
+        NoNb,
+        NoNn
     }
 }

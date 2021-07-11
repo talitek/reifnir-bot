@@ -26,6 +26,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nellebot.Data.Migrations", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nellebot.Tests", "Nellebot.Tests\Nellebot.Tests.csproj", "{B391AD0D-0EF3-4657-966D-57712930C29D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{0210AAB2-8605-4704-A23B-F94455581BF8}"
+	ProjectSection(SolutionItems) = preProject
+		download_orbok_concepts.ps1 = download_orbok_concepts.ps1
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +60,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0210AAB2-8605-4704-A23B-F94455581BF8} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {658B134A-CADB-4447-85A7-048070C93996}

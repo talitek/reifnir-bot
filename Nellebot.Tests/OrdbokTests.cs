@@ -55,10 +55,12 @@ namespace Nellebot.Tests
                     var localizationService = new Mock<ILocalizationService>();
 
                     localizationService
-                        .Setup(m => m.GetString(It.IsAny<LocalizationResource>(), It.IsAny<string>()))
+                        .Setup(m => m.GetString(It.IsAny<string>(), It.IsAny<LocalizationResource>(), It.IsAny<LocalizationLocale>()))
                         .Returns("what");
 
-                    var modelMapper = new OrdbokModelMapper(localizationService.Object);
+                    var ordbokContentParser = new OrdbokContentParser(localizationService.Object);
+
+                    var modelMapper = new OrdbokModelMapper(ordbokContentParser);
 
                     var article = modelMapper.MapArticle(resultItem);
                 }

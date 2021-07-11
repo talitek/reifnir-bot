@@ -9,24 +9,28 @@ namespace Nellebot.Services.Ordbok
 {
     public class OrdbokModelMapper
     {
-        private readonly ILocalizationService _localizationService;
+        private readonly IOrdbokContentParser _contentParser;
 
-        public OrdbokModelMapper(ILocalizationService localizationService)
+        public OrdbokModelMapper(
+            IOrdbokContentParser contentParser
+            )
         {
-            _localizationService = localizationService;
+            _contentParser = contentParser;
         }
 
         public vm.Article MapArticle(api.Article article)
         {
             var vmResult = new vm.Article();
 
+            var dictionary = article.Dictionary;
+
             vmResult.ArticleId = article.ArticleId;
             vmResult.Score = article.Score;
             vmResult.Lemmas = article.Lemmas.Select(MapLemma).ToList();
 
-            vmResult.Definitions = MapDefinitions(article.Body.DefinitionElements);
+            vmResult.Definitions = MapDefinitions(article.Body.DefinitionElements, dictionary);
 
-            vmResult.Etymologies = MapEtymologyLanguages(article.Body.EtymologyGroups);
+            vmResult.Etymologies = MapEtymologies(article.Body.EtymologyGroups, dictionary);
 
             return vmResult;
         }
@@ -47,30 +51,29 @@ namespace Nellebot.Services.Ordbok
         {
             var vmResult = new vm.Paradigm();
 
-            if (string.IsNullOrWhiteSpace(paradigm.InflectionGroup))
-            {
-                vmResult.Value = paradigm.Standardisation ?? "??";
-            }
-            else
+            if (!string.IsNullOrWhiteSpace(paradigm.InflectionGroup))
             {
                 // TODO fix this
                 vmResult.Value = paradigm.InflectionGroup.ToLower() switch
                 {
-                    "verb" => "v2",
-                    "adv" => "adv.",
                     // TODO figure out how to differentiate between n1/n2, etc.
-                    //"noun" => $"{paradigm.Tags[1].ToLower()[0]}?1?",
                     "noun" => $"{paradigm.Tags[1].ToLower()[0]}",
+                    "verb" => "v2",
+                    // should be a1,a2 probably
+                    "adj" => "adj.",
+                    "adv" => "adv.",
                     "det_simple" => "det.",
                     "pron" => "pron.",
-                    _ => "??"
+                    "sym" => "symb.",
+                    "intj" => "interj.",
+                    _ => $"?{paradigm.InflectionGroup.ToLower()}?"
                 };
             }
 
             return vmResult;
         }
 
-        public List<vm.Definition> MapDefinitions(List<api.DefinitionElement> definitionElements)
+        public List<vm.Definition> MapDefinitions(List<api.DefinitionElement> definitionElements, string dictionary)
         {
             var vmResult = new List<vm.Definition>();
 
@@ -88,12 +91,12 @@ namespace Nellebot.Services.Ordbok
 
                     foreach (var nestedDefinition in nestedDefinitions)
                     {
-                        var mappedNestedDefinition = MapDefinition(nestedDefinition);
+                        var mappedNestedDefinition = MapDefinition(nestedDefinition, dictionary);
 
                         var innerDefinitions = nestedDefinition.DefinitionElements
                             .Where(d => d is api.Definition)
                             .Cast<api.Definition>()
-                            .Select(MapDefinition)
+                            .Select(d => MapDefinition(d, dictionary))
                             .ToList();
 
                         mappedNestedDefinition.InnerDefinitions.AddRange(innerDefinitions);
@@ -103,14 +106,14 @@ namespace Nellebot.Services.Ordbok
                 }
                 else
                 {
-                    vmResult.Add(MapDefinition(definition));
+                    vmResult.Add(MapDefinition(definition, dictionary));
                 }
             }
 
             return vmResult;
         }
 
-        public vm.Definition MapDefinition(api.Definition definition)
+        public vm.Definition MapDefinition(api.Definition definition, string dictionary)
         {
             var vmResult = new vm.Definition();
 
@@ -124,118 +127,39 @@ namespace Nellebot.Services.Ordbok
                 .Cast<api.Example>()
                 .ToList();
 
-            vmResult.Explanations = explanations.Select(e => GetExplanationContent(e)).ToList();
+            vmResult.Explanations = explanations.Select(e => _contentParser.GetExplanationContent(e, dictionary)).ToList();
             vmResult.Examples = examples.Select(e => e.Quote.Content).ToList();
 
             return vmResult;
         }
 
-        public List<vm.Etymology> MapEtymologyLanguages(List<api.EtymologyGroup> etymologyGroups)
+        public List<vm.Etymology> MapEtymologies(List<api.EtymologyGroup> etymologyGroups, string dictionary)
         {
             var vmResult = new List<vm.Etymology>();
 
-            var apiEtymologyLanguages = etymologyGroups
-                .Where(x => x is api.EtymologyLanguage)
-                .Cast<api.EtymologyLanguage>()
-                .ToList();
-
-            foreach (var apiEtymologyLanguage in apiEtymologyLanguages)
+            foreach (var etymologyGroup in etymologyGroups)
             {
-                var vmEtymologyLanguage = new vm.Etymology();
+                var vmEtymology = new vm.Etymology();
 
-                vmEtymologyLanguage.Content = apiEtymologyLanguage.Content;
+                switch (etymologyGroup)
+                {
+                    case api.EtymologyLanguage etymologyLanguage:
+                        vmEtymology.Content = _contentParser.GetEtymologyLanguageContent(etymologyLanguage, dictionary);
+                        break;
+                    case api.EtymologyLitt etymologyLitt:
+                        vmEtymology.Content = _contentParser.GetEtymologyLittContent(etymologyLitt, dictionary);
+                        break;
+                    case api.EtymologyReference etymologyReference:
+                        vmEtymology.Content = _contentParser.GetEtymologyReferenceContent(etymologyReference, dictionary);
+                        break;
+                };
 
-                var apiEtymologyLanguageLanguages = apiEtymologyLanguage.EtymologyLanguageElements
-                    .Where(x => x is api.EtymologyLanguageIdElement)
-                    .Cast<api.EtymologyLanguageIdElement>();
-
-                vmEtymologyLanguage.Content = GetEtymologyLanguageContent(apiEtymologyLanguage);
-
-                vmResult.Add(vmEtymologyLanguage);
+                vmResult.Add(vmEtymology);
             }
 
             return vmResult;
         }
 
-        private string GetEtymologyLanguageContent(api.EtymologyLanguage etymologyLanguage)
-        {
-            var contentString = etymologyLanguage.Content;
-
-            var contentHasVariables = etymologyLanguage.EtymologyLanguageElements.Any();
-
-            if (!contentHasVariables)
-                return contentString;
-
-            var regex = new Regex(Regex.Escape("$"));
-
-            foreach (var item in etymologyLanguage.EtymologyLanguageElements)
-            {
-                switch(item)
-                {
-                    case api.EtymologyLanguageIdElement idElement:
-                        var localizedIdElement = _localizationService.GetString(LocalizationResource.Ordbok, idElement.Id);
-
-                        contentString = regex.Replace(contentString, localizedIdElement, 1);
-                        break;
-                    case api.EtymologyLanguageTextElement textElement:
-                        contentString = regex.Replace(contentString, textElement.Text, 1);
-                        break;
-                }
-            }
-
-            return contentString;
-        }
-
-        private string GetExplanationContent(api.Explanation explanation)
-        {
-            var contentString = explanation.Content;
-
-            var contentHasVariables = explanation.ExplanationItems.Any();
-
-            if (!contentHasVariables)
-                return contentString;
-
-            var regex = new Regex(Regex.Escape("$"));
-
-            foreach (var item in explanation.ExplanationItems)
-            {
-                switch (item)
-                {
-                    case api.ExplanationIdElement idElement:
-                        var localizedElementId = _localizationService.GetString(LocalizationResource.Ordbok, idElement.Id);
-
-                        contentString = regex.Replace(contentString, localizedElementId, 1);
-                        break;
-                    case api.ExplanationItemArticleRef articleRef:
-                        var firstLemma = articleRef.Lemmas.FirstOrDefault();
-                        if (firstLemma != null)
-                        {
-                            var value = firstLemma.Value;
-                            var hgNo = firstLemma.HgNo.ToRomanNumeral();
-                            var definitionOrder = articleRef.DefinitionOrder;
-
-                            var pValues = new List<string>();
-
-                            if (!string.IsNullOrWhiteSpace(hgNo))
-                                pValues.Add(hgNo);
-                            if (definitionOrder > 0)
-                                pValues.Add(definitionOrder.ToString());
-
-                            var displayValue = firstLemma.Value;
-
-                            if (pValues.Count > 0)
-                            {
-                                displayValue = $"{displayValue} ({string.Join(",", pValues)})";
-                            }
-
-                            contentString = regex.Replace(contentString, displayValue, 1);
-                        }
-
-                        break;
-                }
-            }
-
-            return contentString;
-        }
+        
     }
 }

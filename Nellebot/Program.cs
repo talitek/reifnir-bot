@@ -60,6 +60,7 @@ namespace Nellebot
                     services.AddTransient<DiscordResolver>();
                     services.AddTransient<ScribanTemplateLoader>();
                     services.AddTransient<OrdbokModelMapper>();
+                    services.AddTransient<IOrdbokContentParser, OrdbokContentParser>();
 
                     services.AddTransient<IUserRoleRepository, UserRoleRepository>();
                     services.AddTransient<AwardMessageRepository>();
