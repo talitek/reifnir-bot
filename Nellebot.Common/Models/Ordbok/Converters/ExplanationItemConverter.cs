@@ -19,7 +19,12 @@ namespace Nellebot.Common.Models.Ordbok.Converters
                 case "domain":
                 case "entity":
                 case "modifier":
+                case "grammar":
+                case "rhetoric":
                     result = JsonSerializer.Deserialize<ExplanationIdElement>(ref reader, options);
+                    break;
+                case "usage":
+                    result = JsonSerializer.Deserialize<ExplanationTextElement>(ref reader, options);
                     break;
                 case "article_ref":
                     result = JsonSerializer.Deserialize<ExplanationItemArticleRef>(ref reader, options);
@@ -38,8 +43,11 @@ namespace Nellebot.Common.Models.Ordbok.Converters
         {
             switch (value)
             {
-                case ExplanationIdElement relation:
-                    JsonSerializer.Serialize(writer, relation);
+                case ExplanationIdElement idElement:
+                    JsonSerializer.Serialize(writer, idElement);
+                    break;
+                case ExplanationTextElement textElement:
+                    JsonSerializer.Serialize(writer, textElement);
                     break;
                 case ExplanationItemArticleRef articleRef:
                     JsonSerializer.Serialize(writer, articleRef);

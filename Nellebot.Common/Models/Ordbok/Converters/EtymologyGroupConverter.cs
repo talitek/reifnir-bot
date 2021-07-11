@@ -18,6 +18,9 @@ namespace Nellebot.Common.Models.Ordbok.Converters
                 case "etymology_language":
                     result = JsonSerializer.Deserialize<EtymologyLanguage>(ref reader, options);
                     break;
+                case "etymology_litt":
+                    result = JsonSerializer.Deserialize<EtymologyLitt>(ref reader, options);
+                    break;
                 case "etymology_reference":
                     result = JsonSerializer.Deserialize<EtymologyReference>(ref reader, options);
                     break;
@@ -37,6 +40,9 @@ namespace Nellebot.Common.Models.Ordbok.Converters
             {
                 case EtymologyLanguage language:
                     JsonSerializer.Serialize(writer, language);
+                    break;
+                case EtymologyLitt litt:
+                    JsonSerializer.Serialize(writer, litt);
                     break;
                 case EtymologyReference reference:
                     JsonSerializer.Serialize(writer, reference);

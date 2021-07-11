@@ -15,8 +15,11 @@ namespace Nellebot.Common.Models.Ordbok.Converters
 
             switch (typeDiscriminator.ToLower())
             {
+                case "entity":
+                    result = JsonSerializer.Deserialize<EtymologyLittIdElement>(ref reader, options);
+                    break;
                 case "usage":
-                    result = JsonSerializer.Deserialize<EtymologyLittUsage>(ref reader, options);
+                    result = JsonSerializer.Deserialize<EtymologyLittTextElement>(ref reader, options);
                     break;
                 default:
                     // Read and throw away object so that the reader reaches EndObject token
@@ -32,8 +35,11 @@ namespace Nellebot.Common.Models.Ordbok.Converters
         {
             switch (value)
             {
-                case EtymologyLittUsage usage:
-                    JsonSerializer.Serialize(writer, usage);
+                case EtymologyLittIdElement idElement:
+                    JsonSerializer.Serialize(writer, idElement);
+                    break;
+                case EtymologyLittTextElement textElement:
+                    JsonSerializer.Serialize(writer, textElement);
                     break;
                 default:
                     throw new JsonException($"Unknown subclass of {value.GetType().FullName}");
