@@ -9,11 +9,19 @@ namespace Nellebot.Services
 {
     public class ScribanTemplateLoader
     {
-        public async Task<string> LoadTemplate(string templateName)
+        public async Task<string> LoadTemplate(string templateName, ScribanTemplateType type)
         {
-            var templateString = await File.ReadAllTextAsync($"Resources/ScribanTemplates/{templateName}.sbn");
+            var extension = type == ScribanTemplateType.Text ? "sbntxt" : "sbnhtml";
+
+            var templateString = await File.ReadAllTextAsync($"Resources/ScribanTemplates/{templateName}.{extension}");
 
             return templateString;
         }
+    }
+
+    public enum ScribanTemplateType
+    {
+        Text,
+        Html
     }
 }

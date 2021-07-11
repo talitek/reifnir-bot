@@ -61,6 +61,7 @@ namespace Nellebot
                     services.AddTransient<ScribanTemplateLoader>();
                     services.AddTransient<OrdbokModelMapper>();
                     services.AddTransient<IOrdbokContentParser, OrdbokContentParser>();
+                    services.AddTransient<HtmlToImageService>();
 
                     services.AddTransient<IUserRoleRepository, UserRoleRepository>();
                     services.AddTransient<AwardMessageRepository>();
