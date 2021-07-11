@@ -41,5 +41,5 @@ foreach ($dictionary in $dictionaries) {
     $result = $sb.ToString();
     
     #Write-Output $result;
-    $result | Out-File "OrdbokConcepts.${dictFileSuffix}.json";
+    $result | Out-File "OrdbokConcepts_${dictFileSuffix}.json";
 }

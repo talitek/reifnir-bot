@@ -1,6 +1,7 @@
 ﻿using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using Nellebot.Services;
 using Nellebot.Services.Ordbok;
 using Scriban;
@@ -28,16 +29,22 @@ namespace Nellebot.CommandHandlers.Ordbok
             private readonly OrdbokHttpClient _ordbokClient;
             private readonly OrdbokModelMapper _ordbokModelMapper;
             private readonly ScribanTemplateLoader _templateLoader;
+            private readonly HtmlToImageService _htmlToImageService;
+            private readonly ILogger<SearchOrdbokHandler> _logger;
 
             public SearchOrdbokHandler(
                 OrdbokHttpClient ordbokClient,
                 OrdbokModelMapper ordbokModelMapper,
-                ScribanTemplateLoader templateLoader
+                ScribanTemplateLoader templateLoader,
+                HtmlToImageService htmlToImageService,
+                ILogger<SearchOrdbokHandler> logger
                 )
             {
                 _ordbokClient = ordbokClient;
                 _ordbokModelMapper = ordbokModelMapper;
                 _templateLoader = templateLoader;
+                _htmlToImageService = htmlToImageService;
+                _logger = logger;
             }
 
             protected override async Task Handle(SearchOrdbokRequest request, CancellationToken cancellationToken)
@@ -72,18 +79,32 @@ namespace Nellebot.CommandHandlers.Ordbok
 
                 articles = articles.OrderBy(a => a.Lemmas.Max(l => l.HgNo)).ToList();
 
-                var templateSource = await _templateLoader.LoadTemplate("OrdbokArticle");
-
                 var queryUrl = $"https://ordbok.uib.no/?OPP={query}";
 
-                var template = Template.Parse(templateSource);
-                var templateResult = template.Render(new { Articles = articles, Dictionary = dictionary, QueryUrl = queryUrl });
+                var textTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Text);
+                var textTemplate = Template.Parse(textTemplateSource);
+                var textTemplateResult = textTemplate.Render(new { Articles = articles, Dictionary = dictionary, QueryUrl = queryUrl });
 
-                var truncatedContent = templateResult.Substring(0, Math.Min(templateResult.Length, 2000));
+                var htmlTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Html);
+                var htmlTemplate = Template.Parse(htmlTemplateSource);
+                var htmlTemplateResult = htmlTemplate.Render(new { Articles = articles, Dictionary = dictionary, QueryUrl = queryUrl });
 
-                var db = new DiscordMessageBuilder();
+                var truncatedContent = textTemplateResult.Substring(0, Math.Min(textTemplateResult.Length, 2000));
 
-                var message = await ctx.RespondAsync(truncatedContent);
+                var db = new DiscordMessageBuilder()
+                   .WithContent(truncatedContent);
+
+                try
+                {
+                    var imagePath = await _htmlToImageService.GenerateImageFile(htmlTemplateResult);
+                    db = db.WithFile(imagePath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, typeof(SearchOrdbok).FullName);
+                }
+
+                var message = await ctx.RespondAsync(db);
 
                 await message.ModifyEmbedSuppressionAsync(true);
             }

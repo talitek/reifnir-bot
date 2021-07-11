@@ -21,8 +21,8 @@ namespace Nellebot.Services
 
         public LocalizationService()
         {
-            _ordbokConceptsDictionaryNb = new Lazy<Dictionary<string, string>>(() => LoadDictionary("OrdbokConcepts.no_nb"));
-            _ordbokConceptsDictionaryNn = new Lazy<Dictionary<string, string>>(() => LoadDictionary("OrdbokConcepts.no_nn"));
+            _ordbokConceptsDictionaryNb = new Lazy<Dictionary<string, string>>(() => LoadDictionary("OrdbokConcepts_no_nb"));
+            _ordbokConceptsDictionaryNn = new Lazy<Dictionary<string, string>>(() => LoadDictionary("OrdbokConcepts_no_nn"));
         }
 
         public string GetString(string key, LocalizationResource resource, LocalizationLocale? locale)

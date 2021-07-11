@@ -1,0 +1,111 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+
+    <style>
+        body {
+            background-color: #36393f;
+            color: #dcddde;
+        }
+
+        a {
+            color: #2a95f4;
+        }
+
+        ul, ol {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        .inline-list  {
+            display: inline-block;
+        }
+
+        .inline-list > li  {
+            display: inline-block;
+        }
+
+        .gutter-bottom {
+            margin-bottom: 1em;
+        }
+
+        .definition-list {
+            list-style-type: decimal;
+            padding-left: 1em;
+        }
+
+        .inner-definition-list {
+            list-style-type: circle;
+            padding-left: 1em;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>{{dictionary == "bob" ? "Bokmålsordboka" : "Nynorskordboka"}}</h1>
+
+    <ul>
+    {{~for article in articles~}}
+    <li class="gutter-bottom">
+        <ul class="inline-list">
+        {{~for lemma in article.lemmas~}}
+            <li>    
+                <span>{{lemma.hg_no != "" ? lemma.hg_no + " " : ""}}<b>{{lemma.value}}</b></span>
+                <ul class="inline-list">
+                {{~for paradigm in lemma.unique_paradigm_values~}}
+                    <li>
+                        <span>&nbsp;{{paradigm}}{{if !for.last; ","; end}}</span>
+                    </li>
+                {{~end~}}
+                </ul>
+                {{~if !for.last; ";&nbsp;el.&nbsp;"; end~}}
+            </li>
+        {{~end~}}
+        </ul>
+        {{~if article.etymologies.size > 0~}}
+        <span>(</span>
+        <ul class="inline-list">
+            {{~for etymology in article.etymologies~}}
+            <li>            
+                {{etymology.content}}{{if !for.last; ",&nbsp;"; end}}            
+            </li>
+            {{~end~}}
+        </ul>
+        <span>)</span>
+        {{~end~}}
+        <ol class="definition-list">
+            {{~for definition in article.definitions~}}
+            <li>
+                <ul class="inline-list">
+                {{~for explanation in definition.explanations~}}
+                <li>
+                    <span>{{explanation}}{{if !for.last; ";&nbsp"; end}}</span>
+                </li>
+                {{~end~}}
+                </ul> 
+
+                <ol class="inner-definition-list">
+                {{~for innerDefinition in definition.inner_definitions~}}
+                    <li>
+                        <ul class="inline-list">
+                        {{~for innerExplanation in innerDefinition.explanations~}}
+                        <li>
+                            <span>{{innerExplanation}}{{if !for.last; ";&nbsp"; end}}</span>
+                        </li>
+                        {{~end~}}
+                        </ul> 
+                    </li>
+                {{~end~}}
+                </ol>
+            </li>
+            {{~end~}}
+        </ol>
+    </li>
+    {{~end~}}
+    </ul>
+</body>
+</html>
+
