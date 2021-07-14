@@ -23,13 +23,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="TestFiles\TestOrdbokArticle.sbnhtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="TestFiles\test_vann.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="TestFiles\test_fly.json">
+    <None Update="TestFiles\test.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="TestFiles\test.json">
+    <None Update="TestFiles\test_hus.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

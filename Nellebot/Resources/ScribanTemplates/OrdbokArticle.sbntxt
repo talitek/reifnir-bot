@@ -17,11 +17,6 @@
 {{for definition in article.definitions-}}
 {{if definition.explanations.size > 0 -}}
 **{{for.index + 1}}** {{for explanation in definition.explanations-}}{{explanation}}{{if !for.last; "; "; end}}{{end}}
-{{for innerDefinition in definition.inner_definitions-}}
-{{if innerDefinition.explanations.size > 0 -}}
-* {{for innerExplanation in innerDefinition.explanations-}}{{innerExplanation}}{{if !for.last; "; "; end}}{{end}}
-{{end-}}
-{{end-}}
 {{end-}}
 {{end~}}
 

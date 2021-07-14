@@ -34,7 +34,14 @@ namespace Nellebot.Common.Models.Ordbok.ViewModels
     {
         public List<string> Explanations { get; set; } = new List<string>();
         public List<string> Examples { get; set; } = new List<string>();
+        public List<SubArticle> SubArticles { get; set; } = new List<SubArticle>();
         public List<Definition> InnerDefinitions { get; set; } = new List<Definition>();
+    }
+
+    public class SubArticle
+    {
+        public List<Lemma> Lemmas { get; set; } = new List<Lemma>();
+        public List<string> Explanations { get; set; } = new List<string>();
     }
 
     public class Etymology

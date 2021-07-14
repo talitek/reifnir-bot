@@ -5,22 +5,21 @@ using System.Text.Json.Serialization;
 
 namespace Nellebot.Common.Models.Ordbok.Converters
 {
-    public class EtymologyReferenceElementConverter : JsonConverter<EtymologyReferenceElement>
+    public class QuoteItemConverter : JsonConverter<QuoteItem>
     {
-        public override EtymologyReferenceElement? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override QuoteItem? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             var typeDiscriminator = TypeElementConverterHelper.GetTypeDiscriminator(ref reader);
 
-            EtymologyReferenceElement? result;
+            QuoteItem? result;
 
             switch (typeDiscriminator.ToLower())
             {
                 case "relation":
-                case "entity":
-                    result = JsonSerializer.Deserialize<EtymologyReferenceIdElement>(ref reader, options);
+                    result = JsonSerializer.Deserialize<QuoteIdItem>(ref reader, options);
                     break;
-                case "article_ref":
-                    result = JsonSerializer.Deserialize<EtymologyReferenceArticleRef>(ref reader, options);
+                case "usage":
+                    result = JsonSerializer.Deserialize<QuoteTextItem>(ref reader, options);
                     break;
                 default:
                     // Read and throw away object so that the reader reaches EndObject token
@@ -32,15 +31,15 @@ namespace Nellebot.Common.Models.Ordbok.Converters
             return result;
         }
 
-        public override void Write(Utf8JsonWriter writer, EtymologyReferenceElement value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, QuoteItem value, JsonSerializerOptions options)
         {
             switch (value)
             {
-                case EtymologyReferenceIdElement relation:
-                    JsonSerializer.Serialize(writer, relation);
+                case QuoteIdItem idElement:
+                    JsonSerializer.Serialize(writer, idElement);
                     break;
-                case EtymologyReferenceArticleRef articleRef:
-                    JsonSerializer.Serialize(writer, articleRef);
+                case QuoteTextItem textElement:
+                    JsonSerializer.Serialize(writer, textElement);
                     break;
                 default:
                     throw new JsonException($"Unknown subclass of {value.GetType().FullName}");

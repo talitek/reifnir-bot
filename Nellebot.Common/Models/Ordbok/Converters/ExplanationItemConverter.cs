@@ -21,13 +21,14 @@ namespace Nellebot.Common.Models.Ordbok.Converters
                 case "modifier":
                 case "grammar":
                 case "rhetoric":
-                    result = JsonSerializer.Deserialize<ExplanationIdElement>(ref reader, options);
+                case "language":
+                    result = JsonSerializer.Deserialize<ExplanationIdItem>(ref reader, options);
                     break;
                 case "usage":
-                    result = JsonSerializer.Deserialize<ExplanationTextElement>(ref reader, options);
+                    result = JsonSerializer.Deserialize<ExplanationTextItem>(ref reader, options);
                     break;
                 case "article_ref":
-                    result = JsonSerializer.Deserialize<ExplanationItemArticleRef>(ref reader, options);
+                    result = JsonSerializer.Deserialize<ExplanationArticleRefItem>(ref reader, options);
                     break;
                 default:
                     // Read and throw away object so that the reader reaches EndObject token
@@ -43,13 +44,13 @@ namespace Nellebot.Common.Models.Ordbok.Converters
         {
             switch (value)
             {
-                case ExplanationIdElement idElement:
+                case ExplanationIdItem idElement:
                     JsonSerializer.Serialize(writer, idElement);
                     break;
-                case ExplanationTextElement textElement:
+                case ExplanationTextItem textElement:
                     JsonSerializer.Serialize(writer, textElement);
                     break;
-                case ExplanationItemArticleRef articleRef:
+                case ExplanationArticleRefItem articleRef:
                     JsonSerializer.Serialize(writer, articleRef);
                     break;
                 default:

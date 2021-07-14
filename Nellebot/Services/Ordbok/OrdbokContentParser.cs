@@ -16,6 +16,7 @@ namespace Nellebot.Services.Ordbok
         string GetEtymologyLittContent(api.EtymologyLitt etymologyLitt, string dictionary);
         string GetEtymologyReferenceContent(api.EtymologyReference reference, string dictionary);
         string GetExplanationContent(api.Explanation explanation, string dictionary);
+        string GetExampleContent(api.Example example, string dictionary);
     }
 
     public class OrdbokContentParser : IOrdbokContentParser
@@ -31,12 +32,7 @@ namespace Nellebot.Services.Ordbok
         {
             var contentString = etymologyLanguage.Content;
 
-            var contentHasVariables = etymologyLanguage.EtymologyLanguageElements.Any();
-
-            if (!contentHasVariables)
-                return contentString;
-
-            var regex = new Regex(Regex.Escape("$"));
+            var replacementValues = new List<string>();
 
             foreach (var item in etymologyLanguage.EtymologyLanguageElements)
             {
@@ -44,28 +40,24 @@ namespace Nellebot.Services.Ordbok
                 {
                     case api.EtymologyLanguageIdElement idElement:
                         var localizedIdElement = _localizationService.GetString(idElement.Id, LocalizationResource.OrdbokConcepts, dictionary);
-
-                        contentString = regex.Replace(contentString, localizedIdElement, 1);
+                        replacementValues.Add(localizedIdElement);
                         break;
                     case api.EtymologyLanguageTextElement textElement:
-                        contentString = regex.Replace(contentString, textElement.Text, 1);
+                        replacementValues.Add(textElement.Text);
                         break;
                 }
             }
 
-            return contentString;
+            var finalContentString = ReplaceContentVariables(contentString, replacementValues);
+
+            return finalContentString;
         }
 
         public string GetEtymologyLittContent(api.EtymologyLitt etymologyLitt, string dictionary)
         {
             var contentString = etymologyLitt.Content;
 
-            var contentHasVariables = etymologyLitt.EtymologyLittElements.Any();
-
-            if (!contentHasVariables)
-                return contentString;
-
-            var regex = new Regex(Regex.Escape("$"));
+            var replacementValues = new List<string>();
 
             foreach (var item in etymologyLitt.EtymologyLittElements)
             {
@@ -73,28 +65,24 @@ namespace Nellebot.Services.Ordbok
                 {
                     case api.EtymologyLittIdElement idElement:
                         var localizedIdElement = _localizationService.GetString(idElement.Id, LocalizationResource.OrdbokConcepts, dictionary);
-
-                        contentString = regex.Replace(contentString, localizedIdElement, 1);
+                        replacementValues.Add(localizedIdElement);
                         break;
                     case api.EtymologyLittTextElement textElement:
-                        contentString = regex.Replace(contentString, textElement.Text, 1);
+                        replacementValues.Add(textElement.Text);
                         break;
                 }
             }
 
-            return contentString;
+            var finalContentString = ReplaceContentVariables(contentString, replacementValues);
+
+            return finalContentString;
         }
 
         public string GetEtymologyReferenceContent(api.EtymologyReference reference, string dictionary)
         {
             var contentString = reference.Content;
 
-            var contentHasVariables = reference.EtymologyReferenceElements.Any();
-
-            if (!contentHasVariables)
-                return contentString;
-
-            var regex = new Regex(Regex.Escape("$"));
+            var replacementValues = new List<string>();
 
             foreach (var item in reference.EtymologyReferenceElements)
             {
@@ -103,7 +91,7 @@ namespace Nellebot.Services.Ordbok
                     case api.EtymologyReferenceIdElement idElement:
                         var localizedElementId = _localizationService.GetString(idElement.Id, LocalizationResource.OrdbokConcepts, dictionary);
 
-                        contentString = regex.Replace(contentString, localizedElementId, 1);
+                        replacementValues.Add(localizedElementId);
                         break;
                     case api.EtymologyReferenceArticleRef articleRef:
                         var firstLemma = articleRef.Lemmas.FirstOrDefault();
@@ -116,44 +104,39 @@ namespace Nellebot.Services.Ordbok
 
                             var displayValue = showHgNo ? $"{value} ({hgNo})" : value;
 
-                            contentString = regex.Replace(contentString, displayValue, 1);
+                            replacementValues.Add(displayValue);
                         }
 
                         break;
                 }
             }
 
-            return contentString;
+            var finalContentString = ReplaceContentVariables(contentString, replacementValues);
+
+            return finalContentString;
         }
 
         public string GetExplanationContent(api.Explanation explanation, string dictionary)
         {
             var contentString = explanation.Content;
 
-            var contentHasVariables = explanation.ExplanationItems.Any();
-
-            if (!contentHasVariables)
-                return contentString;
-
-            var regex = new Regex(Regex.Escape("$"));
+            var replacementValues = new List<string>();
 
             foreach (var item in explanation.ExplanationItems)
             {
                 switch (item)
                 {
-                    case api.ExplanationIdElement idElement:
+                    case api.ExplanationIdItem idElement:
                         var localizedElementId = _localizationService.GetString(idElement.Id, LocalizationResource.OrdbokConcepts, dictionary);
-
-                        contentString = regex.Replace(contentString, localizedElementId, 1);
+                        replacementValues.Add(localizedElementId);
                         break;
-                    case api.ExplanationTextElement textElement:
-                        contentString = regex.Replace(contentString, textElement.Text, 1);
+                    case api.ExplanationTextItem textElement:
+                        replacementValues.Add(textElement.Text);
                         break;
-                    case api.ExplanationItemArticleRef articleRef:
+                    case api.ExplanationArticleRefItem articleRef:
                         var firstLemma = articleRef.Lemmas.FirstOrDefault();
                         if (firstLemma != null)
                         {
-                            var value = firstLemma.Value;
                             var hgNo = firstLemma.HgNo.ToRomanNumeral();
                             var definitionOrder = articleRef.DefinitionOrder;
 
@@ -171,12 +154,54 @@ namespace Nellebot.Services.Ordbok
                                 displayValue = $"{displayValue} ({string.Join(",", pValues)})";
                             }
 
-                            contentString = regex.Replace(contentString, displayValue, 1);
+                            replacementValues.Add(displayValue);
                         }
 
                         break;
                 }
             }
+
+            var finalContentString = ReplaceContentVariables(contentString, replacementValues);
+
+            return finalContentString;
+        }
+
+
+        public string GetExampleContent(api.Example example, string dictionary)
+        {
+            var contentString = example.Quote.Content;
+
+            var replacementValues = new List<string>();
+
+            foreach (var item in example.Quote.QuoteItems)
+            {
+                switch (item)
+                {
+                    case api.QuoteIdItem idElement:
+                        var localizedIdItem = _localizationService.GetString(idElement.Id, LocalizationResource.OrdbokConcepts, dictionary);
+                        replacementValues.Add(localizedIdItem);
+                        break;
+                    case api.QuoteTextItem textElement:
+                        replacementValues.Add(textElement.Text);
+                        break;
+                }
+            }
+
+            var finalContentString = ReplaceContentVariables(contentString, replacementValues);
+
+            return finalContentString;
+        }
+
+        private static string ReplaceContentVariables(string contentString, List<string> values)
+        {
+            var contentHasVariables = values.Any();
+
+            if (!contentHasVariables)
+                return contentString;
+
+            var regex = new Regex(Regex.Escape("$"));
+
+            values.ForEach(v => contentString = regex.Replace(contentString, v, 1));
 
             return contentString;
         }
