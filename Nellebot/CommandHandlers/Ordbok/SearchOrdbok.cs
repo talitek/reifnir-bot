@@ -6,6 +6,7 @@ using Nellebot.Services;
 using Nellebot.Services.Ordbok;
 using Scriban;
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,6 +19,7 @@ namespace Nellebot.CommandHandlers.Ordbok
         {
             public string Query { get; set; } = string.Empty;
             public string Dictionary { get; set; } = string.Empty;
+            public bool AttachTemplate { get; set; } = false;
 
             public SearchOrdbokRequest(CommandContext ctx) : base(ctx)
             {
@@ -52,6 +54,7 @@ namespace Nellebot.CommandHandlers.Ordbok
                 var ctx = request.Ctx;
                 var query = request.Query;
                 var dictionary = request.Dictionary;
+                var attachTemplate = request.AttachTemplate;
 
                 var searchResponse = await _ordbokClient.Search(request.Dictionary, query);
 
@@ -96,8 +99,17 @@ namespace Nellebot.CommandHandlers.Ordbok
 
                 try
                 {
-                    var imagePath = await _htmlToImageService.GenerateImageFile(htmlTemplateResult);
-                    db = db.WithFile(imagePath);
+
+                    var result = await _htmlToImageService.GenerateImageFile(htmlTemplateResult);
+
+                    if (!attachTemplate)
+                    {
+                        db = db.WithFile(result.ImageFilePath);
+                    }
+                    else
+                    {
+                        db = db.WithFile(result.HtmlFilePath);
+                    }
                 }
                 catch (Exception ex)
                 {

@@ -20,7 +20,7 @@ namespace Nellebot.Services
             _logger = logger;
         }
 
-        public async Task<string> GenerateImageFile(string html)
+        public async Task<GenerateImageFileResult> GenerateImageFile(string html)
         {
             var tempFolder = Path.GetTempPath();
 
@@ -39,7 +39,16 @@ namespace Nellebot.Services
 
             await _wkHtmlToImageClient.GenerateImage(args);
 
-            return tempImageFilePath;
+            return new GenerateImageFileResult {
+                ImageFilePath = tempImageFilePath,
+                HtmlFilePath = tempHtmlFilePath                
+            };
         }
+    }
+
+    public class GenerateImageFileResult
+    {
+        public string ImageFilePath { get; set; } = string.Empty;
+        public string HtmlFilePath { get; set; } = string.Empty;
     }
 }

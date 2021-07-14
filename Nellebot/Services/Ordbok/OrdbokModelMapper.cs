@@ -66,6 +66,7 @@ namespace Nellebot.Services.Ordbok
                     "pron" => "pron.",
                     "sym" => "symb.",
                     "intj" => "interj.",
+                    "abbr"=> "fork.",
                     _ => $"?{paradigm.InflectionGroup.ToLower()}?"
                 };
             }

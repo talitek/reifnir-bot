@@ -17,6 +17,7 @@ namespace Nellebot.Common.Models.Ordbok.Converters
             {
                 case "relation":
                 case "entity":
+                case "grammar":
                     result = JsonSerializer.Deserialize<EtymologyReferenceIdElement>(ref reader, options);
                     break;
                 case "article_ref":

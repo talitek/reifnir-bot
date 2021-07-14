@@ -79,5 +79,35 @@ namespace Nellebot.CommandModules
             return Task.CompletedTask;
         }
 
+        [Command("bm-t")]
+        public Task OrdbokSearchBokmalDebugTemplate(CommandContext ctx, [RemainingText] string query)
+        {
+            var searchOrdbokRequest = new SearchOrdbokRequest(ctx)
+            {
+                Dictionary = OrdbokDictionaryMap.Bokmal,
+                Query = query,
+                AttachTemplate = true
+            };
+
+            _commandQueue.Enqueue(searchOrdbokRequest);
+
+            return Task.CompletedTask;
+        }
+
+        [Command("nn-t")]
+        public Task OrdbokSearchNynorskDebugTemplate(CommandContext ctx, [RemainingText] string query)
+        {
+            var searchOrdbokRequest = new SearchOrdbokRequest(ctx)
+            {
+                Dictionary = OrdbokDictionaryMap.Nynorsk,
+                Query = query,
+                AttachTemplate = true
+            };
+
+            _commandQueue.Enqueue(searchOrdbokRequest);
+
+            return Task.CompletedTask;
+        }
+
     }
 }

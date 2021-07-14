@@ -66,6 +66,7 @@ namespace Nellebot.Common.Models.Ordbok.Api
         public string Type { get; set; } = string.Empty;
     }
 
+    /// Api types so far: relation, entity, grammar
     public class EtymologyReferenceIdElement : EtymologyReferenceElement
     {
         [JsonPropertyName("id")]
