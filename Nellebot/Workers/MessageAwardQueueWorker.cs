@@ -23,19 +23,16 @@ namespace Nellebot.Workers
 
         private readonly ILogger<MessageAwardQueueWorker> _logger;
         private readonly IServiceProvider _serviceProvider;
-        private readonly DiscordErrorLogger _discordErrorLogger;
         private readonly MessageAwardQueue _awardQueue;
 
         public MessageAwardQueueWorker(
                 ILogger<MessageAwardQueueWorker> logger,
                 IServiceProvider serviceProvider,
-                DiscordErrorLogger discordErrorLogger,
                 MessageAwardQueue awardQueue
             )
         {
             _logger = logger;
             _serviceProvider = serviceProvider;
-            _discordErrorLogger = discordErrorLogger;
             _awardQueue = awardQueue;
         }
 
@@ -88,9 +85,6 @@ namespace Nellebot.Workers
                     if (!(ex is TaskCanceledException))
                     {
                         _logger.LogError(ex, "MessageAwardQueueWorker");
-
-                        var escapedError = DiscordErrorLogger.ReplaceTicks(ex.ToString());
-                        await _discordErrorLogger.LogDiscordError($"`{escapedError}`");
                     }
                 }
 

@@ -1,19 +1,14 @@
 ﻿using DSharpPlus;
-using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Nellebot;
 using Nellebot.Helpers;
 using Nellebot.Services;
+using Nellebot.Utils;
 using Nellebot.Workers;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Nellebot.EventHandlers
@@ -73,8 +68,17 @@ namespace Nellebot.EventHandlers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "OnMessageReactionAdded");
-                await _discordErrorLogger.LogDiscordError(ex.ToString());
+                _logger.LogError(ex, nameof(OnMessageReactionAdded));
+
+                var eventContextError = new EventErrorContext()
+                {
+                    EventName = nameof(OnMessageReactionAdded),
+                    User = eventArgs.User,
+                    Channel = eventArgs.Channel,
+                    Guild = eventArgs.Guild
+                };
+
+                await _discordErrorLogger.LogDiscordError(eventContextError, ex.ToString());
             }
         }
 
@@ -101,8 +105,17 @@ namespace Nellebot.EventHandlers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "OnMessageReactionRemoved");
-                await _discordErrorLogger.LogDiscordError(ex.ToString());
+                _logger.LogError(ex, nameof(OnMessageReactionRemoved));
+
+                var eventContextError = new EventErrorContext()
+                {
+                    EventName = nameof(OnMessageReactionRemoved),
+                    User = eventArgs.User,
+                    Channel = eventArgs.Channel,
+                    Guild = eventArgs.Guild
+                };
+
+                await _discordErrorLogger.LogDiscordError(eventContextError, ex.ToString());
             }
         }
 
@@ -124,8 +137,18 @@ namespace Nellebot.EventHandlers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "OnMessageUpdated");
-                await _discordErrorLogger.LogDiscordError(ex.ToString());
+                _logger.LogError(ex, nameof(OnMessageUpdated));
+
+                var eventContextError = new EventErrorContext()
+                {
+                    EventName = nameof(OnMessageUpdated),
+                    User = eventArgs.Author,
+                    Channel = eventArgs.Channel,
+                    Guild = eventArgs.Guild,
+                    Message = eventArgs.Message
+                };
+
+                await _discordErrorLogger.LogDiscordError(eventContextError, ex.ToString());
             }
         }
 
@@ -150,8 +173,17 @@ namespace Nellebot.EventHandlers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "OnMessageDeleted");
-                await _discordErrorLogger.LogDiscordError(ex.ToString());
+                _logger.LogError(ex, nameof(OnMessageDeleted));
+
+                var eventContextError = new EventErrorContext()
+                {
+                    EventName = nameof(OnMessageDeleted),
+                    User = null,
+                    Channel = eventArgs.Channel,
+                    Guild = eventArgs.Guild
+                };
+
+                await _discordErrorLogger.LogDiscordError(eventContextError, ex.ToString());
             }
         }
 

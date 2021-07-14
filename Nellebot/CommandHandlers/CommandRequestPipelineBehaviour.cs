@@ -1,5 +1,4 @@
-﻿using DSharpPlus.Entities;
-using MediatR;
+﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using Nellebot.Services;
 using System;
@@ -48,8 +47,7 @@ namespace Nellebot.CommandHandlers
 
             await ctx.RespondAsync(ex.Message);
 
-            var escapedError = DiscordErrorLogger.ReplaceTicks(ex.ToString());
-            await _discordErrorLogger.LogDiscordError($"`{escapedError}`");
+            await _discordErrorLogger.LogDiscordError(ctx, ex.ToString());
 
             _logger.LogError(ex, nameof(HandeCommandRequestException));
         }
