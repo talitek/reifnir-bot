@@ -73,7 +73,7 @@ namespace Nellebot.CommandHandlers.Ordbok
                 }
 
                 // Try to grab exact matches
-                var articles = allArticles.Where(x => x.Lemmas.Any(l => l.Value == query)).ToList();
+                var articles = allArticles.Where(x => x.Lemmas.Any(l => l.Value.Equals(query, StringComparison.OrdinalIgnoreCase))).ToList();
 
                 if (articles.Count == 0)
                 {
