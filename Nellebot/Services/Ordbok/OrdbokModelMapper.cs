@@ -127,8 +127,30 @@ namespace Nellebot.Services.Ordbok
                 .Cast<api.Example>()
                 .ToList();
 
-            vmResult.Explanations = explanations.Select(e => _contentParser.GetExplanationContent(e, dictionary)).ToList();
-            vmResult.Examples = examples.Select(e => e.Quote.Content).ToList();
+            var subArticles = definition.DefinitionElements
+                .Where(de => de is api.DefinitionSubArticle)
+                .Cast<api.DefinitionSubArticle>()
+                .ToList();
+
+            vmResult.Explanations = explanations.Select(x => _contentParser.GetExplanationContent(x, dictionary)).ToList();
+            vmResult.Examples = examples.Select(x => _contentParser.GetExampleContent(x, dictionary)).ToList();
+            vmResult.SubArticles = subArticles.Select(x => MapDefinitionSubArticle(x, dictionary)).ToList();
+
+            return vmResult;
+        }
+
+        public vm.SubArticle MapDefinitionSubArticle(api.DefinitionSubArticle subArticle, string dictionary)
+        {
+            var vmResult = new vm.SubArticle();
+
+            if(subArticle.Article?.Body == null)
+                return vmResult;  
+
+            vmResult.Lemmas = subArticle.Article.Body.Lemmas.Select(MapLemma).ToList();
+
+            vmResult.Explanations = MapDefinitions(subArticle.Article.Body.DefinitionElements, dictionary)
+                .SelectMany(x => x.Explanations)
+                .ToList();
 
             return vmResult;
         }

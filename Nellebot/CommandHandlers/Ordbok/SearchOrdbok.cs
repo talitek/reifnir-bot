@@ -87,7 +87,7 @@ namespace Nellebot.CommandHandlers.Ordbok
 
                 var htmlTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Html);
                 var htmlTemplate = Template.Parse(htmlTemplateSource);
-                var htmlTemplateResult = htmlTemplate.Render(new { Articles = articles, Dictionary = dictionary, QueryUrl = queryUrl });
+                var htmlTemplateResult = htmlTemplate.Render(new { Articles = articles, Dictionary = dictionary });
 
                 var truncatedContent = textTemplateResult.Substring(0, Math.Min(textTemplateResult.Length, 2000));
 

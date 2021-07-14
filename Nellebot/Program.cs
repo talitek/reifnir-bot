@@ -10,13 +10,11 @@ using Nellebot.Data;
 using Nellebot.Data.Repositories;
 using Nellebot.EventHandlers;
 using Nellebot.Services;
+using Nellebot.Services.HtmlToImage;
 using Nellebot.Services.Ordbok;
 using Nellebot.Utils;
 using Nellebot.Workers;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Nellebot
 {
@@ -62,6 +60,7 @@ namespace Nellebot
                     services.AddTransient<OrdbokModelMapper>();
                     services.AddTransient<IOrdbokContentParser, OrdbokContentParser>();
                     services.AddTransient<HtmlToImageService>();
+                    services.AddTransient<WkHtmlToImageClient>();
 
                     services.AddTransient<IUserRoleRepository, UserRoleRepository>();
                     services.AddTransient<AwardMessageRepository>();
