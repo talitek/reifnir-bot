@@ -99,7 +99,6 @@ namespace Nellebot.CommandHandlers.Ordbok
 
                 try
                 {
-
                     var result = await _htmlToImageService.GenerateImageFile(htmlTemplateResult);
 
                     if (!attachTemplate)
@@ -116,9 +115,7 @@ namespace Nellebot.CommandHandlers.Ordbok
                     _logger.LogError(ex, typeof(SearchOrdbok).FullName);
                 }
 
-                var message = await ctx.RespondAsync(db);
-
-                await message.ModifyEmbedSuppressionAsync(true);
+                await ctx.RespondAsync(db);
             }
         }
     }

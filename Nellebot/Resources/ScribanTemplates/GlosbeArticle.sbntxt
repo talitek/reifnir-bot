@@ -1,5 +1,5 @@
 ﻿**Glosbe**
-{{query_url}}
+<{{query_url}}>
 
 **{{article.lemma}}**:
 {{-for grammar_item in article.grammar_items-}}

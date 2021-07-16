@@ -63,9 +63,7 @@ namespace Nellebot.CommandHandlers.Glosbe
 
                 var trimmedResult = textTemplateResult.Trim();
 
-                var message = await ctx.RespondAsync(trimmedResult);
-
-                await message.ModifyEmbedSuppressionAsync(true);
+                await ctx.RespondAsync(trimmedResult);
             }
         }
     }

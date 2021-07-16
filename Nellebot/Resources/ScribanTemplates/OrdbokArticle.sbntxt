@@ -1,5 +1,5 @@
 ﻿**{{dictionary == "bob" ? "Bokmålsordboka" : "Nynorskordboka"}}**
-{{query_url}}
+<{{query_url}}>
 
 {{for article in articles-}}
 {{for lemma in article.lemmas-}}
