@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -23,7 +24,11 @@ namespace Nellebot.Services
                                         .First())
                                     .First();
 
-            var executablePath = Path.Combine(executableDirectory, "chrome.exe");
+            var executableFilename = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                                    ? "chrome.exe"
+                                    : "chrome";
+
+            var executablePath = Path.Combine(executableDirectory, executableFilename);
 
             var options = new LaunchOptions { Headless = true, ExecutablePath = executablePath };
 
