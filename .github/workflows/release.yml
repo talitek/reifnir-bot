@@ -61,9 +61,9 @@ jobs:
       with:  
         host: ${{secrets.VPS_HOST}}
         port: ${{secrets.VPS_PORT}}
-        username: ${{secrets.VPS_USER}}
-        password: ${{secrets.VPS_PASSWORD}}      
-        script: sudo systemctl stop nellebot
+        username: ${{secrets.NELLEBOT_USER}}
+        password: ${{secrets.NELLEBOT_PASSWORD}}      
+        script: systemctl --user stop nellebot
     
     - name: Deploy - Run deploy script
       uses: appleboy/ssh-action@master
