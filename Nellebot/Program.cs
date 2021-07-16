@@ -10,6 +10,7 @@ using Nellebot.Data;
 using Nellebot.Data.Repositories;
 using Nellebot.EventHandlers;
 using Nellebot.Services;
+using Nellebot.Services.Glosbe;
 using Nellebot.Services.HtmlToImage;
 using Nellebot.Services.Ordbok;
 using Nellebot.Utils;
@@ -38,6 +39,7 @@ namespace Nellebot
 
                     services.AddSingleton<SharedCache>();
                     services.AddSingleton<ILocalizationService, LocalizationService>();
+                    services.AddSingleton<PuppeteerFactory>();
 
                     services.AddHostedService<BotWorker>();
                     services.AddHostedService<CommandQueueWorker>();
@@ -61,6 +63,8 @@ namespace Nellebot
                     services.AddTransient<IOrdbokContentParser, OrdbokContentParser>();
                     services.AddTransient<HtmlToImageService>();
                     services.AddTransient<WkHtmlToImageClient>();
+                    services.AddTransient<GlosbeClient>();
+                    services.AddTransient<GlosbeModelMapper>();
 
                     services.AddTransient<IUserRoleRepository, UserRoleRepository>();
                     services.AddTransient<AwardMessageRepository>();

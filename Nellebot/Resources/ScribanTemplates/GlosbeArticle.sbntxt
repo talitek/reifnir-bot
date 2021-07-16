@@ -1,0 +1,28 @@
+﻿**Glosbe**
+{{query_url}}
+
+**{{article.lemma}}**:
+{{-for grammar_item in article.grammar_items-}}
+{{" "}}{{grammar_item}}{{if !for.last; ","; end}}
+{{-end}}
+
+{{~for translation_item in article.translation_items~}}
+**{{translation_item.lemma}}**: {{translation_item.grammar}}
+{{~if translation_item.translation_definition_groups.size > 0~}}
+{{translation_item.translation_definition_groups.size == 1 ? "*Definition*" : "*Definitions*"}}
+{{~for definition_group in translation_item.translation_definition_groups~}}
+{{~for definition in definition_group.translation_definitions~}}
+*{{definition.language}}* {{definition.value}}
+{{~end~}}
+{{~end~}}
+{{~end~}}
+{{~if translation_item.translation_example != empty~}}
+*Example*
+{{~example = translation_item.translation_example~}}
+*{{example.original_language_value}}* {{example.original_language_example}}
+*{{example.target_language_value}}* {{example.target_language_example}}
+{{~end~}}
+{{~if !for.last~}}
+
+{{~end~}}
+{{~end~}}

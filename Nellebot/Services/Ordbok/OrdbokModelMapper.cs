@@ -3,7 +3,6 @@ using System.Linq;
 using vm = Nellebot.Common.Models.Ordbok.ViewModels;
 using api = Nellebot.Common.Models.Ordbok.Api;
 using Nellebot.Common.Extensions;
-using System.Text.RegularExpressions;
 
 namespace Nellebot.Services.Ordbok
 {

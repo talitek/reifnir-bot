@@ -3,10 +3,6 @@ using DSharpPlus.CommandsNext.Attributes;
 using Nellebot.Attributes;
 using Nellebot.Common.Models.Ordbok;
 using Nellebot.Workers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using static Nellebot.CommandHandlers.Ordbok.SearchOrdbok;
 using static Nellebot.CommandHandlers.Ordbok.SearchOrdbokDebug;
@@ -14,6 +10,7 @@ using static Nellebot.CommandHandlers.Ordbok.SearchOrdbokDebug;
 namespace Nellebot.CommandModules
 {
     [BaseCommandCheck]
+    [ModuleLifespan(ModuleLifespan.Transient)]
     public class OrdbokModule : BaseCommandModule
     {
         private readonly CommandQueue _commandQueue;
