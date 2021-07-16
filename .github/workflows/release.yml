@@ -53,7 +53,7 @@ jobs:
         username: ${{secrets.VPS_USER}}
         password: ${{secrets.VPS_PASSWORD}}        
         source: "/home/runner/work/reifnir-bot/reifnir-bot/deploy/"
-        target: "/usr/nellebot-deploy"
+        target: "/home/nellebot-user/nellebot-deploy"
         rm: true
     
     - name: Deploy - Stop service
@@ -72,7 +72,7 @@ jobs:
         port: ${{secrets.VPS_PORT}}
         username: ${{secrets.VPS_USER}}
         password: ${{secrets.VPS_PASSWORD}}      
-        script: sudo /usr/nellebot-deploy.sh
+        script: sudo /home/nellebot-user/nellebot-deploy.sh
  
     - name: Deploy - Change Nellebot permission
       uses: appleboy/ssh-action@master
@@ -81,7 +81,7 @@ jobs:
         port: ${{secrets.VPS_PORT}}
         username: ${{secrets.VPS_USER}}
         password: ${{secrets.VPS_PASSWORD}}      
-        script: sudo chmod 777 /usr/nellebot/Nellebot
+        script: sudo chmod 777 /home/nellebot-user/nellebot/Nellebot
 
     - name: Deploy - Backup database
       if: github.event.inputs.updateDatabase == 'auto' || github.event.inputs.updateDatabase == 'manual'
@@ -91,7 +91,7 @@ jobs:
         port: ${{secrets.VPS_PORT}}
         username: ${{secrets.VPS_USER}}
         password: ${{secrets.VPS_PASSWORD}}      
-        script: sudo /usr/nellebot-backup-db.sh
+        script: sudo /home/nellebot-user/nellebot-backup-db.sh
  
     - name: Deploy - Run database migration script
       if: github.event.inputs.updateDatabase == 'auto'
@@ -101,7 +101,7 @@ jobs:
         port: ${{secrets.VPS_PORT}}
         username: ${{secrets.VPS_USER}}
         password: ${{secrets.VPS_PASSWORD}}      
-        script: sudo psql -U postgres -d nellebot -q -f /usr/nellebot/database_migration.sql
+        script: sudo psql -U postgres -d nellebot -q -f /home/nellebot-user/nellebot/database_migration.sql
  
     - name: Deploy - Start service
       if: github.event.inputs.updateDatabase == 'no' || github.event.inputs.updateDatabase == 'auto'
@@ -109,6 +109,6 @@ jobs:
       with:  
         host: ${{secrets.VPS_HOST}}
         port: ${{secrets.VPS_PORT}}
-        username: ${{secrets.VPS_USER}}
-        password: ${{secrets.VPS_PASSWORD}}      
-        script: sudo systemctl start nellebot
+        username: ${{secrets.NELLEBOT_USER}}
+        password: ${{secrets.NELLEBOT_PASSWORD}}      
+        script: systemctl --user start nellebot

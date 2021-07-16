@@ -3,8 +3,8 @@ Description=Nellebot
 
 [Service]
 Type=notify
-ExecStart=/usr/nellebot/Nellebot
-WorkingDirectory=/usr/nellebot
+ExecStart=/home/nellebot-user/nellebot/Nellebot
+WorkingDirectory=/home/nellebot-user/nellebot
 Environment=DOTNET_ENVIRONMENT=Production
 
 [Install]

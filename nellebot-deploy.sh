@@ -1,10 +1,10 @@
 #! /bin/bash
 
 # empty directory
-rm -rf /usr/nellebot
+rm -rf /home/nellebot-user/nellebot
 
 # recreate it
-mkdir -p /usr/nellebot
+mkdir -p /home/nellebot-user/nellebot
 
 # copy files from deploy to app directory
-cp -r /usr/nellebot-deploy/github/workspace/deploy/. /usr/nellebot
+cp -r /home/nellebot-user/nellebot-deploy/github/workspace/deploy/. /home/nellebot-user/nellebot
