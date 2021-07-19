@@ -1,7 +1,4 @@
-﻿**Glosbe**
-<{{query_url}}>
-
-**{{article.lemma}}**:
+﻿**{{article.lemma}}**:
 {{-for grammar_item in article.grammar_items-}}
 {{" "}}{{grammar_item}}{{if !for.last; ","; end}}
 {{-end}}

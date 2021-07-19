@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Nellebot.Services;
 using Nellebot.Services.Ordbok;
+using Nellebot.Utils;
 using Scriban;
 using System;
 using System.IO;
@@ -86,28 +87,41 @@ namespace Nellebot.CommandHandlers.Ordbok
 
                 var textTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Text);
                 var textTemplate = Template.Parse(textTemplateSource);
-                var textTemplateResult = textTemplate.Render(new { articles, dictionary, queryUrl });
+                var textTemplateResult = textTemplate.Render(new { articles });
 
                 var htmlTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Html);
                 var htmlTemplate = Template.Parse(htmlTemplateSource);
                 var htmlTemplateResult = htmlTemplate.Render(new { articles, dictionary });
 
-                var truncatedContent = textTemplateResult.Substring(0, Math.Min(textTemplateResult.Length, 2000));
+                var truncatedContent = textTemplateResult.Substring(0, Math.Min(textTemplateResult.Length, DiscordConstants.MaxEmbedContentLength));
 
-                var db = new DiscordMessageBuilder()
-                   .WithContent(truncatedContent);
+                var eb = new DiscordEmbedBuilder()
+                    .WithTitle(dictionary == "bob" ? "Bokmålsordboka" : "Nynorskordboka")
+                    .WithUrl(queryUrl)
+                    .WithDescription(truncatedContent)
+                    .WithFooter("Universitetet i Bergen og Språkrådet - ordbok.uib.no")
+                    .WithColor(DiscordConstants.EmbedColor); 
+
+                var mb = new DiscordMessageBuilder();
+
+                FileStream? imageFileStream = null;
+                FileStream? htmlFileStream = null;
 
                 try
                 {
                     var result = await _htmlToImageService.GenerateImageFile(htmlTemplateResult);
 
+                    imageFileStream = result.ImageFileStream;
+                    htmlFileStream = result.HtmlFileStream;
+
                     if (!attachTemplate)
                     {
-                        db = db.WithFile(result.ImageFilePath);
+                        eb = eb.WithImageUrl($"attachment://{result.ImageFileName}");
+                        mb = mb.WithFile(result.ImageFileName, result.ImageFileStream);
                     }
                     else
                     {
-                        db = db.WithFile(result.HtmlFilePath);
+                        mb = mb.WithFile(result.HtmlFileStream);
                     }
                 }
                 catch (Exception ex)
@@ -115,7 +129,15 @@ namespace Nellebot.CommandHandlers.Ordbok
                     _logger.LogError(ex, typeof(SearchOrdbok).FullName);
                 }
 
-                await ctx.RespondAsync(db);
+                mb = mb.WithEmbed(eb.Build());
+
+                await ctx.RespondAsync(mb);
+
+                if(imageFileStream != null)
+                    await imageFileStream.DisposeAsync();
+
+                if (htmlFileStream != null)
+                    await htmlFileStream.DisposeAsync();
             }
         }
     }

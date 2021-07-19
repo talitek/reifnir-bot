@@ -39,16 +39,34 @@ namespace Nellebot.Services
 
             await _wkHtmlToImageClient.GenerateImage(args);
 
-            return new GenerateImageFileResult {
-                ImageFilePath = tempImageFilePath,
-                HtmlFilePath = tempHtmlFilePath                
+            var imageFileStream = await ReadFileAsync(tempImageFilePath);
+            var htmlFileStream = await ReadFileAsync(tempHtmlFilePath);
+
+            return new GenerateImageFileResult
+            {
+                ImageFileName = $"{fileName}.png",
+                ImageFileStream = imageFileStream,
+                HtmlFileStream = htmlFileStream
             };
+        }
+
+        private async Task<FileStream> ReadFileAsync(string filePath)
+        {
+            var imageFileStream = File.OpenRead(filePath);
+            var sr = new StreamReader(imageFileStream);
+            await sr.ReadToEndAsync();
+
+            await imageFileStream.FlushAsync();
+            imageFileStream.Position = 0;
+
+            return imageFileStream;
         }
     }
 
     public class GenerateImageFileResult
     {
-        public string ImageFilePath { get; set; } = string.Empty;
-        public string HtmlFilePath { get; set; } = string.Empty;
+        public string ImageFileName { get; set; } = string.Empty;
+        public FileStream ImageFileStream = null!;
+        public FileStream HtmlFileStream = null!;
     }
 }

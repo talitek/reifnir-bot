@@ -72,7 +72,7 @@ namespace Nellebot.CommandModules
             var embedBuilder = new DiscordEmbedBuilder()
                 .WithAuthor(mention, null, member.AvatarUrl)
                 .WithTitle("Cookie stats")
-                .WithColor(9648895); // #933aff 
+                .WithColor(DiscordConstants.EmbedColor);
 
             if (userAwardStats.TotalAwardCount == 0)
             {

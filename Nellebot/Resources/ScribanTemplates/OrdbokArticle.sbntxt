@@ -1,7 +1,4 @@
-﻿**{{dictionary == "bob" ? "Bokmålsordboka" : "Nynorskordboka"}}**
-<{{query_url}}>
-
-{{for article in articles-}}
+﻿{{for article in articles-}}
 {{for lemma in article.lemmas-}}
 {{lemma.hg_no != "" ? lemma.hg_no + " " : ""}}**{{lemma.value}}**
 {{-for paradigm in lemma.unique_paradigm_values}} {{paradigm}}

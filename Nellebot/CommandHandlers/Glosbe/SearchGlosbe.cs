@@ -1,8 +1,10 @@
 ﻿using DSharpPlus.CommandsNext;
+using DSharpPlus.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Nellebot.Services;
 using Nellebot.Services.Glosbe;
+using Nellebot.Utils;
 using Scriban;
 using System;
 using System.Collections.Generic;
@@ -59,11 +61,19 @@ namespace Nellebot.CommandHandlers.Glosbe
 
                 var textTemplateSource = await _templateLoader.LoadTemplate("GlosbeArticle", ScribanTemplateType.Text);
                 var textTemplate = Template.Parse(textTemplateSource);
-                var textTemplateResult = textTemplate.Render(new { model.Article, model.QueryUrl });
+                var textTemplateResult = textTemplate.Render(new { model.Article });
 
                 var trimmedResult = textTemplateResult.Trim();
+                var truncatedContent = trimmedResult.Substring(0, Math.Min(trimmedResult.Length, DiscordConstants.MaxEmbedContentLength));
 
-                await ctx.RespondAsync(trimmedResult);
+                var eb = new DiscordEmbedBuilder()
+                    .WithTitle("Glosbe")
+                    .WithUrl(model.QueryUrl)
+                    .WithDescription(truncatedContent)
+                    .WithFooter("Glosbe.com")
+                    .WithColor(DiscordConstants.EmbedColor);
+
+                await ctx.RespondAsync(eb.Build());
             }
         }
     }

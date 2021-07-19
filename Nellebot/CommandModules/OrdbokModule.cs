@@ -5,7 +5,6 @@ using Nellebot.Common.Models.Ordbok;
 using Nellebot.Workers;
 using System.Threading.Tasks;
 using static Nellebot.CommandHandlers.Ordbok.SearchOrdbok;
-using static Nellebot.CommandHandlers.Ordbok.SearchOrdbokDebug;
 
 namespace Nellebot.CommandModules
 {
@@ -38,34 +37,6 @@ namespace Nellebot.CommandModules
         public Task OrdbokSearchNynorsk(CommandContext ctx, [RemainingText] string query)
         {
             var searchOrdbokRequest = new SearchOrdbokRequest(ctx)
-            {
-                Dictionary = OrdbokDictionaryMap.Nynorsk,
-                Query = query
-            };
-
-            _commandQueue.Enqueue(searchOrdbokRequest);
-
-            return Task.CompletedTask;
-        }
-
-        [Command("bm-d")]
-        public Task OrdbokSearchBokmalDebug(CommandContext ctx, [RemainingText] string query)
-        {
-            var searchOrdbokRequest = new SearchOrdbokDebugRequest(ctx)
-            {
-                Dictionary = OrdbokDictionaryMap.Bokmal,
-                Query = query
-            };
-
-            _commandQueue.Enqueue(searchOrdbokRequest);
-
-            return Task.CompletedTask;
-        }
-
-        [Command("nn-d")]
-        public Task OrdbokSearchNynorskDebug(CommandContext ctx, [RemainingText] string query)
-        {
-            var searchOrdbokRequest = new SearchOrdbokDebugRequest(ctx)
             {
                 Dictionary = OrdbokDictionaryMap.Nynorsk,
                 Query = query
