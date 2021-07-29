@@ -127,6 +127,9 @@ namespace Nellebot.EventHandlers
                 var message = eventArgs.Message;
                 var user = eventArgs.Author;
 
+                if (message == null)
+                    throw new Exception($"{nameof(eventArgs.Message)} is null");
+
                 if (!ShouldHandleReaction(channel, user))
                     return;
 
@@ -219,10 +222,14 @@ namespace Nellebot.EventHandlers
         ///// <returns></returns>
         private bool ShouldHandleReaction(DiscordChannel channel, DiscordUser author)
         {
-            if (channel.IsPrivate)
+            // This seems to happen because of the newly introduced Threads feature
+            if (author == null)
                 return false;
 
             if (author.IsBot || (author.IsSystem ?? false))
+                return false;
+
+            if (channel.IsPrivate)
                 return false;
 
             return true;
