@@ -10,9 +10,7 @@ namespace Nellebot.Services.Ordbok
     {
         private readonly IOrdbokContentParser _contentParser;
 
-        public OrdbokModelMapper(
-            IOrdbokContentParser contentParser
-            )
+        public OrdbokModelMapper(IOrdbokContentParser contentParser)
         {
             _contentParser = contentParser;
         }
@@ -56,9 +54,12 @@ namespace Nellebot.Services.Ordbok
                 vmResult.Value = paradigm.InflectionGroup.ToLower() switch
                 {
                     // TODO figure out how to differentiate between n1/n2, etc.
-                    "noun" => $"{paradigm.Tags[1].ToLower()[0]}",
+                    "noun" => $"{paradigm.Tags[1].ToLower()[0]}", 
+                    "noun_regular" => $"{paradigm.Tags[1].ToLower()[0]}",
                     "verb" => "v2",
+                    "verb_regular" => "v2",
                     // should be a1,a2 probably
+                    "adj_regular" => "adj.",
                     "adj" => "adj.",
                     "adv" => "adv.",
                     "det_simple" => "det.",
