@@ -33,5 +33,10 @@ namespace Nellebot.Services
 
             return roles;
         }
+
+        public async Task<IEnumerable<UserRole>> GetRoleList()
+        {
+            return await _userRoleRepo.GetRoleList();
+        }
     }
 }

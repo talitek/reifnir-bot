@@ -30,6 +30,7 @@ namespace Nellebot.CommandModules
             sb.AppendLine("**Roles on NELLE**");
             sb.AppendLine($"On NELLE, you can assign roles to yourself using the `{commandPrefix}role` command followed by the `name` of the role.");
             sb.AppendLine($"To unassign a role from yourself, type the same command again.");
+            sb.AppendLine($"To view all the available roles, type `{commandPrefix}roles`.");
 
             sb.AppendLine();
             sb.AppendLine("Examples:");

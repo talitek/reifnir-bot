@@ -224,7 +224,9 @@ namespace Nellebot.CommandModules
 
                     sb.AppendLine($"* {userRole.Name}: {formattedAliasList}");
                 }
-            }
+
+                sb.AppendLine();
+            }            
 
             var message = sb.ToString();
 
@@ -396,7 +398,6 @@ namespace Nellebot.CommandModules
             sb.AppendLine($"`{command} update-role [role] [role-name]`");
             sb.AppendLine($"`{command} delete-role [role]`");
             sb.AppendLine($"`{command} get-role [role]`");
-            sb.AppendLine($"`{command} list-roles`");
             sb.AppendLine($"`{command} add-alias [role] [alias-name]`");
             sb.AppendLine($"`{command} remove-alias [role] [alias-name]`");
             sb.AppendLine($"`{command} set-group [role] [group-number]`");

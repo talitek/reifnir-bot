@@ -35,6 +35,36 @@ namespace Nellebot.CommandModules
             _options = options.Value;
         }
 
+        [Command("roles")]
+        public async Task GetRoleList(CommandContext ctx)
+        {
+            var userRoles = await _roleService.GetRoleList();
+
+            var sb = new StringBuilder();
+
+            sb.AppendLine("**List of roles**");
+
+            var roleGroups = userRoles
+                .GroupBy(r => r.GroupNumber)
+                .OrderBy(r => r.Key.HasValue ? r.Key : int.MaxValue);
+
+            foreach (var roleGroup in roleGroups)
+            {
+                foreach (var userRole in roleGroup.ToList())
+                {
+                    var formattedAliasList = string.Join(", ", userRole.UserRoleAliases.Select(x => x.Alias));
+
+                    sb.AppendLine($"* {userRole.Name}: {formattedAliasList}");
+                }
+
+                sb.AppendLine();
+            }
+
+            var message = sb.ToString();
+
+            await ctx.RespondAsync(message);
+        }
+
         [Command("role")]
         public async Task SetSelfRole(CommandContext ctx, string alias)
         {
@@ -44,7 +74,7 @@ namespace Nellebot.CommandModules
 
             if(userRole == null)
             {
-                await ctx.RespondAsync($"{alias} role does not exist");
+                await ctx.RespondAsync($"**{alias}** role does not exist");
                 return;
             }
 

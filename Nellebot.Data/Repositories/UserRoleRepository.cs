@@ -65,6 +65,7 @@ namespace Nellebot.Data.Repositories
         {
             var roles = await _dbContext.UserRoles
                 .Include(x => x.UserRoleAliases)
+                .OrderBy(x => x.Name)
                 .ToListAsync();
 
             return roles;
