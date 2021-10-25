@@ -17,12 +17,12 @@ namespace Nellebot.Services
             _userRoleRepo = userRoleRepo;
         }
 
-        public async Task<UserRole> GetUserRoleByAlias(string alias)
+        public async Task<UserRole> GetUserRoleByNameOrAlias(string roleName)
         {
-            if (string.IsNullOrWhiteSpace(alias))
-                throw new ArgumentException("Alias cannot be empty");
+            if (string.IsNullOrWhiteSpace(roleName))
+                throw new ArgumentException("Role name cannot be empty");
 
-            var role = await _userRoleRepo.GetRoleByAlias(alias.Trim().ToLower());
+            var role = await _userRoleRepo.GetRoleByNameOrAlias(roleName.Trim().ToLower());
 
             return role;
         }

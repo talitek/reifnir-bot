@@ -16,7 +16,7 @@ namespace Nellebot.Data.Repositories
         Task<IEnumerable<UserRole>> GetRoleList();
         Task<UserRole> UpdateRole(Guid userRoleId, string name);
         Task<UserRole> UpdateRoleGroup(Guid id, uint? groupNumber);
-        Task<UserRole> GetRoleByAlias(string alias);
+        Task<UserRole> GetRoleByNameOrAlias(string alias);
         Task<List<UserRole>> GetRolesByGroup(uint groupNumber);
     }
 }

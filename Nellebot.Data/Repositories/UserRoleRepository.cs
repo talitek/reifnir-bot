@@ -113,11 +113,16 @@ namespace Nellebot.Data.Repositories
             return role;
         }
 
-        public async Task<UserRole> GetRoleByAlias(string alias)
+        public async Task<UserRole> GetRoleByNameOrAlias(string roleName)
         {
-            var role = await _dbContext.UserRoles
+            var role = await _dbContext.UserRoles.FirstOrDefaultAsync(x => x.Name.ToLower() == roleName);
+
+            if(role == null)
+            {
+                role = await _dbContext.UserRoles
                 .Include(x => x.UserRoleAliases)
-                .SingleOrDefaultAsync(r => r.UserRoleAliases.Select(a => a.Alias).Contains(alias));
+                .SingleOrDefaultAsync(r => r.UserRoleAliases.Select(a => a.Alias).Contains(roleName));
+            }            
 
             return role;
         }

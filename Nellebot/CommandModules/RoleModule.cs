@@ -54,7 +54,7 @@ namespace Nellebot.CommandModules
                 {
                     var formattedAliasList = string.Join(", ", userRole.UserRoleAliases.Select(x => x.Alias));
 
-                    sb.AppendLine($"* {userRole.Name}: {formattedAliasList}");
+                    sb.AppendLine($"* {userRole.Name} (or {formattedAliasList})");
                 }
 
                 sb.AppendLine();
@@ -66,15 +66,15 @@ namespace Nellebot.CommandModules
         }
 
         [Command("role")]
-        public async Task SetSelfRole(CommandContext ctx, string alias)
+        public async Task SetSelfRole(CommandContext ctx, [RemainingText] string roleName)
         {
             var member = ctx.Member;
 
-            var userRole = await _roleService.GetUserRoleByAlias(alias);
+            var userRole = await _roleService.GetUserRoleByNameOrAlias(roleName);
 
             if(userRole == null)
             {
-                await ctx.RespondAsync($"**{alias}** role does not exist");
+                await ctx.RespondAsync($"**{roleName}** role does not exist");
                 return;
             }
 
