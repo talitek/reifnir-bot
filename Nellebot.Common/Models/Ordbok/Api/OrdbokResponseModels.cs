@@ -8,6 +8,12 @@ using System.Threading.Tasks;
 
 namespace Nellebot.Common.Models.Ordbok.Api
 {
-    public class OrdbokSearchResponse : List<Article> { }
+    public class OrdbokSearchResponse 
+    {
+        [JsonPropertyName("bm")]
+        public List<int>? BokmalArticleIds { get; set; }
 
+        [JsonPropertyName("nn")]
+        public List<int>? NynorskArticleIds { get; set; }
+    }
 }

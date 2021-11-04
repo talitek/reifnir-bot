@@ -22,106 +22,35 @@ namespace Nellebot.Tests
     public class OrdbokTests
     {
         [TestMethod]
-        public async Task TestDeserialization()
+        public async Task TestArticleDeserialization()
         {
             var directory = AppDomain.CurrentDomain.BaseDirectory;
 
-            var file = Path.Combine(directory, "TestFiles/test.json");
+            var file = Path.Combine(directory, "TestFiles/test_hus_66433.json");
 
             var json = await File.ReadAllTextAsync(file);
 
             try
             {
-                var result = JsonSerializer.Deserialize<api.OrdbokSearchResponse>(json);
+                var result = JsonSerializer.Deserialize<api.Article>(json);
+
+                var localizationService = new Mock<ILocalizationService>();
+
+                localizationService
+                    .Setup(m => m.GetString(It.IsAny<string>(), It.IsAny<LocalizationResource>(), It.IsAny<string>()))
+                    .Returns((string s, LocalizationResource rs, string loc) => s);
+
+                var ordbokContentParser = new OrdbokContentParser(localizationService.Object);
+
+                var modelMapper = new OrdbokModelMapper(ordbokContentParser);
+
+                var article = modelMapper.MapArticle(result!);
 
             }
             catch (Exception ex)
             {
                 Assert.Fail(ex.ToString());
             }
-        }
-
-        [TestMethod]
-        public async Task TestModelMapping()
-        {
-            try
-            {
-                var query = "fly";
-
-                var allArticles = await LoadTestModel();
-
-                var articles = allArticles.Where(x => x.Lemmas.Any(l => l.Value == query)).ToList();
-
-                if (articles.Count == 0)
-                {
-                    articles = allArticles.Take(5).ToList();
-                }
-
-                articles = articles.OrderBy(a => a.Lemmas.Max(l => l.HgNo)).ToList();
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail(ex.ToString());
-            }
-        }
-
-        [TestMethod]
-        public async Task TestHtmlGenerationMapping()
-        {
-            var wkHtmlClient = new WkHtmlToImageClient();
-            var logger = new Mock<ILogger<HtmlToImageService>>();
-            var htmlToImageService = new HtmlToImageService(wkHtmlClient, logger.Object);
-
-            try
-            {
-                var query = "fly";
-
-                var allArticles = await LoadTestModel();
-
-                var articles = allArticles.Where(x => x.Lemmas.Any(l => l.Value == query)).ToList();
-
-                if (articles.Count == 0)
-                {
-                    articles = allArticles.Take(5).ToList();
-                }
-
-                articles = articles.OrderBy(a => a.Lemmas.Max(l => l.HgNo)).ToList();
-
-                var htmlTemplateSource = await File.ReadAllTextAsync($"TestFiles/TestOrdbokArticle.sbnhtml");
-                var htmlTemplate = Template.Parse(htmlTemplateSource);
-                var htmlTemplateResult = htmlTemplate.Render(new { Articles = articles, Dictionary = "nob" });
-
-                var imagePath = await htmlToImageService.GenerateImageFile(htmlTemplateResult);
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail(ex.ToString());
-            }
-        }
-
-        private async Task<List<vm.Article>> LoadTestModel()
-        {
-            var directory = AppDomain.CurrentDomain.BaseDirectory;
-
-            var file = Path.Combine(directory, "TestFiles/test.json");
-
-            var json = await File.ReadAllTextAsync(file);
-
-            var result = JsonSerializer.Deserialize<api.OrdbokSearchResponse>(json);
-
-            var localizationService = new Mock<ILocalizationService>();
-
-            localizationService
-                .Setup(m => m.GetString(It.IsAny<string>(), It.IsAny<LocalizationResource>(), It.IsAny<string>()))
-                .Returns((string s, LocalizationResource rs, string loc) => s);
-
-            var ordbokContentParser = new OrdbokContentParser(localizationService.Object);
-
-            var modelMapper = new OrdbokModelMapper(ordbokContentParser);
-
-            var articles = result!.Select(modelMapper.MapArticle).ToList();
-
-            return articles;
         }
     }
 }

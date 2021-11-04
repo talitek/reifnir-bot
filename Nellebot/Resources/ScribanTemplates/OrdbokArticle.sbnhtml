@@ -35,7 +35,7 @@
         }
 
         .inline-list-items > li  {
-            display: inline-block;
+            display: inline;
         }
 
         .definition-list {
@@ -58,7 +58,7 @@
     </style>
 </head>
 <body>
-    <h1 class="title">{{dictionary == "bob" ? "Bokmålsordboka" : "Nynorskordboka"}}</h1>
+    <h1 class="title">{{dictionary == "bm" ? "Bokmålsordboka" : "Nynorskordboka"}}</h1>
 
     <ul class="article-list">
     {{~for article in articles~}}
@@ -66,7 +66,7 @@
         <ul class="inline-list inline-list-items">
         {{~for lemma in article.lemmas~}}
             <li>    
-                <span>{{lemma.hg_no != "" ? lemma.hg_no + " " : ""}}<b>{{lemma.value}}</b></span>
+                <span>{{lemma.hg_no_roman != "" ? lemma.hg_no_roman + " " : ""}}<b>{{lemma.value}}</b></span>
                 <ul class="inline-list inline-list-items">
                 {{~for paradigm in lemma.unique_paradigm_values~}}
                     <li>
@@ -129,28 +129,6 @@
                     </li>
                 {{~end~}}
                 </ol>
-
-                <ul class="sub-articles">
-                    {{~for subArticle in definition.sub_articles~}}
-                    <li>
-                        <ul class="inline-list inline-list-items">
-                            {{~for subArticleLemma in subArticle.lemmas~}}
-                                <li>
-                                    <b>{{subArticleLemma.value}}&nbsp;</b>
-                                </li>
-                            {{~end~}}
-                        </ul>
-
-                        <ul class="inline-list inline-lit-items">
-                            {{~for subArticleExplanation in subArticle.explanations~}}
-                                <li>
-                                    <span>{{subArticleExplanation}}&nbsp;</span>
-                                </li>
-                            {{~end~}}
-                        </ul>
-                    </li>
-                    {{~end~}}
-                </ul>
             </li>
             {{~end~}}
         </ol>

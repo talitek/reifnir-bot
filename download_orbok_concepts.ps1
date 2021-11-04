@@ -1,29 +1,33 @@
-$apiKey = Read-Host "OrdbokApiKey";
-
-$baseRequestUrl = "https://beta.ordbok.uib.no/api/dict";
+$baseRequestUrl = "https://ord.uib.no";
 
 $bob = [PSCustomObject]@{
-    name = 'bob'
+    name = 'bm'
     fileSuffix = 'no_nb'
 };
 
 $nob = [PSCustomObject]@{
-    name = 'nob'
+    name = 'nn'
     fileSuffix = 'no_nn'
 };
 
 $dictionaries = @($bob, $nob);
 
+$tempFile = "temp_file.txt";
+
 foreach ($dictionary in $dictionaries) {
     $dictName = $dictionary.name;
     $dictFileSuffix = $dictionary.fileSuffix;
 
-    $requestUrl = "${baseRequestUrl}/${dictName}";
-    $requestHeaders = @{'x-api-key' = $apiKey };
+    $requestUrl = "${baseRequestUrl}/${dictName}/concepts.json";
+    $requestHeaders = @{'Accept' = 'application/json; charset=utf-8'};
 
-    $result = Invoke-WebRequest $requestUrl -Headers $requestHeaders | ConvertFrom-Json;
+    $response = Invoke-WebRequest $requestUrl -Headers $requestHeaders -OutFile $tempFile;
+
+    $responseJson = Get-Content $tempFile -Encoding UTF8 -Raw | ConvertFrom-Json
+
+    Remove-Item $tempFile -Force
     
-    $conceptMap = $result.concepts;
+    $conceptMap = $responseJson.concepts;
     
     $sb = [System.Text.StringBuilder]::new();
     
@@ -38,8 +42,8 @@ foreach ($dictionary in $dictionaries) {
     
     [void]$sb.AppendLine("}");
     
-    $result = $sb.ToString();
+    $conceptData = $sb.ToString();
     
     #Write-Output $result;
-    $result | Out-File "OrdbokConcepts_${dictFileSuffix}.json";
+    $conceptData | Out-File "OrdbokConcepts_${dictFileSuffix}.json";
 }

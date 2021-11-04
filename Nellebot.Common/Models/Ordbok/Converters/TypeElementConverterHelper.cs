@@ -5,6 +5,7 @@ namespace Nellebot.Common.Models.Ordbok.Converters
     public static class TypeElementConverterHelper
     {
         public static readonly string TypePropertyName = "type_";
+        public static readonly int MaxPropertiesToTraverse = 100;
 
         public static string GetTypeDiscriminator(ref Utf8JsonReader reader)
         {
@@ -21,7 +22,19 @@ namespace Nellebot.Common.Models.Ordbok.Converters
                 throw new JsonException();
             }
 
-            var propertyName = readerClone.GetString();
+            var traversedPropertyCount = 0;
+
+            var propertyName = readerClone.GetString();           
+
+            while(propertyName != TypePropertyName && traversedPropertyCount < MaxPropertiesToTraverse)
+            {
+                traversedPropertyCount++;
+
+                readerClone.Skip();
+                readerClone.Read();
+                propertyName = readerClone.GetString();                
+            }
+
             if (propertyName != TypePropertyName)
             {
                 throw new JsonException();

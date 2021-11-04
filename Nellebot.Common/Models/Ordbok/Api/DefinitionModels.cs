@@ -103,12 +103,12 @@ namespace Nellebot.Common.Models.Ordbok.Api
         public string Content { get; set; } = string.Empty;
     }
 
-    public class DefinitionSubArticle : DefinitionElement
-    {
-        [JsonPropertyName("article_id")]
-        public int ArticleId { get; set; }
-        [JsonPropertyName("article")]
-        public SubArticle Article { get; set; } = null!;
-        // intro?
-    }
+    //public class DefinitionSubArticle : DefinitionElement
+    //{
+    //    [JsonPropertyName("article_id")]
+    //    public int ArticleId { get; set; }
+    //    [JsonPropertyName("article")]
+    //    public SubArticle Article { get; set; } = null!;
+    //    // intro?
+    //}
 }

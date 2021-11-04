@@ -2,15 +2,20 @@
 using DSharpPlus.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Nellebot.Common.Models.Ordbok;
 using Nellebot.Services;
 using Nellebot.Services.Ordbok;
 using Nellebot.Utils;
 using Scriban;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using vm = Nellebot.Common.Models.Ordbok.ViewModels;
+using api = Nellebot.Common.Models.Ordbok.Api;
 
 namespace Nellebot.CommandHandlers.Ordbok
 {
@@ -59,48 +64,32 @@ namespace Nellebot.CommandHandlers.Ordbok
 
                 var searchResponse = await _ordbokClient.Search(request.Dictionary, query);
 
-                if (searchResponse == null)
-                {
-                    await ctx.RespondAsync($"no result");
-                    return;
-                }
+                var articleIds = dictionary == OrdbokDictionaryMap.Bokmal ? searchResponse?.BokmalArticleIds : searchResponse?.NynorskArticleIds;
 
-                var allArticles = searchResponse.Select(_ordbokModelMapper.MapArticle).ToList();
-
-                if (allArticles.Count == 0)
+                if (articleIds == null || articleIds.Count == 0)
                 {
                     await ctx.RespondAsync("No match");
                     return;
                 }
 
-                // Try to grab exact matches
-                var articles = allArticles.Where(x => x.Lemmas.Any(l => l.Value.Equals(query, StringComparison.OrdinalIgnoreCase))).ToList();
+                var ordbokArticles = await _ordbokClient.GetArticles(dictionary, articleIds);
 
-                if (articles.Count == 0)
-                {
-                    articles = allArticles.Take(5).ToList();
-                }
-
-                articles = articles.OrderBy(a => a.Lemmas.Max(l => l.HgNo)).ToList();
+                var articles = MapAndSelectArticles(query, ordbokArticles);
 
                 var queryUrl = $"https://ordbok.uib.no/?OPP={query}";
 
-                var textTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Text);
-                var textTemplate = Template.Parse(textTemplateSource);
-                var textTemplateResult = textTemplate.Render(new { articles });
+                string textTemplateResult = await RenderTextTemplate(articles);
 
-                var htmlTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Html);
-                var htmlTemplate = Template.Parse(htmlTemplateSource);
-                var htmlTemplateResult = htmlTemplate.Render(new { articles, dictionary });
+                string htmlTemplateResult = await RenderHtmlTemplate(dictionary, articles);
 
                 var truncatedContent = textTemplateResult.Substring(0, Math.Min(textTemplateResult.Length, DiscordConstants.MaxEmbedContentLength));
 
                 var eb = new DiscordEmbedBuilder()
-                    .WithTitle(dictionary == "bob" ? "Bokmålsordboka" : "Nynorskordboka")
+                    .WithTitle(dictionary == OrdbokDictionaryMap.Bokmal ? "Bokmålsordboka" : "Nynorskordboka")
                     .WithUrl(queryUrl)
                     .WithDescription(truncatedContent)
                     .WithFooter("Universitetet i Bergen og Språkrådet - ordbok.uib.no")
-                    .WithColor(DiscordConstants.EmbedColor); 
+                    .WithColor(DiscordConstants.EmbedColor);
 
                 var mb = new DiscordMessageBuilder();
 
@@ -133,11 +122,45 @@ namespace Nellebot.CommandHandlers.Ordbok
 
                 await ctx.RespondAsync(mb);
 
-                if(imageFileStream != null)
+                if (imageFileStream != null)
                     await imageFileStream.DisposeAsync();
 
                 if (htmlFileStream != null)
                     await htmlFileStream.DisposeAsync();
+            }
+
+            private async Task<string> RenderTextTemplate(List<Common.Models.Ordbok.ViewModels.Article> articles)
+            {
+                var textTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Text);
+                var textTemplate = Template.Parse(textTemplateSource);
+                var textTemplateResult = textTemplate.Render(new { articles });
+                return textTemplateResult;
+            }
+
+            private async Task<string> RenderHtmlTemplate(string dictionary, List<Common.Models.Ordbok.ViewModels.Article> articles)
+            {
+                var htmlTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Html);
+                var htmlTemplate = Template.Parse(htmlTemplateSource);
+                var htmlTemplateResult = htmlTemplate.Render(new { articles, dictionary });
+                return htmlTemplateResult;
+            }
+
+            private List<vm.Article> MapAndSelectArticles(string query, List<api.Article?> ordbokArticles)
+            {
+                var allArticles = ordbokArticles
+                    .Where(a => a != null)
+                    .Select(_ordbokModelMapper.MapArticle!).ToList();
+
+                // Try to grab exact matches
+                var articles = allArticles.Where(x => x.Lemmas.Any(l => l.Value.Equals(query, StringComparison.OrdinalIgnoreCase))).ToList();
+
+                if (articles.Count == 0)
+                {
+                    articles = allArticles.Take(5).ToList();
+                }
+
+                articles = articles.OrderBy(a => a.Lemmas.Max(l => l.HgNo)).ToList();
+                return articles;
             }
         }
     }

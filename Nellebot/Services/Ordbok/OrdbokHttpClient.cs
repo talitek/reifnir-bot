@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Options;
 using Nellebot.Common.Models.Ordbok.Api;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -17,14 +19,13 @@ namespace Nellebot.Services.Ordbok
             _options = options.Value;
             _client = client;
 
-            _client.BaseAddress = new Uri("https://beta.ordbok.uib.no/api/");
+            _client.BaseAddress = new Uri("https://ord.uib.no/");
             _client.DefaultRequestHeaders.Add("Accept", "application/json");
-            _client.DefaultRequestHeaders.Add("x-api-key", _options.OrdbokApiKey);
         }
 
         public async Task<OrdbokSearchResponse?> Search(string dictionary, string query)
         {
-            var requestUri = $"dict/{dictionary}/article/search?q={query}";
+            var requestUri = $"api/articles?w={query}&dict={dictionary}";
 
             var response = await _client.GetAsync(requestUri);
 
@@ -36,7 +37,32 @@ namespace Nellebot.Services.Ordbok
 
             return searchResponse;
         }
+
+        public async Task<Article?> GetArticle(string dictionary, int articleId)
+        {
+            var requestUri = $"{dictionary}/article/{articleId}.json";
+
+            var response = await _client.GetAsync(requestUri);
+
+            response.EnsureSuccessStatusCode();
+
+            var jsonStream = await response.Content.ReadAsStreamAsync();
+
+            var article = await JsonSerializer.DeserializeAsync<Article>(jsonStream);
+
+            return article;
+        }
+
+        public async Task<List<Article?>> GetArticles(string dictionary, List<int> articleIds)
+        {
+            var tasks = articleIds.Select(id => GetArticle(dictionary, id));
+
+            var result = await Task.WhenAll(tasks);
+
+            if (result == null)
+                return Enumerable.Empty<Article?>().ToList();
+
+            return result.ToList();
+        }
     }
-
-
 }

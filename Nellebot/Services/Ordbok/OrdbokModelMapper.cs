@@ -22,7 +22,6 @@ namespace Nellebot.Services.Ordbok
             var dictionary = article.Dictionary;
 
             vmResult.ArticleId = article.ArticleId;
-            vmResult.Score = article.Score;
             vmResult.Lemmas = article.Lemmas.Select(MapLemma).ToList();
 
             vmResult.Definitions = MapDefinitions(article.Body.DefinitionElements, dictionary);
@@ -38,7 +37,8 @@ namespace Nellebot.Services.Ordbok
 
             vmResult.Id = lemma.Id;
             vmResult.Value = lemma.Value;
-            vmResult.HgNo = lemma.HgNo.ToRomanNumeral();
+            vmResult.HgNo = lemma.HgNo;
+            vmResult.HgNoRoman = lemma.HgNo.ToRomanNumeral();
             vmResult.Paradigms = lemma.Paradigms.Select(MapParadigm).ToList();
 
             return vmResult;
@@ -94,6 +94,9 @@ namespace Nellebot.Services.Ordbok
                     {
                         var mappedNestedDefinition = MapDefinition(nestedDefinition, dictionary);
 
+                        if (mappedNestedDefinition.IsEmpty)
+                            continue;
+
                         var innerDefinitions = nestedDefinition.DefinitionElements
                             .Where(d => d is api.Definition)
                             .Cast<api.Definition>()
@@ -107,7 +110,10 @@ namespace Nellebot.Services.Ordbok
                 }
                 else
                 {
-                    vmResult.Add(MapDefinition(definition, dictionary));
+                    var mappedDefinition = MapDefinition(definition, dictionary);
+
+                    if(!mappedDefinition.IsEmpty)
+                        vmResult.Add(mappedDefinition);
                 }
             }
 
@@ -128,33 +134,33 @@ namespace Nellebot.Services.Ordbok
                 .Cast<api.Example>()
                 .ToList();
 
-            var subArticles = definition.DefinitionElements
-                .Where(de => de is api.DefinitionSubArticle)
-                .Cast<api.DefinitionSubArticle>()
-                .ToList();
+            //var subArticles = definition.DefinitionElements
+            //    .Where(de => de is api.DefinitionSubArticle)
+            //    .Cast<api.DefinitionSubArticle>()
+            //    .ToList();
 
             vmResult.Explanations = explanations.Select(x => _contentParser.GetExplanationContent(x, dictionary)).ToList();
             vmResult.Examples = examples.Select(x => _contentParser.GetExampleContent(x, dictionary)).ToList();
-            vmResult.SubArticles = subArticles.Select(x => MapDefinitionSubArticle(x, dictionary)).ToList();
+            //vmResult.SubArticles = subArticles.Select(x => MapDefinitionSubArticle(x, dictionary)).ToList();
 
             return vmResult;
         }
 
-        public vm.SubArticle MapDefinitionSubArticle(api.DefinitionSubArticle subArticle, string dictionary)
-        {
-            var vmResult = new vm.SubArticle();
+        //public vm.SubArticle MapDefinitionSubArticle(api.DefinitionSubArticle subArticle, string dictionary)
+        //{
+        //    var vmResult = new vm.SubArticle();
 
-            if(subArticle.Article?.Body == null)
-                return vmResult;  
+        //    if(subArticle.Article?.Body == null)
+        //        return vmResult;  
 
-            vmResult.Lemmas = subArticle.Article.Body.Lemmas.Select(MapLemma).ToList();
+        //    vmResult.Lemmas = subArticle.Article.Body.Lemmas.Select(MapLemma).ToList();
 
-            vmResult.Explanations = MapDefinitions(subArticle.Article.Body.DefinitionElements, dictionary)
-                .SelectMany(x => x.Explanations)
-                .ToList();
+        //    vmResult.Explanations = MapDefinitions(subArticle.Article.Body.DefinitionElements, dictionary)
+        //        .SelectMany(x => x.Explanations)
+        //        .ToList();
 
-            return vmResult;
-        }
+        //    return vmResult;
+        //}
 
         public List<vm.Etymology> MapEtymologies(List<api.EtymologyGroup> etymologyGroups, string dictionary)
         {

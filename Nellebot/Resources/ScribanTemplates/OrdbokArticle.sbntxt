@@ -1,6 +1,6 @@
 ﻿{{for article in articles-}}
 {{for lemma in article.lemmas-}}
-{{lemma.hg_no != "" ? lemma.hg_no + " " : ""}}**{{lemma.value}}**
+{{lemma.hg_no_roman != "" ? lemma.hg_no_roman + " " : ""}}**{{lemma.value}}**
 {{-for paradigm in lemma.unique_paradigm_values}} {{paradigm}}
 {{-if !for.last; ","; end}}
 {{-end}}
