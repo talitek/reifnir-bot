@@ -40,6 +40,8 @@ namespace Nellebot.CommandHandlers.Ordbok
             private readonly HtmlToImageService _htmlToImageService;
             private readonly ILogger<SearchOrdbokHandler> _logger;
 
+            private const int MaxArticles = 5;
+
             public SearchOrdbokHandler(
                 OrdbokHttpClient ordbokClient,
                 OrdbokModelMapper ordbokModelMapper,
@@ -64,7 +66,9 @@ namespace Nellebot.CommandHandlers.Ordbok
 
                 var searchResponse = await _ordbokClient.Search(request.Dictionary, query);
 
-                var articleIds = dictionary == OrdbokDictionaryMap.Bokmal ? searchResponse?.BokmalArticleIds : searchResponse?.NynorskArticleIds;
+                var articleIds = dictionary == OrdbokDictionaryMap.Bokmal 
+                                    ? searchResponse?.Articles?.BokmalArticleIds 
+                                    : searchResponse?.Articles?.NynorskArticleIds;
 
                 if (articleIds == null || articleIds.Count == 0)
                 {
@@ -74,7 +78,7 @@ namespace Nellebot.CommandHandlers.Ordbok
 
                 var ordbokArticles = await _ordbokClient.GetArticles(dictionary, articleIds);
 
-                var articles = MapAndSelectArticles(query, ordbokArticles);
+                var articles = MapAndSelectArticles(ordbokArticles);
 
                 var queryUrl = $"https://ordbok.uib.no/?OPP={query}";
 
@@ -145,21 +149,15 @@ namespace Nellebot.CommandHandlers.Ordbok
                 return htmlTemplateResult;
             }
 
-            private List<vm.Article> MapAndSelectArticles(string query, List<api.Article?> ordbokArticles)
+            private List<vm.Article> MapAndSelectArticles(List<api.Article?> ordbokArticles)
             {
-                var allArticles = ordbokArticles
+                var articles = ordbokArticles
                     .Where(a => a != null)
+                    .Take(MaxArticles)
                     .Select(_ordbokModelMapper.MapArticle!).ToList();
 
-                // Try to grab exact matches
-                var articles = allArticles.Where(x => x.Lemmas.Any(l => l.Value.Equals(query, StringComparison.OrdinalIgnoreCase))).ToList();
-
-                if (articles.Count == 0)
-                {
-                    articles = allArticles.Take(5).ToList();
-                }
-
                 articles = articles.OrderBy(a => a.Lemmas.Max(l => l.HgNo)).ToList();
+
                 return articles;
             }
         }
