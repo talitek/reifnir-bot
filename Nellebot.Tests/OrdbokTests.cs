@@ -26,7 +26,7 @@ namespace Nellebot.Tests
         {
             var directory = AppDomain.CurrentDomain.BaseDirectory;
 
-            var file = Path.Combine(directory, "TestFiles/test_hus_66433.json");
+            var file = Path.Combine(directory, "TestFiles/test_hus_24627.json");
 
             var json = await File.ReadAllTextAsync(file);
 

@@ -63,6 +63,17 @@
             margin-bottom: 0.5em;
         }
 
+        .sub-articles-title {
+            font-size: 1em;
+            text-transform: uppercase;
+        }
+
+        .sub-article-definition-list {
+            list-style-type: circle;
+            padding-left: 2em;
+            margin-bottom: 1em;
+        }
+
     </style>
 </head>
 <body>
@@ -143,6 +154,68 @@
             </li>
             {{~end~}}
         </ol>
+
+        {{~if article.sub_articles.size > 0~}}
+        <h2 class="sub-articles-title">Faste uttrykk</h2>
+        {{~for sub_article in article.sub_articles~}}
+        <li>
+            <ul class="inline-list inline-list-items">
+            {{~for lemma in sub_article.lemmas~}}
+                <li>    
+                    <span><b>{{lemma.value}}</b></span>
+                    {{~if !for.last; ";&nbsp;el.&nbsp;"; end~}}
+                </li>
+            {{~end~}}
+            </ul>
+            <ul class="sub-article-definition-list">
+                {{~for definition in sub_article.definitions~}}
+                <li>
+                    <ul class="inline-list-items">
+                    {{~for explanation in definition.explanations~}}
+                    <li>
+                        <span>{{explanation}}{{if !for.last; ";&nbsp;"; end}}</span>
+                    </li>
+                    {{~end~}}
+                    </ul> 
+
+                    {{~if definition.examples.size > 0~}}
+                    <strong>{{dictionary == "bm" ? "Eksempel" : "Døme"}}</strong>
+                    <ul class="example-list">
+                    {{~for example in definition.examples~}}
+                    <li>
+                        <span>{{example}}</span>
+                    </li>
+                    {{~end~}}
+                    </ul>
+                    {{~end~}}
+
+                    <ol class="inner-definition-list">
+                    {{~for innerDefinition in definition.inner_definitions~}}
+                        <li>
+                            <ul class="inline-list-items">
+                            {{~for innerExplanation in innerDefinition.explanations~}}
+                            <li>
+                                <span>{{innerExplanation}}{{if !for.last; ";&nbsp"; end}}</span>
+                            </li>
+                            {{~end~}}
+                            </ul> 
+
+                            <ul class="inline-list-items">
+                            {{~for innerExample in innerDefinition.examples~}}
+                            <li>
+                                <i>{{innerExample}}{{if !for.last; "&nbsp;|&nbsp;"; end}}</i>
+                            </li>
+                            {{~end~}}
+                            </ul>
+                        </li>
+                    {{~end~}}
+                    </ol>
+                </li>
+                {{~end~}}
+            </ul>
+        </li>
+        {{~end~}}
+        {{~end~}}
     </li>
     {{~end~}}
     </ul>

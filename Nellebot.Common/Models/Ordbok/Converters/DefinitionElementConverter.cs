@@ -24,9 +24,9 @@ namespace Nellebot.Common.Models.Ordbok.Converters
                 case "example":
                     result = JsonSerializer.Deserialize<Example>(ref reader, options);
                     break;
-                //case "sub_article":
-                //    result = JsonSerializer.Deserialize<DefinitionSubArticle>(ref reader, options);
-                //    break;
+                case "sub_article":
+                    result = JsonSerializer.Deserialize<DefinitionSubArticle>(ref reader, options);
+                    break;
                 default:
                     // Read and throw away object so that the reader reaches EndObject token
                     _ = JsonSerializer.Deserialize<object>(ref reader, options);
@@ -50,9 +50,9 @@ namespace Nellebot.Common.Models.Ordbok.Converters
                 case Example example:
                     JsonSerializer.Serialize(writer, example);
                     break;
-                //case DefinitionSubArticle subArticle:
-                //    JsonSerializer.Serialize(writer, subArticle);
-                //    break;
+                case DefinitionSubArticle subArticle:
+                    JsonSerializer.Serialize(writer, subArticle);
+                    break;
                 default:
                     throw new JsonException($"Unknown subclass of {value.GetType().FullName}");
             }

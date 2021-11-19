@@ -9,9 +9,9 @@ namespace Nellebot.Common.Models.Ordbok.ViewModels
     public class Article
     {
         public int ArticleId { get; set; }
-        //public double Score { get; set; }
         public List<Lemma> Lemmas { get; set; } = new List<Lemma>();
         public List<Definition> Definitions { get; set; } = new List<Definition>();
+        public List<SubArticle> SubArticles { get; set; } = new List<SubArticle>();
         public List<Etymology> Etymologies { get; set; } = new List<Etymology>();
     }
 
@@ -35,17 +35,14 @@ namespace Nellebot.Common.Models.Ordbok.ViewModels
     {
         public List<string> Explanations { get; set; } = new List<string>();
         public List<string> Examples { get; set; } = new List<string>();
-        //public List<SubArticle> SubArticles { get; set; } = new List<SubArticle>();
         public List<Definition> InnerDefinitions { get; set; } = new List<Definition>();
-
-        public bool IsEmpty => Explanations.Count == 0 && Examples.Count == 0;
     }
 
-    //public class SubArticle
-    //{
-    //    public List<Lemma> Lemmas { get; set; } = new List<Lemma>();
-    //    public List<string> Explanations { get; set; } = new List<string>();
-    //}
+    public class SubArticle
+    {
+        public List<Lemma> Lemmas { get; set; } = new List<Lemma>();
+        public List<Definition> Definitions = new List<Definition>();
+    }
 
     public class Etymology
     {

@@ -26,6 +26,8 @@ namespace Nellebot.Services.Ordbok
 
             vmResult.Definitions = MapDefinitions(article.Body.DefinitionElements, dictionary);
 
+            vmResult.SubArticles = MapSubArticles(article.Body.DefinitionElements, dictionary);
+
             vmResult.Etymologies = MapEtymologies(article.Body.EtymologyGroups, dictionary);
 
             return vmResult;
@@ -84,18 +86,20 @@ namespace Nellebot.Services.Ordbok
                 // Top level element is always a Definition (hopefully)
                 var definition = (api.Definition)definitionElement;
 
-                var containsDefinitions = definition.DefinitionElements.All(de => de is api.Definition);
+                var childrenAreDefinitions = definition.DefinitionElements.All(de => de is api.Definition);
 
-                if (containsDefinitions)
+                if (childrenAreDefinitions)
                 {
                     var nestedDefinitions = definition.DefinitionElements.Cast<api.Definition>().ToList();
 
                     foreach (var nestedDefinition in nestedDefinitions)
                     {
-                        var mappedNestedDefinition = MapDefinition(nestedDefinition, dictionary);
+                        var elementsAreNotSubArticles = !nestedDefinition.DefinitionElements.Any(x => x is api.DefinitionSubArticle);
 
-                        if (mappedNestedDefinition.IsEmpty)
+                        if (!elementsAreNotSubArticles)
                             continue;
+
+                        var mappedNestedDefinition = MapDefinition(nestedDefinition, dictionary);
 
                         var innerDefinitions = nestedDefinition.DefinitionElements
                             .Where(d => d is api.Definition)
@@ -110,10 +114,66 @@ namespace Nellebot.Services.Ordbok
                 }
                 else
                 {
+                    var elementsAreNotSubArticles = !definition.DefinitionElements.Any(x => x is api.DefinitionSubArticle);
+
+                    if (!elementsAreNotSubArticles)
+                        continue;
+
                     var mappedDefinition = MapDefinition(definition, dictionary);
 
-                    if(!mappedDefinition.IsEmpty)
-                        vmResult.Add(mappedDefinition);
+                    vmResult.Add(mappedDefinition);
+                }
+            }
+
+            return vmResult;
+        }
+
+        public List<vm.SubArticle> MapSubArticles(List<api.DefinitionElement> definitionElements, string dictionary)
+        {
+            var vmResult = new List<vm.SubArticle>();
+
+            // TODO go recursive if a new nested level is discovered
+            foreach (var definitionElement in definitionElements)
+            {
+                // Top level element is always a Definition (hopefully)
+                var definition = (api.Definition)definitionElement;
+
+                var childrenAreDefinitions = definition.DefinitionElements.All(de => de is api.Definition);
+
+                if (childrenAreDefinitions)
+                {
+                    var nestedDefinitions = definition.DefinitionElements.Cast<api.Definition>().ToList();
+
+                    foreach (var nestedDefinition in nestedDefinitions)
+                    {
+                        var elementsAreSubArticles = nestedDefinition.DefinitionElements.All(x => x is api.DefinitionSubArticle);
+
+                        if (!elementsAreSubArticles)
+                            continue;
+
+                        var nestedDefinitionAsSubArticles = nestedDefinition.DefinitionElements
+                            .Cast<api.DefinitionSubArticle>()
+                            .ToList();
+
+                        var mappedSubArticles = nestedDefinitionAsSubArticles.Select(x => MapDefinitionSubArticle(x, dictionary));
+
+                        vmResult.AddRange(mappedSubArticles);
+                    }
+                }
+                else
+                {
+                    var elementsAreSubArticles = definition.DefinitionElements.All(x => x is api.DefinitionSubArticle);
+
+                    if (!elementsAreSubArticles)
+                        continue;
+
+                    var nestedDefinitionAsSubArticles = definition.DefinitionElements
+                        .Cast<api.DefinitionSubArticle>()
+                        .ToList();
+
+                    var mappedSubArticles = nestedDefinitionAsSubArticles.Select(x => MapDefinitionSubArticle(x, dictionary));
+
+                    vmResult.AddRange(mappedSubArticles);
                 }
             }
 
@@ -134,33 +194,26 @@ namespace Nellebot.Services.Ordbok
                 .Cast<api.Example>()
                 .ToList();
 
-            //var subArticles = definition.DefinitionElements
-            //    .Where(de => de is api.DefinitionSubArticle)
-            //    .Cast<api.DefinitionSubArticle>()
-            //    .ToList();
-
             vmResult.Explanations = explanations.Select(x => _contentParser.GetExplanationContent(x, dictionary)).ToList();
             vmResult.Examples = examples.Select(x => _contentParser.GetExampleContent(x, dictionary)).ToList();
-            //vmResult.SubArticles = subArticles.Select(x => MapDefinitionSubArticle(x, dictionary)).ToList();
 
             return vmResult;
         }
 
-        //public vm.SubArticle MapDefinitionSubArticle(api.DefinitionSubArticle subArticle, string dictionary)
-        //{
-        //    var vmResult = new vm.SubArticle();
+        public vm.SubArticle MapDefinitionSubArticle(api.DefinitionSubArticle subArticle, string dictionary)
+        {
+            var vmResult = new vm.SubArticle();
 
-        //    if(subArticle.Article?.Body == null)
-        //        return vmResult;  
+            if (subArticle.Article?.Body == null)
+                return vmResult;
 
-        //    vmResult.Lemmas = subArticle.Article.Body.Lemmas.Select(MapLemma).ToList();
+            vmResult.Lemmas = subArticle.Article.Body.Lemmas.Select(MapLemma).ToList();
 
-        //    vmResult.Explanations = MapDefinitions(subArticle.Article.Body.DefinitionElements, dictionary)
-        //        .SelectMany(x => x.Explanations)
-        //        .ToList();
+            vmResult.Definitions = MapDefinitions(subArticle.Article.Body.DefinitionElements, dictionary)
+                .ToList();
 
-        //    return vmResult;
-        //}
+            return vmResult;
+        }
 
         public List<vm.Etymology> MapEtymologies(List<api.EtymologyGroup> etymologyGroups, string dictionary)
         {
