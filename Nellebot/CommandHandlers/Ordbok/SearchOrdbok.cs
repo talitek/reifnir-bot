@@ -40,7 +40,7 @@ namespace Nellebot.CommandHandlers.Ordbok
             private readonly HtmlToImageService _htmlToImageService;
             private readonly ILogger<SearchOrdbokHandler> _logger;
 
-            private const int MaxArticles = 5;
+            private const int _maxDefinitionsInTextForm = 5;
 
             public SearchOrdbokHandler(
                 OrdbokHttpClient ordbokClient,
@@ -80,7 +80,7 @@ namespace Nellebot.CommandHandlers.Ordbok
 
                 var articles = MapAndSelectArticles(ordbokArticles);
 
-                var queryUrl = $"https://ordbok.uib.no/?OPP={query}";
+                var queryUrl = $"https://ordbokene.no/{(dictionary == OrdbokDictionaryMap.Bokmal ? "bm" : "nn")}/w/{query}";
 
                 string textTemplateResult = await RenderTextTemplate(articles);
 
@@ -92,7 +92,7 @@ namespace Nellebot.CommandHandlers.Ordbok
                     .WithTitle(dictionary == OrdbokDictionaryMap.Bokmal ? "Bokmålsordboka" : "Nynorskordboka")
                     .WithUrl(queryUrl)
                     .WithDescription(truncatedContent)
-                    .WithFooter("Universitetet i Bergen og Språkrådet - ordbok.uib.no")
+                    .WithFooter("Universitetet i Bergen og Språkrådet - ordbokene.no")
                     .WithColor(DiscordConstants.EmbedColor);
 
                 var mb = new DiscordMessageBuilder();
@@ -133,19 +133,25 @@ namespace Nellebot.CommandHandlers.Ordbok
                     await htmlFileStream.DisposeAsync();
             }
 
-            private async Task<string> RenderTextTemplate(List<Common.Models.Ordbok.ViewModels.Article> articles)
+            private async Task<string> RenderTextTemplate(List<vm.Article> articles)
             {
                 var textTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Text);
                 var textTemplate = Template.Parse(textTemplateSource);
-                var textTemplateResult = textTemplate.Render(new { articles });
+
+                var maxDefinitions = _maxDefinitionsInTextForm;
+
+                var textTemplateResult = textTemplate.Render(new { articles, maxDefinitions });
+
                 return textTemplateResult;
             }
 
-            private async Task<string> RenderHtmlTemplate(string dictionary, List<Common.Models.Ordbok.ViewModels.Article> articles)
+            private async Task<string> RenderHtmlTemplate(string dictionary, List<vm.Article> articles)
             {
                 var htmlTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Html);
                 var htmlTemplate = Template.Parse(htmlTemplateSource);
+
                 var htmlTemplateResult = htmlTemplate.Render(new { articles, dictionary });
+
                 return htmlTemplateResult;
             }
 
@@ -153,10 +159,9 @@ namespace Nellebot.CommandHandlers.Ordbok
             {
                 var articles = ordbokArticles
                     .Where(a => a != null)
-                    .Take(MaxArticles)
-                    .Select(_ordbokModelMapper.MapArticle!).ToList();
-
-                articles = articles.OrderBy(a => a.Lemmas.Max(l => l.HgNo)).ToList();
+                    .Select(_ordbokModelMapper.MapArticle!)
+                    .OrderBy(a => a.Lemmas.Max(l => l.HgNo))
+                    .ToList();
 
                 return articles;
             }

@@ -51,6 +51,14 @@
             margin-bottom: 0.5em;
         }
 
+        .example-list {
+            list-style-type: none;
+        }
+
+        .example-list > li > span{
+            font-style: italic;
+        }
+
         .sub-articles {
             margin-bottom: 0.5em;
         }
@@ -100,13 +108,16 @@
                 {{~end~}}
                 </ul> 
 
-                <ul class="inline-list-items">
+                {{~if definition.examples.size > 0~}}
+                <strong>{{dictionary == "bm" ? "Eksempel" : "Døme"}}</strong>
+                <ul class="example-list">
                 {{~for example in definition.examples~}}
                 <li>
-                    <i>{{example}}{{if !for.last; "&nbsp;|&nbsp;"; end}}</i>
+                    <span>{{example}}</span>
                 </li>
                 {{~end~}}
                 </ul>
+                {{~end~}}
 
                 <ol class="inner-definition-list">
                 {{~for innerDefinition in definition.inner_definitions~}}

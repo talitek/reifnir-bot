@@ -14,6 +14,8 @@ namespace Nellebot.Services.Ordbok
         private readonly BotOptions _options;
         private readonly HttpClient _client;
 
+        private const int _maxArticles = 5;
+
         public OrdbokHttpClient(IOptions<BotOptions> options, HttpClient client)
         {
             _options = options.Value;
@@ -55,7 +57,7 @@ namespace Nellebot.Services.Ordbok
 
         public async Task<List<Article?>> GetArticles(string dictionary, List<int> articleIds)
         {
-            var tasks = articleIds.Select(id => GetArticle(dictionary, id));
+            var tasks = articleIds.Take(_maxArticles).Select(id => GetArticle(dictionary, id));
 
             var result = await Task.WhenAll(tasks);
 
