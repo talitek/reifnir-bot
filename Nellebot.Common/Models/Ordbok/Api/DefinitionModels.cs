@@ -35,7 +35,7 @@ namespace Nellebot.Common.Models.Ordbok.Api
     }
 
     /// <summary>
-    /// Api types so far: relation, domain, entity, modifier, grammar, rhetoric, language
+    /// Api types so far: relation, domain, entity, modifier, grammar, rhetoric, language, temporal
     /// </summary>
     public class ExplanationIdItem: ExplanationItem
     {

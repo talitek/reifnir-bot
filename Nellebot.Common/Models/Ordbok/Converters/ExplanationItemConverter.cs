@@ -22,6 +22,7 @@ namespace Nellebot.Common.Models.Ordbok.Converters
                 case "grammar":
                 case "rhetoric":
                 case "language":
+                case "temporal":
                     result = JsonSerializer.Deserialize<ExplanationIdItem>(ref reader, options);
                     break;
                 case "usage":

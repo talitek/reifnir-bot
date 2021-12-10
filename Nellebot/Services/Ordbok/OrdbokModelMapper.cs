@@ -149,7 +149,7 @@ namespace Nellebot.Services.Ordbok
                             .Cast<api.DefinitionSubArticle>()
                             .ToList();
 
-                        var mappedSubArticles = nestedDefinitionSubArticles.Select(x => MapDefinitionSubArticle(x, dictionary));
+                        var mappedSubArticles = nestedDefinitionSubArticles.Select(x => MapSubArticle(x, dictionary));
 
                         vmResult.AddRange(mappedSubArticles);
                     }
@@ -161,7 +161,7 @@ namespace Nellebot.Services.Ordbok
                             .Cast<api.DefinitionSubArticle>()
                             .ToList();
 
-                    var mappedSubArticles = nestedDefinitionSubArticles.Select(x => MapDefinitionSubArticle(x, dictionary));
+                    var mappedSubArticles = nestedDefinitionSubArticles.Select(x => MapSubArticle(x, dictionary));
 
                     vmResult.AddRange(mappedSubArticles);
                 }
@@ -184,13 +184,19 @@ namespace Nellebot.Services.Ordbok
                 .Cast<api.Example>()
                 .ToList();
 
+            var innerDefinitions = definitionElements
+                .Where(de => de is api.Definition)
+                .Cast<api.Definition>()
+                .ToList();
+
             vmResult.Explanations = explanations.Select(x => _contentParser.GetExplanationContent(x, dictionary)).ToList();
             vmResult.Examples = examples.Select(x => _contentParser.GetExampleContent(x, dictionary)).ToList();
+            vmResult.InnerDefinitions = innerDefinitions.Select(x => MapDefinition(x.DefinitionElements, dictionary)).ToList();
 
             return vmResult;
         }
 
-        public vm.SubArticle MapDefinitionSubArticle(api.DefinitionSubArticle subArticle, string dictionary)
+        public vm.SubArticle MapSubArticle(api.DefinitionSubArticle subArticle, string dictionary)
         {
             var vmResult = new vm.SubArticle();
 
