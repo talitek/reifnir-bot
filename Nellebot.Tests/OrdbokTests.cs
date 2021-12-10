@@ -18,15 +18,15 @@ using Microsoft.Extensions.Logging;
 namespace Nellebot.Tests
 {
     [TestClass]
-    [Ignore]
     public class OrdbokTests
     {
         [TestMethod]
+        [Ignore]
         public async Task TestArticleDeserialization()
         {
             var directory = AppDomain.CurrentDomain.BaseDirectory;
 
-            var file = Path.Combine(directory, "TestFiles/test_hus_24627.json");
+            var file = Path.Combine(directory, "TestFiles/test.json");
 
             var json = await File.ReadAllTextAsync(file);
 

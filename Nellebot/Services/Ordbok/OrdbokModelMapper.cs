@@ -56,7 +56,7 @@ namespace Nellebot.Services.Ordbok
                 vmResult.Value = paradigm.InflectionGroup.ToLower() switch
                 {
                     // TODO figure out how to differentiate between n1/n2, etc.
-                    "noun" => $"{paradigm.Tags[1].ToLower()[0]}", 
+                    "noun" => $"{paradigm.Tags[1].ToLower()[0]}",
                     "noun_regular" => $"{paradigm.Tags[1].ToLower()[0]}",
                     "verb" => "v2",
                     "verb_regular" => "v2",
@@ -68,7 +68,7 @@ namespace Nellebot.Services.Ordbok
                     "pron" => "pron.",
                     "sym" => "symb.",
                     "intj" => "interj.",
-                    "abbr"=> "fork.",
+                    "abbr" => "fork.",
                     _ => $"?{paradigm.InflectionGroup.ToLower()}?"
                 };
             }
@@ -94,17 +94,16 @@ namespace Nellebot.Services.Ordbok
 
                     foreach (var nestedDefinition in nestedDefinitions)
                     {
-                        var elementsAreNotSubArticles = !nestedDefinition.DefinitionElements.Any(x => x is api.DefinitionSubArticle);
+                        var nestedDefinitionElements = nestedDefinition.DefinitionElements
+                            .Where(x => !(x is api.DefinitionSubArticle))
+                            .ToList();
 
-                        if (!elementsAreNotSubArticles)
-                            continue;
+                        var mappedNestedDefinition = MapDefinition(nestedDefinitionElements, dictionary);
 
-                        var mappedNestedDefinition = MapDefinition(nestedDefinition, dictionary);
-
-                        var innerDefinitions = nestedDefinition.DefinitionElements
+                        var innerDefinitions = nestedDefinitionElements
                             .Where(d => d is api.Definition)
                             .Cast<api.Definition>()
-                            .Select(d => MapDefinition(d, dictionary))
+                            .Select(d => MapDefinition(d.DefinitionElements, dictionary))
                             .ToList();
 
                         mappedNestedDefinition.InnerDefinitions.AddRange(innerDefinitions);
@@ -114,12 +113,11 @@ namespace Nellebot.Services.Ordbok
                 }
                 else
                 {
-                    var elementsAreNotSubArticles = !definition.DefinitionElements.Any(x => x is api.DefinitionSubArticle);
+                    var nestedDefinitionElements = definition.DefinitionElements
+                            .Where(x => !(x is api.DefinitionSubArticle))
+                            .ToList();
 
-                    if (!elementsAreNotSubArticles)
-                        continue;
-
-                    var mappedDefinition = MapDefinition(definition, dictionary);
+                    var mappedDefinition = MapDefinition(nestedDefinitionElements, dictionary);
 
                     vmResult.Add(mappedDefinition);
                 }
@@ -146,32 +144,24 @@ namespace Nellebot.Services.Ordbok
 
                     foreach (var nestedDefinition in nestedDefinitions)
                     {
-                        var elementsAreSubArticles = nestedDefinition.DefinitionElements.All(x => x is api.DefinitionSubArticle);
-
-                        if (!elementsAreSubArticles)
-                            continue;
-
-                        var nestedDefinitionAsSubArticles = nestedDefinition.DefinitionElements
+                        var nestedDefinitionSubArticles = nestedDefinition.DefinitionElements
+                            .Where(x => x is api.DefinitionSubArticle)
                             .Cast<api.DefinitionSubArticle>()
                             .ToList();
 
-                        var mappedSubArticles = nestedDefinitionAsSubArticles.Select(x => MapDefinitionSubArticle(x, dictionary));
+                        var mappedSubArticles = nestedDefinitionSubArticles.Select(x => MapDefinitionSubArticle(x, dictionary));
 
                         vmResult.AddRange(mappedSubArticles);
                     }
                 }
                 else
                 {
-                    var elementsAreSubArticles = definition.DefinitionElements.All(x => x is api.DefinitionSubArticle);
+                    var nestedDefinitionSubArticles = definition.DefinitionElements
+                            .Where(x => x is api.DefinitionSubArticle)
+                            .Cast<api.DefinitionSubArticle>()
+                            .ToList();
 
-                    if (!elementsAreSubArticles)
-                        continue;
-
-                    var nestedDefinitionAsSubArticles = definition.DefinitionElements
-                        .Cast<api.DefinitionSubArticle>()
-                        .ToList();
-
-                    var mappedSubArticles = nestedDefinitionAsSubArticles.Select(x => MapDefinitionSubArticle(x, dictionary));
+                    var mappedSubArticles = nestedDefinitionSubArticles.Select(x => MapDefinitionSubArticle(x, dictionary));
 
                     vmResult.AddRange(mappedSubArticles);
                 }
@@ -180,16 +170,16 @@ namespace Nellebot.Services.Ordbok
             return vmResult;
         }
 
-        public vm.Definition MapDefinition(api.Definition definition, string dictionary)
+        public vm.Definition MapDefinition(List<api.DefinitionElement> definitionElements, string dictionary)
         {
             var vmResult = new vm.Definition();
 
-            var explanations = definition.DefinitionElements
+            var explanations = definitionElements
                 .Where(de => de is api.Explanation)
                 .Cast<api.Explanation>()
                 .ToList();
 
-            var examples = definition.DefinitionElements
+            var examples = definitionElements
                 .Where(de => de is api.Example)
                 .Cast<api.Example>()
                 .ToList();
@@ -242,6 +232,6 @@ namespace Nellebot.Services.Ordbok
             return vmResult;
         }
 
-        
+
     }
 }
