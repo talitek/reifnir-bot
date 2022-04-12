@@ -21,7 +21,7 @@ namespace Nellebot.Tests
     public class OrdbokTests
     {
         [TestMethod]
-        //[Ignore]
+        [Ignore]
         public async Task TestArticleDeserialization()
         {
             var directory = AppDomain.CurrentDomain.BaseDirectory;
