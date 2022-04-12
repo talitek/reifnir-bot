@@ -78,6 +78,9 @@ namespace Nellebot.CommandModules
                 return;
             }
 
+            if (member == null)
+                throw new ArgumentNullException(nameof(member));
+
             // Check if user already has role
             var existingDiscordRole = member.Roles.SingleOrDefault(r => r.Id == userRole.RoleId);
 
@@ -101,6 +104,9 @@ namespace Nellebot.CommandModules
             {
                 throw new ArgumentException($"Role Id {userRole.RoleId} does not exist");
             }
+
+            if(member == null)
+                throw new ArgumentNullException(nameof(member));
 
             // If user role has group, get all roles from the same group
             if (userRole.GroupNumber.HasValue)
@@ -139,6 +145,9 @@ namespace Nellebot.CommandModules
         {
             var member = ctx.Member;
             var guild = ctx.Guild;
+
+            if (member == null)
+                throw new ArgumentNullException(nameof(member));
 
             await member.RevokeRoleAsync(existingDiscordRole);
 
