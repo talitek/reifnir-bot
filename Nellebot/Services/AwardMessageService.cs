@@ -307,7 +307,7 @@ namespace Nellebot.Services
             return embed;
         }
 
-        private async Task<uint> GetAwardReactionCount(DiscordMessage message, DiscordMember? messageAuthor)
+        private async Task<uint> GetAwardReactionCount(DiscordMessage message, DiscordMember messageAuthor)
         {
             uint awardReactionCount = 0;
 

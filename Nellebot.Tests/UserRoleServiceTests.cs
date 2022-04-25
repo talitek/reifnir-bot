@@ -41,7 +41,7 @@ namespace Nellebot.Tests
             Func<Task> act = async () => await _sut.CreateRole(discordRole, name, aliases);
 
             act.Should()
-                .Throw<ArgumentException>()
+                .ThrowAsync<ArgumentException>()
                 .WithMessage("Role name cannot be empty");
         }
 
@@ -61,7 +61,7 @@ namespace Nellebot.Tests
             Func<Task> act = async () => await _sut.CreateRole(discordRole, name, aliases);
 
             act.Should()
-                .Throw<ArgumentException>()
+                .ThrowAsync<ArgumentException>()
                 .WithMessage("Alias list cannot be empty");
         }
 
@@ -81,7 +81,7 @@ namespace Nellebot.Tests
             Func<Task> act = async () => await _sut.CreateRole(discordRole, name, aliases);
 
             act.Should()
-                .Throw<ArgumentException>()
+                .ThrowAsync<ArgumentException>()
                 .WithMessage("User role already exists");
         }
 
@@ -99,7 +99,7 @@ namespace Nellebot.Tests
             Func<Task> act = async () => await _sut.UpdateRole(discordRole, name);
 
             act.Should()
-                .Throw<ArgumentException>()
+                .ThrowAsync<ArgumentException>()
                 .WithMessage("Role name cannot be empty");
         }
 
@@ -118,7 +118,7 @@ namespace Nellebot.Tests
             Func<Task> act = async () => await _sut.UpdateRole(discordRole, name);
 
             act.Should()
-                .Throw<ArgumentException>()
+                .ThrowAsync<ArgumentException>()
                 .WithMessage("User role doesn't exist");
         }
 
@@ -136,7 +136,7 @@ namespace Nellebot.Tests
             Func<Task> act = async () => await _sut.DeleteRole(discordRole);
 
             act.Should()
-                .Throw<ArgumentException>()
+                .ThrowAsync<ArgumentException>()
                 .WithMessage("User role doesn't exist");
         }
 
@@ -154,7 +154,7 @@ namespace Nellebot.Tests
             Func<Task> act = async () => await _sut.GetRole(discordRole);
 
             act.Should()
-                .Throw<ArgumentException>()
+                .ThrowAsync<ArgumentException>()
                 .WithMessage("User role doesn't exist");
         }
 
@@ -172,7 +172,7 @@ namespace Nellebot.Tests
             Func<Task> act = async () => await _sut.AddRoleAlias(discordRole, alias);
 
             act.Should()
-                .Throw<ArgumentException>()
+                .ThrowAsync<ArgumentException>()
                 .WithMessage("Alias cannot be empty");
         }
 
@@ -191,7 +191,7 @@ namespace Nellebot.Tests
             Func<Task> act = async () => await _sut.AddRoleAlias(discordRole, alias);
 
             act.Should()
-                .Throw<ArgumentException>()
+                .ThrowAsync<ArgumentException>()
                 .WithMessage("User role doesn't exist");
         }
 
@@ -214,7 +214,7 @@ namespace Nellebot.Tests
             Func<Task> act = async () => await _sut.AddRoleAlias(discordRole, alias);
 
             act.Should()
-                .Throw<ArgumentException>()
+                .ThrowAsync<ArgumentException>()
                 .WithMessage("Alias already exists");
         }
 
@@ -233,7 +233,7 @@ namespace Nellebot.Tests
             Func<Task> act = async () => await _sut.RemoveRoleAlias(discordRole, alias);
 
             act.Should()
-                .Throw<ArgumentException>()
+                .ThrowAsync<ArgumentException>()
                 .WithMessage("User role doesn't exist");
         }
 
@@ -260,7 +260,7 @@ namespace Nellebot.Tests
             Func<Task> act = async () => await _sut.RemoveRoleAlias(discordRole, alias);
 
             act.Should()
-                .Throw<ArgumentException>()
+                .ThrowAsync<ArgumentException>()
                 .WithMessage("User role must have at least 1 alias");
         }
 
@@ -279,7 +279,7 @@ namespace Nellebot.Tests
             Func<Task> act = async () => await _sut.SetRoleGroup(discordRole, groupNumber);
 
             act.Should()
-                .Throw<ArgumentException>()
+                .ThrowAsync<ArgumentException>()
                 .WithMessage("User role doesn't exist");
         }
 
@@ -297,7 +297,7 @@ namespace Nellebot.Tests
             Func<Task> act = async () => await _sut.UnsetRoleGroup(discordRole);
 
             act.Should()
-                .Throw<ArgumentException>()
+                .ThrowAsync<ArgumentException>()
                 .WithMessage("User role doesn't exist");
         }
     }

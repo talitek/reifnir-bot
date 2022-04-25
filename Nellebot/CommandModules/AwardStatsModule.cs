@@ -41,6 +41,12 @@ namespace Nellebot.CommandModules
         {
             var member = ctx.Member;
 
+            if (member == null)
+            {
+                await ctx.RespondAsync("Could not fetch user");
+                return;
+            }
+
             await GetUserAwardStats(ctx, member);
         }
 

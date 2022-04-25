@@ -17,12 +17,13 @@ namespace Nellebot.Attributes
         {
             var authorizationServiceObj = ctx.Services.GetService(typeof(AuthorizationService));
 
-            if (authorizationServiceObj == null) {
+            if (authorizationServiceObj == null)
+            {
                 var error = "Could not fetch AuthorizationService";
 
                 var discordErrorLoggerObj = ctx.Services.GetService(typeof(DiscordErrorLogger));
 
-                if(discordErrorLoggerObj == null)
+                if (discordErrorLoggerObj == null)
                 {
                     throw new Exception("Could not fetch DiscordErrorLogger");
                 }
@@ -35,6 +36,8 @@ namespace Nellebot.Attributes
             }
 
             var authorizationService = (AuthorizationService)authorizationServiceObj;
+
+            if (ctx.Member == null) return false;
 
             var appMember = DiscordMemberMapper.Map(ctx.Member);
             var appApplication = DiscordApplicationMapper.Map(ctx.Client.CurrentApplication);

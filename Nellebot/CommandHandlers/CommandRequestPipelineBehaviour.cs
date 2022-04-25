@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Nellebot.CommandHandlers
 {
-    public class CommandRequestPipelineBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse> where TRequest : notnull
+    public class CommandRequestPipelineBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse> where TRequest : IRequest<TResponse>
     {
         private readonly ILogger<CommandRequestPipelineBehaviour<TRequest, TResponse>> _logger;
         private readonly DiscordErrorLogger _discordErrorLogger;
