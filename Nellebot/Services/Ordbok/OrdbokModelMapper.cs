@@ -3,6 +3,7 @@ using System.Linq;
 using vm = Nellebot.Common.Models.Ordbok.ViewModels;
 using api = Nellebot.Common.Models.Ordbok.Api;
 using Nellebot.Common.Extensions;
+using System;
 
 namespace Nellebot.Services.Ordbok
 {
@@ -21,7 +22,8 @@ namespace Nellebot.Services.Ordbok
 
             var dictionary = article.Dictionary;
 
-            vmResult.ArticleId = article.ArticleId;
+            vmResult.ArticleId = int.TryParse(Convert.ToString(article.ArticleId), out int intArticleId) ? intArticleId : 0;
+
             vmResult.Lemmas = article.Lemmas.Select(MapLemma).ToList();
 
             vmResult.Definitions = MapDefinitions(article.Body.DefinitionElements, dictionary);

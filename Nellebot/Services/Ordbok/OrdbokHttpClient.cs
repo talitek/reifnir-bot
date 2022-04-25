@@ -11,14 +11,12 @@ namespace Nellebot.Services.Ordbok
 {
     public class OrdbokHttpClient
     {
-        private readonly BotOptions _options;
         private readonly HttpClient _client;
 
         private const int _maxArticles = 5;
 
-        public OrdbokHttpClient(IOptions<BotOptions> options, HttpClient client)
+        public OrdbokHttpClient(HttpClient client)
         {
-            _options = options.Value;
             _client = client;
 
             _client.BaseAddress = new Uri("https://ord.uib.no/");
@@ -27,7 +25,7 @@ namespace Nellebot.Services.Ordbok
 
         public async Task<OrdbokSearchResponse?> Search(string dictionary, string query)
         {
-            var requestUri = $"api/articles?w={query}&dict={dictionary}";
+            var requestUri = $"api/articles?w={query}&dict={dictionary}&scope=ei";
 
             var response = await _client.GetAsync(requestUri);
 

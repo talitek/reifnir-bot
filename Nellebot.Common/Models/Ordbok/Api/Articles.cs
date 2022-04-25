@@ -9,7 +9,7 @@ namespace Nellebot.Common.Models.Ordbok.Api
         public string Dictionary { get; set; } = string.Empty;
 
         [JsonPropertyName("article_id")]
-        public int ArticleId { get; set; }
+        public dynamic? ArticleId { get; set; }
 
         [JsonPropertyName("body")]
         public Body Body { get; set; } = null!;
