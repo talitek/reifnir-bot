@@ -20,6 +20,12 @@ namespace Nellebot.CommandModules
         {
             return ctx.RespondAsync("<:katt_trist:622144052455800832> y u so mean? <:katt_trist:622144052455800832>");
         }
+
+        [Command("taco")]
+        public Task Taco(CommandContext ctx)
+        {
+            return ctx.RespondAsync(".\n                :cowboy: are u gonna say howdy\n　＿ノ ヽ ノ＼＿ back or are we\n/      / ⌒ Ｙ ⌒ Ｙ     ヽ gonna have a\n( 　(三ヽ人　 /　　 | fuckin problem\n|　ﾉ⌒＼ ￣￣ヽ　 ノ here partner?\nヽ＿＿＿＞､＿＿_／\n　　 ｜( 王 ﾉ〈\n　　 /ﾐ`ー―彡\n      /      ╰  ╯");
+        }
     }
 
     
