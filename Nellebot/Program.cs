@@ -50,7 +50,6 @@ namespace Nellebot
 
                     services.AddSingleton<AwardEventHandler>();
                     services.AddSingleton<CommandEventHandler>();
-                    services.AddSingleton<BlacklistEventHandler>();
 
                     services.AddTransient<AuthorizationService>();
                     services.AddTransient<DiscordErrorLogger>();
