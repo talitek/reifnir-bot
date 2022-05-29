@@ -18,7 +18,7 @@ namespace Nellebot.EventHandlers
         private readonly DiscordClient _client;
         private readonly ILogger<AwardEventHandler> _logger;
         private readonly MessageAwardQueue _awardQueue;
-        private readonly DiscordErrorLogger _discordErrorLogger;
+        private readonly IDiscordErrorLogger _discordErrorLogger;
         private readonly BotOptions _options;
 
         public AwardEventHandler(
@@ -26,7 +26,7 @@ namespace Nellebot.EventHandlers
             ILogger<AwardEventHandler> logger,
             MessageAwardQueue awardQueue,
             IOptions<BotOptions> options,
-            DiscordErrorLogger discordErrorLogger)
+            IDiscordErrorLogger discordErrorLogger)
         {
             _client = client;
             _logger = logger;

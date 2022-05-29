@@ -52,7 +52,7 @@ namespace Nellebot
                     services.AddSingleton<CommandEventHandler>();
 
                     services.AddTransient<AuthorizationService>();
-                    services.AddTransient<DiscordErrorLogger>();
+                    services.AddTransient<IDiscordErrorLogger, DiscordErrorLogger>();
                     services.AddTransient<UserRoleService>();
                     services.AddTransient<RoleService>();
                     services.AddTransient<AwardMessageService>();

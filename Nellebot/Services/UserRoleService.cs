@@ -140,7 +140,7 @@ namespace Nellebot.Services
 
                 if (discordRole == null)
                 {
-                    await _discordErrorLogger.LogDiscordError($"Could not find discordRole with id: {userRole.RoleId}. Skipping.");
+                    await _discordErrorLogger.LogDiscordError($"Could not find discord role for user role {userRole.Name} ({userRole.RoleId}). Skipping.");
                     continue;
                 }
 

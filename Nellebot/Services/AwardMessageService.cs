@@ -17,7 +17,7 @@ namespace Nellebot.Services
     {
         private readonly AwardMessageRepository _awardMessageRepo;
         private readonly ILogger<AwardMessageService> _logger;
-        private readonly DiscordErrorLogger _discordErrorLogger;
+        private readonly IDiscordErrorLogger _discordErrorLogger;
         private readonly DiscordResolver _discordResolver;
         private readonly BotOptions _options;
 
@@ -25,7 +25,7 @@ namespace Nellebot.Services
             AwardMessageRepository awardMessageRepo,
             ILogger<AwardMessageService> logger,
             IOptions<BotOptions> options,
-            DiscordErrorLogger discordErrorLogger,
+            IDiscordErrorLogger discordErrorLogger,
             DiscordResolver discordResolver
             )
         {

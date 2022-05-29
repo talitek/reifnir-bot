@@ -13,12 +13,12 @@ namespace Nellebot.EventHandlers
     {
         private readonly BotOptions _options;
         private readonly ILogger<CommandEventHandler> _logger;
-        private readonly DiscordErrorLogger _discordErrorLogger;
+        private readonly IDiscordErrorLogger _discordErrorLogger;
 
         public CommandEventHandler(
             IOptions<BotOptions> options,
             ILogger<CommandEventHandler> logger,
-            DiscordErrorLogger discordErrorLogger
+            IDiscordErrorLogger discordErrorLogger
             )
         {
             _options = options.Value;

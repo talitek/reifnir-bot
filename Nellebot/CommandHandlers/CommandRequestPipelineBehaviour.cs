@@ -10,11 +10,11 @@ namespace Nellebot.CommandHandlers
     public class CommandRequestPipelineBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse> where TRequest : IRequest<TResponse>
     {
         private readonly ILogger<CommandRequestPipelineBehaviour<TRequest, TResponse>> _logger;
-        private readonly DiscordErrorLogger _discordErrorLogger;
+        private readonly IDiscordErrorLogger _discordErrorLogger;
 
         public CommandRequestPipelineBehaviour(
             ILogger<CommandRequestPipelineBehaviour<TRequest, TResponse>> logger,
-            DiscordErrorLogger discordErrorLogger
+            IDiscordErrorLogger discordErrorLogger
             )
         {
             _logger = logger;

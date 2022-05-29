@@ -10,9 +10,9 @@ namespace Nellebot.Utils
 {
     public class DiscordResolver
     {
-        private readonly DiscordErrorLogger _discordErrorLogger;
+        private readonly IDiscordErrorLogger _discordErrorLogger;
 
-        public DiscordResolver(DiscordErrorLogger discordErrorLogger)
+        public DiscordResolver(IDiscordErrorLogger discordErrorLogger)
         {
             _discordErrorLogger = discordErrorLogger;
         }
