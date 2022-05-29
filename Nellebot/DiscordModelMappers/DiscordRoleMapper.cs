@@ -15,6 +15,7 @@ namespace Nellebot.DiscordModelMappers
             var appDiscordRole = new AppDiscordRole();
 
             appDiscordRole.Id = discordRole.Id;
+            appDiscordRole.Name = discordRole.Name;
 
             return appDiscordRole;
         }

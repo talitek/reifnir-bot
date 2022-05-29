@@ -12,57 +12,38 @@ namespace Nellebot.Services
     public class UserRoleService
     {
         private readonly IUserRoleRepository _userRoleRepo;
+        private readonly IDiscordErrorLogger _discordErrorLogger;
 
-        public UserRoleService(IUserRoleRepository userRoleRepo)
+        public UserRoleService(IUserRoleRepository userRoleRepo, IDiscordErrorLogger discordErrorLogger)
         {
             _userRoleRepo = userRoleRepo;
+            _discordErrorLogger = discordErrorLogger;
         }
 
-        public async Task<UserRole> CreateRole(AppDiscordRole role, string name, string aliasList)
+        public async Task<UserRole> CreateRole(AppDiscordRole role, string? aliasList)
         {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException("Role name cannot be empty");
-
-            if (string.IsNullOrWhiteSpace(aliasList))
-                throw new ArgumentException("Alias list cannot be empty");
-
-            var aliases = aliasList.Split(',').Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
-
-            if (aliases.Count == 0)
-                throw new ArgumentException("Alias list cannot be empty");
-
             var existingRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
 
             if (existingRole != null)
                 throw new ArgumentException("User role already exists");
 
-            var userRole = await _userRoleRepo.CreateRole(role.Id, name.Trim());
+            var userRole = await _userRoleRepo.CreateRole(role.Id, role.Name);
 
-            var newAliases = new List<UserRoleAlias>();
-
-            foreach (var alias in aliases)
+            if (aliasList != null)
             {
-                var aliasName = alias.Trim().ToLower();
-                var newAlias = await _userRoleRepo.CreateRoleAlias(userRole.Id, aliasName);
-                newAliases.Add(newAlias);
+                var aliases = aliasList.Split(',').Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
+
+                var newAliases = new List<UserRoleAlias>();
+
+                foreach (var alias in aliases)
+                {
+                    var aliasName = alias.Trim().ToLower();
+                    var newAlias = await _userRoleRepo.CreateRoleAlias(userRole.Id, aliasName);
+                    newAliases.Add(newAlias);
+                }
+
+                userRole.UserRoleAliases = newAliases;
             }
-
-            userRole.UserRoleAliases = newAliases;
-
-            return userRole;
-        }
-
-        public async Task<UserRole> UpdateRole(AppDiscordRole role, string name)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException("Role name cannot be empty");
-
-            var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
-
-            if (userRole == null)
-                throw new ArgumentException("User role doesn't exist");
-
-            await _userRoleRepo.UpdateRole(userRole.Id, name.Trim());
 
             return userRole;
         }
@@ -121,8 +102,8 @@ namespace Nellebot.Services
             if (userRole == null)
                 throw new ArgumentException("User role doesn't exist");
 
-            if (userRole.UserRoleAliases.Count() == 1)
-                throw new ArgumentException("User role must have at least 1 alias");
+            if (!userRole.UserRoleAliases.Any())
+                throw new ArgumentException("User role has no aliases");
 
             await _userRoleRepo.DeleteRoleAlias(userRole.Id, alias);
         }
@@ -145,6 +126,32 @@ namespace Nellebot.Services
                 throw new ArgumentException("User role doesn't exist");
 
             await _userRoleRepo.UpdateRoleGroup(userRole.Id, null);
+        }
+
+        public async Task<uint> UpdateRoleNames(IEnumerable<AppDiscordRole> roles)
+        {
+            var userRoles = await _userRoleRepo.GetRoleList();
+
+            uint updatedRoleCount = 0;
+
+            foreach (var userRole in userRoles)
+            {
+                var discordRole = roles.SingleOrDefault(r => r.Id == userRole.RoleId);
+
+                if (discordRole == null)
+                {
+                    await _discordErrorLogger.LogDiscordError($"Could not find discordRole with id: {userRole.RoleId}. Skipping.");
+                    continue;
+                }
+
+                if (!string.Equals(discordRole.Name, userRole.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    await _userRoleRepo.UpdateRole(userRole.Id, discordRole.Name);
+                    updatedRoleCount++;
+                }
+            }
+
+            return updatedRoleCount;
         }
     }
 }

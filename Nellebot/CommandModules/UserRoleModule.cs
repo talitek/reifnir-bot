@@ -35,31 +35,31 @@ namespace Nellebot.CommandModules
         }
 
         [Command("create-role")]
-        public async Task CreateRole(CommandContext ctx, DiscordRole role, string name, string aliasList)
+        public async Task CreateRole(CommandContext ctx, DiscordRole role, string? aliasList = null)
         {
             var appDiscordRole = DiscordRoleMapper.Map(role);
 
-            await _userRoleService.CreateRole(appDiscordRole, name, aliasList);
+            await _userRoleService.CreateRole(appDiscordRole, aliasList);
 
-            await ctx.RespondAsync($"Created user role with name {name} for {role.Name}");
+            await ctx.RespondAsync($"Created user role for {role.Name}");
         }
 
         [Command("create-role")]
-        public async Task CreateRole(CommandContext ctx, ulong roleId, string name, string aliasList)
+        public async Task CreateRole(CommandContext ctx, ulong roleId, string? aliasList = null)
         {
             ctx.Guild.Roles.TryGetValue(roleId, out var discordRole);
 
             if (discordRole == null)
             {
-                await ctx.RespondAsync($"A role with id {roleId} doesn't exist.");
+                await ctx.RespondAsync($"A discord role with id {roleId} doesn't exist.");
                 return;
             }
 
-            await CreateRole(ctx, discordRole, name, aliasList);
+            await CreateRole(ctx, discordRole, aliasList);
         }
 
         [Command("create-role")]
-        public async Task CreateRole(CommandContext ctx, string discordRoleName, string name, string aliasList)
+        public async Task CreateRole(CommandContext ctx, string discordRoleName, string? aliasList = null)
         {
             var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName, out var discordRole);
 
@@ -69,45 +69,7 @@ namespace Nellebot.CommandModules
                 return;
             }
 
-            await CreateRole(ctx, discordRole, name, aliasList);
-        }
-
-        [Command("update-role")]
-        public async Task UpdateRole(CommandContext ctx, DiscordRole role, string name)
-        {
-            var appDiscordRole = DiscordRoleMapper.Map(role);
-
-            await _userRoleService.UpdateRole(appDiscordRole, name);
-
-            await ctx.RespondAsync($"Changed user role name to {name} for {role.Name}");
-        }
-
-        [Command("update-role")]
-        public async Task UpdateRole(CommandContext ctx, uint roleId, string name)
-        {
-            ctx.Guild.Roles.TryGetValue(roleId, out var discordRole);
-
-            if (discordRole == null)
-            {
-                await ctx.RespondAsync($"A role with id {roleId} doesn't exist.");
-                return;
-            }
-
-            await UpdateRole(ctx, discordRole, name);
-        }
-
-        [Command("update-role")]
-        public async Task UpdateRole(CommandContext ctx, string discordRoleName, string name)
-        {
-            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName, out var discordRole);
-
-            if (!result.Resolved)
-            {
-                await ctx.RespondAsync(result.ErrorMessage);
-                return;
-            }
-
-            await UpdateRole(ctx, discordRole, name);
+            await CreateRole(ctx, discordRole, aliasList);
         }
 
         [Command("delete-role")]
@@ -127,7 +89,7 @@ namespace Nellebot.CommandModules
 
             if (discordRole == null)
             {
-                await ctx.RespondAsync($"A role with id {roleId} doesn't exist.");
+                await ctx.RespondAsync($"A discord role with id {roleId} doesn't exist.");
                 return;
             }
 
@@ -177,7 +139,7 @@ namespace Nellebot.CommandModules
 
             if (discordRole == null)
             {
-                await ctx.RespondAsync($"A role with id {roleId} doesn't exist.");
+                await ctx.RespondAsync($"A discord role with id {roleId} doesn't exist.");
                 return;
             }
 
@@ -226,7 +188,7 @@ namespace Nellebot.CommandModules
                 }
 
                 sb.AppendLine();
-            }            
+            }
 
             var message = sb.ToString();
 
@@ -288,7 +250,7 @@ namespace Nellebot.CommandModules
 
             if (discordRole == null)
             {
-                await ctx.RespondAsync($"A role with id {roleId} doesn't exist.");
+                await ctx.RespondAsync($"A discord role with id {roleId} doesn't exist.");
                 return;
             }
 
@@ -385,6 +347,24 @@ namespace Nellebot.CommandModules
             await UnsetRoleGroup(ctx, discordRole);
         }
 
+        [Command("update-roles")]
+        [Description("Update user role names to match Discord roles")]
+        public async Task UpdateRoles(CommandContext ctx)
+        {
+            var guildRoles = ctx.Guild.Roles.Select(r => DiscordRoleMapper.Map(r.Value));
+
+            var updatedRoleCount = await _userRoleService.UpdateRoleNames(guildRoles);
+
+            if (updatedRoleCount == 0)
+            {
+                await ctx.RespondAsync("Roles already up to date");
+            }
+            else
+            {
+                await ctx.RespondAsync($"Updated {updatedRoleCount} {(updatedRoleCount == 1 ? "role" : "roles")}");
+            }
+        }
+
         [Command("help")]
         public Task GetHelp(CommandContext ctx)
         {
@@ -394,21 +374,20 @@ namespace Nellebot.CommandModules
 
             sb.AppendLine("User role commands");
 
-            sb.AppendLine($"`{command} create-role [role] [role-name] [alias-list]`");
-            sb.AppendLine($"`{command} update-role [role] [role-name]`");
+            sb.AppendLine($"`{command} create-role [role] [?alias-list]`");
             sb.AppendLine($"`{command} delete-role [role]`");
             sb.AppendLine($"`{command} get-role [role]`");
             sb.AppendLine($"`{command} add-alias [role] [alias-name]`");
             sb.AppendLine($"`{command} remove-alias [role] [alias-name]`");
             sb.AppendLine($"`{command} set-group [role] [group-number]`");
             sb.AppendLine($"`{command} unset-group [role]`");
+            sb.AppendLine($"`{command} update-roles`");
 
             sb.AppendLine();
             sb.AppendLine($"Command arguments:");
             sb.AppendLine($"`role           .. Discord role name, Discord role Id or Discord role @mention`");
-            sb.AppendLine($"`role-name      .. Friendly role name (e.g. used in #log)`");
             sb.AppendLine($"`alias-name     .. User role alias (used when assigning role)`");
-            sb.AppendLine($"`alias-list     .. Comma separated value of alias names`");
+            sb.AppendLine($"`alias-list     .. Alias names (comma separated values, optional)`");
             sb.AppendLine($"`group-number   .. User role group number (positive whole number)`");
 
             var message = sb.ToString();

@@ -8,7 +8,7 @@ using Nellebot.Utils;
 
 namespace Nellebot.Services
 {
-    public class DiscordErrorLogger
+    public class DiscordErrorLogger : IDiscordErrorLogger
     {
         private readonly DiscordClient _client;
         private readonly BotOptions _options;

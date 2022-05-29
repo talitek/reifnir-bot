@@ -18,108 +18,33 @@ namespace Nellebot.Tests
     {
         private UserRoleService _sut = null!;
         private Mock<IUserRoleRepository> _userRoleRepoMock = null!;
+        private Mock<IDiscordErrorLogger> _discordErrorLoggerMock = null!;
 
         [TestInitialize]
         public void Initialize()
         {
             _sut = null!;
             _userRoleRepoMock = new Mock<IUserRoleRepository>();
-        }
-
-        [DataTestMethod]
-        [DataRow(null)]
-        [DataRow("")]
-        [DataRow(" ")]
-        public void CreateRole_WithEmptyName_ThrowsException(string inputName)
-        {
-            var discordRole = It.IsAny<AppDiscordRole>();
-            var name = inputName;
-            var aliases = It.IsAny<string>();
-
-            _sut = new UserRoleService(_userRoleRepoMock.Object);
-
-            Func<Task> act = async () => await _sut.CreateRole(discordRole, name, aliases);
-
-            act.Should()
-                .ThrowAsync<ArgumentException>()
-                .WithMessage("Role name cannot be empty");
-        }
-
-        [DataTestMethod]
-        [DataRow(null)]
-        [DataRow("")]
-        [DataRow(" ")]
-        [DataRow(",")]
-        public void CreateRole_WithLessThan1ValidAlias_ThrowsException(string inputAliasList)
-        {
-            var discordRole = It.IsAny<AppDiscordRole>();
-            var name = "name";
-            var aliases = inputAliasList;
-
-            _sut = new UserRoleService(_userRoleRepoMock.Object);
-
-            Func<Task> act = async () => await _sut.CreateRole(discordRole, name, aliases);
-
-            act.Should()
-                .ThrowAsync<ArgumentException>()
-                .WithMessage("Alias list cannot be empty");
+            _discordErrorLoggerMock = new Mock<IDiscordErrorLogger>();
         }
 
         [TestMethod]
         public void CreateRole_UserRoleAlreadyExists_ThrowException()
         {
             var discordRole = new AppDiscordRole();
-            var name = "name";
             var aliases = "alias";
 
             _userRoleRepoMock
                 .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
                 .ReturnsAsync(new UserRole());
 
-            _sut = new UserRoleService(_userRoleRepoMock.Object);
+            _sut = BuildSutWithMocks();
 
-            Func<Task> act = async () => await _sut.CreateRole(discordRole, name, aliases);
+            Func<Task> act = async () => await _sut.CreateRole(discordRole, aliases);
 
             act.Should()
                 .ThrowAsync<ArgumentException>()
                 .WithMessage("User role already exists");
-        }
-
-        [DataTestMethod]
-        [DataRow(null)]
-        [DataRow("")]
-        [DataRow(" ")]
-        public void Update_WithEmptyName_ThrowsException(string inputName)
-        {
-            var discordRole = It.IsAny<AppDiscordRole>();
-            var name = inputName;
-
-            _sut = new UserRoleService(_userRoleRepoMock.Object);
-
-            Func<Task> act = async () => await _sut.UpdateRole(discordRole, name);
-
-            act.Should()
-                .ThrowAsync<ArgumentException>()
-                .WithMessage("Role name cannot be empty");
-        }
-
-        [TestMethod]
-        public void UpdateRole_UserRoleNotExists_ThrowException()
-        {
-            var discordRole = new AppDiscordRole();
-            var name = "name";
-
-            _userRoleRepoMock
-                .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
-                .ReturnsAsync((UserRole)null!);
-
-            _sut = new UserRoleService(_userRoleRepoMock.Object);
-
-            Func<Task> act = async () => await _sut.UpdateRole(discordRole, name);
-
-            act.Should()
-                .ThrowAsync<ArgumentException>()
-                .WithMessage("User role doesn't exist");
         }
 
         [TestMethod]
@@ -131,7 +56,7 @@ namespace Nellebot.Tests
                 .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
                 .ReturnsAsync((UserRole)null!);
 
-            _sut = new UserRoleService(_userRoleRepoMock.Object);
+            _sut = BuildSutWithMocks();
 
             Func<Task> act = async () => await _sut.DeleteRole(discordRole);
 
@@ -149,7 +74,7 @@ namespace Nellebot.Tests
                 .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
                 .ReturnsAsync((UserRole)null!);
 
-            _sut = new UserRoleService(_userRoleRepoMock.Object);
+            _sut = BuildSutWithMocks();
 
             Func<Task> act = async () => await _sut.GetRole(discordRole);
 
@@ -167,7 +92,7 @@ namespace Nellebot.Tests
             var discordRole = It.IsAny<AppDiscordRole>();
             var alias = inputAlias;
 
-            _sut = new UserRoleService(_userRoleRepoMock.Object);
+            _sut = BuildSutWithMocks();
 
             Func<Task> act = async () => await _sut.AddRoleAlias(discordRole, alias);
 
@@ -186,7 +111,7 @@ namespace Nellebot.Tests
                 .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
                 .ReturnsAsync((UserRole)null!);
 
-            _sut = new UserRoleService(_userRoleRepoMock.Object);
+            _sut = BuildSutWithMocks();
 
             Func<Task> act = async () => await _sut.AddRoleAlias(discordRole, alias);
 
@@ -209,7 +134,7 @@ namespace Nellebot.Tests
                 .Setup(x => x.GetRoleAlias(It.IsAny<string>()))
                 .ReturnsAsync(new UserRoleAlias());
 
-            _sut = new UserRoleService(_userRoleRepoMock.Object);
+            _sut = BuildSutWithMocks();
 
             Func<Task> act = async () => await _sut.AddRoleAlias(discordRole, alias);
 
@@ -228,7 +153,7 @@ namespace Nellebot.Tests
                 .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
                 .ReturnsAsync((UserRole)null!);
 
-            _sut = new UserRoleService(_userRoleRepoMock.Object);
+            _sut = BuildSutWithMocks();
 
             Func<Task> act = async () => await _sut.RemoveRoleAlias(discordRole, alias);
 
@@ -238,7 +163,7 @@ namespace Nellebot.Tests
         }
 
         [TestMethod]
-        public void RemoveRoleAlias_RoleHas1Alias_ThrowException()
+        public void RemoveRoleAlias_RoleHasNoAliases_ThrowException()
         {
             var discordRole = new AppDiscordRole();
             var alias = "alias";
@@ -246,22 +171,19 @@ namespace Nellebot.Tests
             var userRole = new UserRole()
             {
                 UserRoleAliases = new List<UserRoleAlias>()
-                {
-                    new UserRoleAlias()
-                }
             };
 
             _userRoleRepoMock
                 .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
                 .ReturnsAsync(userRole);
 
-            _sut = new UserRoleService(_userRoleRepoMock.Object);
+            _sut = BuildSutWithMocks();
 
             Func<Task> act = async () => await _sut.RemoveRoleAlias(discordRole, alias);
 
             act.Should()
                 .ThrowAsync<ArgumentException>()
-                .WithMessage("User role must have at least 1 alias");
+                .WithMessage("User role has no aliases");
         }
 
         [TestMethod]
@@ -274,7 +196,7 @@ namespace Nellebot.Tests
                 .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
                 .ReturnsAsync((UserRole)null!);
 
-            _sut = new UserRoleService(_userRoleRepoMock.Object);
+            _sut = BuildSutWithMocks();
 
             Func<Task> act = async () => await _sut.SetRoleGroup(discordRole, groupNumber);
 
@@ -292,13 +214,18 @@ namespace Nellebot.Tests
                 .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
                 .ReturnsAsync((UserRole)null!);
 
-            _sut = new UserRoleService(_userRoleRepoMock.Object);
+            _sut = BuildSutWithMocks();
 
             Func<Task> act = async () => await _sut.UnsetRoleGroup(discordRole);
 
             act.Should()
                 .ThrowAsync<ArgumentException>()
                 .WithMessage("User role doesn't exist");
+        }
+
+        private UserRoleService BuildSutWithMocks()
+        {
+            return new UserRoleService(_userRoleRepoMock.Object, _discordErrorLoggerMock.Object);
         }
     }
 }

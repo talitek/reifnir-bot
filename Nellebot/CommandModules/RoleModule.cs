@@ -52,9 +52,15 @@ namespace Nellebot.CommandModules
             {
                 foreach (var userRole in roleGroup.ToList())
                 {
-                    var formattedAliasList = string.Join(", ", userRole.UserRoleAliases.Select(x => x.Alias));
+                    sb.Append($"* {userRole.Name}");
 
-                    sb.AppendLine($"* {userRole.Name} (or {formattedAliasList})");
+                    if(userRole.UserRoleAliases.Any())
+                    {
+                        var formattedAliasList = string.Join(", ", userRole.UserRoleAliases.Select(x => x.Alias));
+                        sb.Append($" (or {formattedAliasList})");
+                    }
+
+                    sb.AppendLine();
                 }
 
                 sb.AppendLine();
