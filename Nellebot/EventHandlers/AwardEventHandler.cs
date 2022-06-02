@@ -192,6 +192,8 @@ namespace Nellebot.EventHandlers
 
         private bool IsAwardAllowedChannel(DiscordChannel channel)
         {
+            if (channel.IsThread) channel = channel.Parent;
+
             var allowedGroupIds = _options.AwardVoteGroupIds;
 
             if (allowedGroupIds == null || allowedGroupIds.Length == 0)
