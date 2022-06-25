@@ -6,14 +6,17 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
+using Nellebot.CommandHandlers;
 using Nellebot.Common.Extensions;
 using Nellebot.Helpers;
 using Nellebot.Services;
+using Nellebot.Workers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Nellebot.CommandHandlers.AddMissingMemberRoles;
 
 namespace Nellebot.CommandModules
 {
@@ -23,13 +26,16 @@ namespace Nellebot.CommandModules
     public class AdminModule : BaseCommandModule
     {
         private readonly ILogger<AdminModule> _logger;
+        private readonly CommandQueue _commandQueue;
         private readonly BotOptions _options;
 
         public AdminModule(
             ILogger<AdminModule> logger,
-            IOptions<BotOptions> options)
+            IOptions<BotOptions> options,
+            CommandQueue commandQueue)
         {
             _logger = logger;
+            _commandQueue = commandQueue;
             _options = options.Value;
         }
 
@@ -76,6 +82,18 @@ namespace Nellebot.CommandModules
             }
 
             await ctx.RespondAsync(sb.ToString());
+        }
+
+        [Command("add-missing-members")]
+        public Task AddMissingMemberRoles(CommandContext ctx, uint proficiencyGroup)
+        {
+            _commandQueue.Enqueue(new AddMissingMemberRolesRequest(ctx)
+            {
+                MemberRoleId = _options.MemberRoleId,
+                ProficiencyGroup = proficiencyGroup
+            });
+
+            return Task.CompletedTask;
         }
     }
 }
