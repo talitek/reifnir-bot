@@ -1,10 +1,10 @@
 ﻿using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using Nellebot.Attributes;
+using Nellebot.CommandHandlers.Glosbe;
 using Nellebot.Common.Models.Glosbe;
 using Nellebot.Workers;
 using System.Threading.Tasks;
-using static Nellebot.CommandHandlers.Glosbe.SearchGlosbe;
 
 namespace Nellebot.CommandModules
 {

@@ -6,31 +6,32 @@ using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nellebot.CommandHandlers;
+using Nellebot.NotificationHandlers;
 
 namespace Nellebot.Workers
 {
-    public class CommandQueue : ConcurrentQueue<CommandRequest>
+    public class EventQueue : ConcurrentQueue<EventNotification>
     {
 
     }
 
-    public class CommandQueueWorker : BackgroundService
+    public class EventQueueWorker : BackgroundService
     {
         private const int IdleDelay = 1000;
         private const int BusyDelay = 10;
 
-        private readonly ILogger<CommandQueueWorker> _logger;
-        private readonly CommandQueue _commandQueue;
+        private readonly ILogger<EventQueueWorker> _logger;
+        private readonly EventQueue _eventQueue;
         private readonly IMediator _mediator;
 
-        public CommandQueueWorker(
-                ILogger<CommandQueueWorker> logger,
-                CommandQueue commandQueue,
+        public EventQueueWorker(
+                ILogger<EventQueueWorker> logger,
+                EventQueue eventQueue,
                 IMediator mediator
             )
         {
             _logger = logger;
-            _commandQueue = commandQueue;
+            _eventQueue = eventQueue;
             _mediator = mediator;
         }
 
@@ -42,20 +43,28 @@ namespace Nellebot.Workers
 
                 try
                 {
-                    if (_commandQueue.Count == 0)
+                    if (_eventQueue.Count == 0)
                     {
                         await Task.Delay(nextDelay, stoppingToken);
 
                         continue;
                     }
 
-                    _commandQueue.TryDequeue(out var command);
+                    _eventQueue.TryDequeue(out var @event);
 
-                    if (command != null)
+                    if (@event != null)
                     {
-                        _logger.LogDebug($"Dequeued command. {_commandQueue.Count} left in queue");
+                        _logger.LogDebug($"Dequeued event. {_eventQueue.Count} left in queue");
 
-                        await _mediator.Send(command);
+                        switch (@event)
+                        {
+                            case GuildMemberUpdatedNotification guildMemberUpdated:
+                                await _mediator.Publish(guildMemberUpdated, stoppingToken);
+                                break;
+                            default:
+                                _logger.LogWarning($"Unknown EventNotification type");
+                                break;
+                        };
 
                         nextDelay = BusyDelay;
                     }

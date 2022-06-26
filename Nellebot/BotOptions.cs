@@ -23,5 +23,6 @@ namespace Nellebot
         public int RequiredAwardCount { get; set; }
         public ulong AdminRoleId { get; set; }
         public ulong MemberRoleId { get; set; }
+        public ulong[] RequiredRoleIds { get; set; } = null!;
     }
 }

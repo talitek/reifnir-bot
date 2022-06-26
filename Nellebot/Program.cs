@@ -43,9 +43,11 @@ namespace Nellebot
 
                     services.AddHostedService<BotWorker>();
                     services.AddHostedService<CommandQueueWorker>();
-                    services.AddHostedService<MessageAwardQueueWorker>();
+                    services.AddHostedService<EventQueueWorker>();
+                    services.AddHostedService<MessageAwardQueueWorker>();                    
 
                     services.AddSingleton<CommandQueue>();
+                    services.AddSingleton<EventQueue>();
                     services.AddSingleton<MessageAwardQueue>();
 
                     services.AddSingleton<AwardEventHandler>();

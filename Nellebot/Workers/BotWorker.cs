@@ -6,6 +6,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.EventHandlers;
+using Nellebot.NotificationHandlers;
+using Nellebot.Workers;
 using System;
 using System.Reflection;
 using System.Threading;
@@ -21,6 +23,7 @@ namespace Nellebot
         private readonly IServiceProvider _serviceProvider;
         private readonly CommandEventHandler _commandEventHandler;
         private readonly AwardEventHandler _awardEventHandler;
+        private readonly EventQueue _eventQueue;
 
         public BotWorker(
             IOptions<BotOptions> options,
@@ -28,7 +31,8 @@ namespace Nellebot
             DiscordClient client,
             IServiceProvider serviceProvider,
             CommandEventHandler commandEventHandler,
-            AwardEventHandler awardEventHandler
+            AwardEventHandler awardEventHandler,
+            EventQueue eventQueue
             )
         {
             _options = options.Value;
@@ -37,6 +41,7 @@ namespace Nellebot
             _serviceProvider = serviceProvider;
             _commandEventHandler = commandEventHandler;
             _awardEventHandler = awardEventHandler;
+            _eventQueue = eventQueue;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -62,6 +67,17 @@ namespace Nellebot
 
             _commandEventHandler.RegisterHandlers(commands);
             _awardEventHandler.RegisterHandlers();
+
+            RegisterGuildEventHandlers();
+        }
+
+        private void RegisterGuildEventHandlers()
+        {
+            _client.GuildMemberUpdated += (sender, args) =>
+            {
+                _eventQueue.Enqueue(new GuildMemberUpdatedNotification(args));
+                return Task.CompletedTask;
+            };
         }
 
         private Task OnClientDisconnected(DiscordClient sender, SocketCloseEventArgs e)

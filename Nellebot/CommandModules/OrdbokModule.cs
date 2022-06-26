@@ -1,10 +1,10 @@
 ﻿using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using Nellebot.Attributes;
+using Nellebot.CommandHandlers.Ordbok;
 using Nellebot.Common.Models.Ordbok;
 using Nellebot.Workers;
 using System.Threading.Tasks;
-using static Nellebot.CommandHandlers.Ordbok.SearchOrdbok;
 
 namespace Nellebot.CommandModules
 {

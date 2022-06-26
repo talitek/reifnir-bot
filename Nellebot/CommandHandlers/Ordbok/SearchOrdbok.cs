@@ -19,152 +19,149 @@ using api = Nellebot.Common.Models.Ordbok.Api;
 
 namespace Nellebot.CommandHandlers.Ordbok
 {
-    public class SearchOrdbok
+    public class SearchOrdbokRequest : CommandRequest
     {
-        public class SearchOrdbokRequest : CommandRequest
-        {
-            public string Query { get; set; } = string.Empty;
-            public string Dictionary { get; set; } = string.Empty;
-            public bool AttachTemplate { get; set; } = false;
+        public string Query { get; set; } = string.Empty;
+        public string Dictionary { get; set; } = string.Empty;
+        public bool AttachTemplate { get; set; } = false;
 
-            public SearchOrdbokRequest(CommandContext ctx) : base(ctx)
-            {
-            }
+        public SearchOrdbokRequest(CommandContext ctx) : base(ctx)
+        {
+        }
+    }
+
+    public class SearchOrdbokHandler : AsyncRequestHandler<SearchOrdbokRequest>
+    {
+        private readonly OrdbokHttpClient _ordbokClient;
+        private readonly OrdbokModelMapper _ordbokModelMapper;
+        private readonly ScribanTemplateLoader _templateLoader;
+        private readonly HtmlToImageService _htmlToImageService;
+        private readonly ILogger<SearchOrdbokHandler> _logger;
+
+        private const int _maxDefinitionsInTextForm = 5;
+
+        public SearchOrdbokHandler(
+            OrdbokHttpClient ordbokClient,
+            OrdbokModelMapper ordbokModelMapper,
+            ScribanTemplateLoader templateLoader,
+            HtmlToImageService htmlToImageService,
+            ILogger<SearchOrdbokHandler> logger
+            )
+        {
+            _ordbokClient = ordbokClient;
+            _ordbokModelMapper = ordbokModelMapper;
+            _templateLoader = templateLoader;
+            _htmlToImageService = htmlToImageService;
+            _logger = logger;
         }
 
-        public class SearchOrdbokHandler : AsyncRequestHandler<SearchOrdbokRequest>
+        protected override async Task Handle(SearchOrdbokRequest request, CancellationToken cancellationToken)
         {
-            private readonly OrdbokHttpClient _ordbokClient;
-            private readonly OrdbokModelMapper _ordbokModelMapper;
-            private readonly ScribanTemplateLoader _templateLoader;
-            private readonly HtmlToImageService _htmlToImageService;
-            private readonly ILogger<SearchOrdbokHandler> _logger;
+            var ctx = request.Ctx;
+            var query = request.Query;
+            var dictionary = request.Dictionary;
+            var attachTemplate = request.AttachTemplate;
 
-            private const int _maxDefinitionsInTextForm = 5;
+            var searchResponse = await _ordbokClient.Search(request.Dictionary, query);
 
-            public SearchOrdbokHandler(
-                OrdbokHttpClient ordbokClient,
-                OrdbokModelMapper ordbokModelMapper,
-                ScribanTemplateLoader templateLoader,
-                HtmlToImageService htmlToImageService,
-                ILogger<SearchOrdbokHandler> logger
-                )
+            var articleIds = dictionary == OrdbokDictionaryMap.Bokmal
+                                ? searchResponse?.Articles?.BokmalArticleIds
+                                : searchResponse?.Articles?.NynorskArticleIds;
+
+            if (articleIds == null || articleIds.Count == 0)
             {
-                _ordbokClient = ordbokClient;
-                _ordbokModelMapper = ordbokModelMapper;
-                _templateLoader = templateLoader;
-                _htmlToImageService = htmlToImageService;
-                _logger = logger;
+                await ctx.RespondAsync("No match");
+                return;
             }
 
-            protected override async Task Handle(SearchOrdbokRequest request, CancellationToken cancellationToken)
+            var ordbokArticles = await _ordbokClient.GetArticles(dictionary, articleIds);
+
+            var articles = MapAndSelectArticles(ordbokArticles);
+
+            var queryUrl = $"https://ordbokene.no/{(dictionary == OrdbokDictionaryMap.Bokmal ? "bm" : "nn")}/w/{query}";
+
+            string textTemplateResult = await RenderTextTemplate(articles);
+
+            string htmlTemplateResult = await RenderHtmlTemplate(dictionary, articles);
+
+            var truncatedContent = textTemplateResult.Substring(0, Math.Min(textTemplateResult.Length, DiscordConstants.MaxEmbedContentLength));
+
+            var eb = new DiscordEmbedBuilder()
+                .WithTitle(dictionary == OrdbokDictionaryMap.Bokmal ? "Bokmålsordboka" : "Nynorskordboka")
+                .WithUrl(queryUrl)
+                .WithDescription(truncatedContent)
+                .WithFooter("Universitetet i Bergen og Språkrådet - ordbokene.no")
+                .WithColor(DiscordConstants.EmbedColor);
+
+            var mb = new DiscordMessageBuilder();
+
+            FileStream? imageFileStream = null;
+            FileStream? htmlFileStream = null;
+
+            try
             {
-                var ctx = request.Ctx;
-                var query = request.Query;
-                var dictionary = request.Dictionary;
-                var attachTemplate = request.AttachTemplate;
+                var result = await _htmlToImageService.GenerateImageFile(htmlTemplateResult);
 
-                var searchResponse = await _ordbokClient.Search(request.Dictionary, query);
+                imageFileStream = result.ImageFileStream;
+                htmlFileStream = result.HtmlFileStream;
 
-                var articleIds = dictionary == OrdbokDictionaryMap.Bokmal 
-                                    ? searchResponse?.Articles?.BokmalArticleIds 
-                                    : searchResponse?.Articles?.NynorskArticleIds;
-
-                if (articleIds == null || articleIds.Count == 0)
+                if (!attachTemplate)
                 {
-                    await ctx.RespondAsync("No match");
-                    return;
+                    eb = eb.WithImageUrl($"attachment://{result.ImageFileName}");
+                    mb = mb.WithFile(result.ImageFileName, result.ImageFileStream);
                 }
-
-                var ordbokArticles = await _ordbokClient.GetArticles(dictionary, articleIds);
-
-                var articles = MapAndSelectArticles(ordbokArticles);
-
-                var queryUrl = $"https://ordbokene.no/{(dictionary == OrdbokDictionaryMap.Bokmal ? "bm" : "nn")}/w/{query}";
-
-                string textTemplateResult = await RenderTextTemplate(articles);
-
-                string htmlTemplateResult = await RenderHtmlTemplate(dictionary, articles);
-
-                var truncatedContent = textTemplateResult.Substring(0, Math.Min(textTemplateResult.Length, DiscordConstants.MaxEmbedContentLength));
-
-                var eb = new DiscordEmbedBuilder()
-                    .WithTitle(dictionary == OrdbokDictionaryMap.Bokmal ? "Bokmålsordboka" : "Nynorskordboka")
-                    .WithUrl(queryUrl)
-                    .WithDescription(truncatedContent)
-                    .WithFooter("Universitetet i Bergen og Språkrådet - ordbokene.no")
-                    .WithColor(DiscordConstants.EmbedColor);
-
-                var mb = new DiscordMessageBuilder();
-
-                FileStream? imageFileStream = null;
-                FileStream? htmlFileStream = null;
-
-                try
+                else
                 {
-                    var result = await _htmlToImageService.GenerateImageFile(htmlTemplateResult);
-
-                    imageFileStream = result.ImageFileStream;
-                    htmlFileStream = result.HtmlFileStream;
-
-                    if (!attachTemplate)
-                    {
-                        eb = eb.WithImageUrl($"attachment://{result.ImageFileName}");
-                        mb = mb.WithFile(result.ImageFileName, result.ImageFileStream);
-                    }
-                    else
-                    {
-                        mb = mb.WithFile(result.HtmlFileStream);
-                    }
+                    mb = mb.WithFile(result.HtmlFileStream);
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, typeof(SearchOrdbok).FullName);
-                }
-
-                mb = mb.WithEmbed(eb.Build());
-
-                await ctx.RespondAsync(mb);
-
-                if (imageFileStream != null)
-                    await imageFileStream.DisposeAsync();
-
-                if (htmlFileStream != null)
-                    await htmlFileStream.DisposeAsync();
             }
-
-            private async Task<string> RenderTextTemplate(List<vm.Article> articles)
+            catch (Exception ex)
             {
-                var textTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Text);
-                var textTemplate = Template.Parse(textTemplateSource);
-
-                var maxDefinitions = _maxDefinitionsInTextForm;
-
-                var textTemplateResult = textTemplate.Render(new { articles, maxDefinitions });
-
-                return textTemplateResult;
+                _logger.LogError(ex, typeof(SearchOrdbokRequest).FullName);
             }
 
-            private async Task<string> RenderHtmlTemplate(string dictionary, List<vm.Article> articles)
-            {
-                var htmlTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Html);
-                var htmlTemplate = Template.Parse(htmlTemplateSource);
+            mb = mb.WithEmbed(eb.Build());
 
-                var htmlTemplateResult = htmlTemplate.Render(new { articles, dictionary });
+            await ctx.RespondAsync(mb);
 
-                return htmlTemplateResult;
-            }
+            if (imageFileStream != null)
+                await imageFileStream.DisposeAsync();
 
-            private List<vm.Article> MapAndSelectArticles(List<api.Article?> ordbokArticles)
-            {
-                var articles = ordbokArticles
-                    .Where(a => a != null)
-                    .Select(_ordbokModelMapper.MapArticle!)
-                    .OrderBy(a => a.Lemmas.Max(l => l.HgNo))
-                    .ToList();
+            if (htmlFileStream != null)
+                await htmlFileStream.DisposeAsync();
+        }
 
-                return articles;
-            }
+        private async Task<string> RenderTextTemplate(List<vm.Article> articles)
+        {
+            var textTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Text);
+            var textTemplate = Template.Parse(textTemplateSource);
+
+            var maxDefinitions = _maxDefinitionsInTextForm;
+
+            var textTemplateResult = textTemplate.Render(new { articles, maxDefinitions });
+
+            return textTemplateResult;
+        }
+
+        private async Task<string> RenderHtmlTemplate(string dictionary, List<vm.Article> articles)
+        {
+            var htmlTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Html);
+            var htmlTemplate = Template.Parse(htmlTemplateSource);
+
+            var htmlTemplateResult = htmlTemplate.Render(new { articles, dictionary });
+
+            return htmlTemplateResult;
+        }
+
+        private List<vm.Article> MapAndSelectArticles(List<api.Article?> ordbokArticles)
+        {
+            var articles = ordbokArticles
+                .Where(a => a != null)
+                .Select(_ordbokModelMapper.MapArticle!)
+                .OrderBy(a => a.Lemmas.Max(l => l.HgNo))
+                .ToList();
+
+            return articles;
         }
     }
 }

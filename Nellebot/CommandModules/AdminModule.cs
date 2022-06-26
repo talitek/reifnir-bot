@@ -16,7 +16,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static Nellebot.CommandHandlers.AddMissingMemberRoles;
 
 namespace Nellebot.CommandModules
 {
@@ -85,13 +84,9 @@ namespace Nellebot.CommandModules
         }
 
         [Command("add-missing-members")]
-        public Task AddMissingMemberRoles(CommandContext ctx, uint proficiencyGroup)
+        public Task AddMissingMemberRoles(CommandContext ctx)
         {
-            _commandQueue.Enqueue(new AddMissingMemberRolesRequest(ctx)
-            {
-                MemberRoleId = _options.MemberRoleId,
-                ProficiencyGroup = proficiencyGroup
-            });
+            _commandQueue.Enqueue(new AddMissingMemberRolesRequest(ctx));
 
             return Task.CompletedTask;
         }
