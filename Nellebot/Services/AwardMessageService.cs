@@ -265,9 +265,15 @@ namespace Nellebot.Services
         {
             var authorDisplayName = author.GetNicknameOrDisplayName();
 
-            var messageLink = $"[**Jump to message!**]({message.JumpLink})";
+            var messageContentSb = new StringBuilder();
 
-            var messageContent = $"{messageLink}\r\n\r\n{message.Content}";
+            messageContentSb.AppendLine($"[**Jump to message!**]({message.JumpLink})");
+
+            if (!string.IsNullOrWhiteSpace(message.Content))
+            {
+                messageContentSb.AppendLine();
+                messageContentSb.AppendLine(message.Content);
+            }
 
             var embedBuilder = new DiscordEmbedBuilder()
                 .WithAuthor(authorDisplayName, null, author.AvatarUrl)
@@ -275,11 +281,31 @@ namespace Nellebot.Services
                 .WithTimestamp(message.Id)
                 .WithColor(9648895); // #933aff 
 
-            var attachment = message.Attachments.FirstOrDefault();
-
-            if (attachment != null)
+            if (message.Attachments.Count > 0)
             {
-                embedBuilder = embedBuilder.WithImageUrl(attachment.Url);
+                var addedEmbedImage = false;
+
+                foreach (var attachment in message.Attachments)
+                {
+                    switch (attachment.MediaType)
+                    {
+                        case string s when s.StartsWith("video"):
+                            messageContentSb.AppendLine();
+                            messageContentSb.AppendLine($"`Video attachment: {attachment.FileName}`");
+                            break;
+                        case string s when s.StartsWith("image"):
+                            if (!addedEmbedImage)
+                            {
+                                embedBuilder = embedBuilder.WithImageUrl(attachment.Url);
+                                addedEmbedImage = true;
+                            }
+                            break;
+                        default:
+                            messageContentSb.AppendLine();
+                            messageContentSb.AppendLine($"`File attachment: {attachment.FileName}`");
+                            break;
+                    }
+                }
             }
             else
             {
@@ -295,12 +321,13 @@ namespace Nellebot.Services
                     {
                         var embededLinkText = $"[{messageEmbed.Title}]({messageEmbed.Url})";
 
-                        messageContent += $"\r\n\r\n{embededLinkText}";
+                        messageContentSb.AppendLine();
+                        messageContentSb.AppendLine(embededLinkText);
                     }
                 }
             }
 
-            embedBuilder = embedBuilder.WithDescription(messageContent);
+            embedBuilder = embedBuilder.WithDescription(messageContentSb.ToString());
 
             var embed = embedBuilder.Build();
 
