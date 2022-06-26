@@ -54,7 +54,7 @@ namespace Nellebot.CommandModules
                 {
                     sb.Append($"* {userRole.Name}");
 
-                    if(userRole.UserRoleAliases.Any())
+                    if (userRole.UserRoleAliases.Any())
                     {
                         var formattedAliasList = string.Join(", ", userRole.UserRoleAliases.Select(x => x.Alias));
                         sb.Append($" (or {formattedAliasList})");
@@ -78,7 +78,7 @@ namespace Nellebot.CommandModules
 
             var userRole = await _roleService.GetUserRoleByNameOrAlias(roleName);
 
-            if(userRole == null)
+            if (userRole == null)
             {
                 await ctx.RespondAsync($"**{roleName}** role does not exist");
                 return;
@@ -92,7 +92,7 @@ namespace Nellebot.CommandModules
 
             if (existingDiscordRole != null)
             {
-                await RemoveDiscordRole(ctx, existingDiscordRole, userRole.Name);
+                await RemoveDiscordRole(ctx, existingDiscordRole);
             }
             else
             {
@@ -111,43 +111,48 @@ namespace Nellebot.CommandModules
                 throw new ArgumentException($"Role Id {userRole.RoleId} does not exist");
             }
 
-            if(member == null)
+            if (member == null)
                 throw new ArgumentNullException(nameof(member));
 
-            // If user role has group, get all roles from the same group
-            if (userRole.GroupNumber.HasValue)
-            {
-                var rolesInGroup = await _roleService.GetUserRolesByGroup(userRole.GroupNumber.Value);
-
-                // If user has a discord role from this group, remove it
-                var discordRoleInGroup = member.Roles
-                                    .Where(r => rolesInGroup.Select(r => r.RoleId)
-                                                .ToList()
-                                                .Contains(r.Id))
-                                    .FirstOrDefault();
-
-                if (discordRoleInGroup != null)
-                {
-                    // Get the user role matching this discord role
-                    var userRoleToRemove = rolesInGroup.Single(r => r.RoleId == discordRoleInGroup.Id);
-
-                    await member.RevokeRoleAsync(discordRoleInGroup);
-
-                    await LogRoleRemoved(guild, userRoleToRemove.Name, member);
-                }
-            }
-
             // Assign new role
-            var guildRole = ctx.Guild.Roles[userRole.RoleId];
+            var discordRole = ctx.Guild.Roles[userRole.RoleId];
 
-            await member.GrantRoleAsync(guildRole);
+            await member.GrantRoleAsync(discordRole);
+
+            await LogRoleAdded(guild, discordRole.Name, member);
+
+            // If user role has group, remove all other roles from the same group
+            await RemoveAllOtherRolesInGroup(userRole, member, guild);
 
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.WhiteCheckmark));
-
-            await LogRoleAdded(guild, userRole.Name, member);
         }
 
-        private async Task RemoveDiscordRole(CommandContext ctx, DiscordRole existingDiscordRole, string userRoleName)
+        private async Task RemoveAllOtherRolesInGroup(UserRole userRole, DiscordMember member, DiscordGuild guild)
+        {
+            if (!userRole.GroupNumber.HasValue)
+                return;
+
+            var otherRolesInGroup = (await _roleService.GetUserRolesByGroup(userRole.GroupNumber.Value))
+                                                .Where(r => r.Id != userRole.Id);
+
+            var discordRolesInGroup = member.Roles
+                                .Where(r => otherRolesInGroup.Select(r => r.RoleId)
+                                            .ToList()
+                                            .Contains(r.Id))
+                                .ToList();
+
+            foreach (var discordRoleToRemove in discordRolesInGroup)
+            {
+                await member.RevokeRoleAsync(discordRoleToRemove);
+
+                // Get the user role matching this discord role
+                var userRoleToRemove = otherRolesInGroup.Single(r => r.RoleId == discordRoleToRemove.Id);
+
+                await LogRoleRemoved(guild, userRoleToRemove.Name, member);
+            }
+        }
+
+        private async Task RemoveDiscordRole(CommandContext ctx, DiscordRole existingDiscordRole)
         {
             var member = ctx.Member;
             var guild = ctx.Guild;
@@ -159,7 +164,7 @@ namespace Nellebot.CommandModules
 
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.WhiteCheckmark));
 
-            await LogRoleRemoved(guild, userRoleName, member);
+            await LogRoleRemoved(guild, existingDiscordRole.Name, member);
         }
 
         private async Task LogRoleAdded(DiscordGuild guild, string roleName, DiscordMember member)
@@ -168,7 +173,7 @@ namespace Nellebot.CommandModules
 
             var logChannel = guild.Channels[logChannelId];
 
-            if(logChannel == null)
+            if (logChannel == null)
             {
                 _logger.LogError($"Could not fetch log channel {logChannelId} from guild");
                 return;
