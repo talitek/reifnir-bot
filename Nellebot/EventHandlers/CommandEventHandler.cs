@@ -1,11 +1,11 @@
 ﻿using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Exceptions;
-using Nellebot.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Threading.Tasks;
 using Nellebot.Attributes;
+using Nellebot.Services.Loggers;
 
 namespace Nellebot.EventHandlers
 {
@@ -154,7 +154,7 @@ namespace Nellebot.EventHandlers
 
             if (shouldLogDiscordError)
             {
-                await _discordErrorLogger.LogDiscordError(ctx, exception.ToString());
+                await _discordErrorLogger.LogCommandError(ctx, exception.ToString());
             }
 
             _logger.LogWarning($"Message: {message.Content}\r\nCommand failed: {exception})");

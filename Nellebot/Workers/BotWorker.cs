@@ -68,11 +68,33 @@ namespace Nellebot
             _commandEventHandler.RegisterHandlers(commands);
             _awardEventHandler.RegisterHandlers();
 
+            RegisterMessageHandlers();
             RegisterGuildEventHandlers();
+        }
+
+        private void RegisterMessageHandlers()
+        {
+            _client.MessageCreated += (sender, args) =>
+            {
+                _eventQueue.Enqueue(new MessageCreatedNotification(args));
+                return Task.CompletedTask;
+            };
         }
 
         private void RegisterGuildEventHandlers()
         {
+            _client.GuildMemberAdded += (sender, args) =>
+            {
+                _eventQueue.Enqueue(new GuildMemberAddedNotification(args));
+                return Task.CompletedTask;
+            };
+
+            _client.GuildMemberRemoved += (sender, args) =>
+            {
+                _eventQueue.Enqueue(new GuildMemberRemovedNotification(args));
+                return Task.CompletedTask;
+            };
+
             _client.GuildMemberUpdated += (sender, args) =>
             {
                 _eventQueue.Enqueue(new GuildMemberUpdatedNotification(args));

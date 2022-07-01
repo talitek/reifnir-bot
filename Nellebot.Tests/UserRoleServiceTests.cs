@@ -5,6 +5,7 @@ using Nellebot.Common.AppDiscordModels;
 using Nellebot.Common.Models;
 using Nellebot.Data.Repositories;
 using Nellebot.Services;
+using Nellebot.Services.Loggers;
 using System;
 using System.Collections.Generic;
 using System.Linq;

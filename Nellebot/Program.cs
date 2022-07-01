@@ -12,6 +12,7 @@ using Nellebot.EventHandlers;
 using Nellebot.Services;
 using Nellebot.Services.Glosbe;
 using Nellebot.Services.HtmlToImage;
+using Nellebot.Services.Loggers;
 using Nellebot.Services.Ordbok;
 using Nellebot.Utils;
 using Nellebot.Workers;
@@ -55,6 +56,7 @@ namespace Nellebot
 
                     services.AddTransient<AuthorizationService>();
                     services.AddTransient<IDiscordErrorLogger, DiscordErrorLogger>();
+                    services.AddTransient<DiscordLogger>();
                     services.AddTransient<UserRoleService>();
                     services.AddTransient<RoleService>();
                     services.AddTransient<AwardMessageService>();

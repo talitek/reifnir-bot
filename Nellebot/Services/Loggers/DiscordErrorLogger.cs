@@ -6,7 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Nellebot.Utils;
 
-namespace Nellebot.Services
+namespace Nellebot.Services.Loggers
 {
     public class DiscordErrorLogger : IDiscordErrorLogger
     {
@@ -22,7 +22,7 @@ namespace Nellebot.Services
             _options = options.Value;
         }
 
-        public async Task LogDiscordError(CommandContext ctx, string errorMessage)
+        public async Task LogCommandError(CommandContext ctx, string errorMessage)
         {
             var user = $"{ctx.User.Username}#{ctx.User.Discriminator}";
             var channelName = ctx.Channel.Name;
@@ -34,10 +34,10 @@ namespace Nellebot.Services
 
             var fullErrorMessage = $"{contextMessage}{Environment.NewLine}{escapedErrorMesssage}";
 
-            await LogDiscordError(fullErrorMessage);
+            await LogError(fullErrorMessage);
         }
 
-        public async Task LogDiscordError(EventErrorContext ctx, string errorMessage)
+        public async Task LogEventError(EventErrorContext ctx, string errorMessage)
         {
             var user = ctx.User != null ? $"{ctx.User.Username}#{ctx.User.Discriminator}" : "Unknown user";
             var channelName = ctx.Channel?.Name ?? "Unknown channel";
@@ -54,15 +54,15 @@ namespace Nellebot.Services
 
             var fullErrorMessage = $"{contextMessage}{Environment.NewLine}{escapedErrorMesssage}";
 
-            await LogDiscordError(fullErrorMessage);
+            await LogError(fullErrorMessage);
         }
 
-        public async Task LogDiscordError(string error)
+        public async Task LogError(string error)
         {
-            var errorLogGuilId = _options.ErrorLogGuildId;
+            var guildId = _options.GuildId;
             var errorLogChannelId = _options.ErrorLogChannelId;
 
-            var errorLogChannel = await ResolveErrorLogChannel(errorLogGuilId, errorLogChannelId);
+            var errorLogChannel = await ResolveErrorLogChannel(guildId, errorLogChannelId);
 
             if (errorLogChannel != null)
             {
@@ -78,6 +78,9 @@ namespace Nellebot.Services
             return value.Replace('`', '\'');
         }
 
+        // There is a DiscordResolver method for resolving channels...
+        // but that class depends on DiscordLogger so it's just simpler
+        // to have a duplicate method than dealing with circular dependency
         private async Task<DiscordChannel> ResolveErrorLogChannel(ulong guildId, ulong channelId)
         {
             _client.Guilds.TryGetValue(guildId, out var discordGuild);

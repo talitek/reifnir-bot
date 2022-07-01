@@ -1,5 +1,6 @@
-﻿using DSharpPlus.Entities;
-using Nellebot.Services;
+﻿using DSharpPlus;
+using DSharpPlus.Entities;
+using Nellebot.Services.Loggers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,10 +12,12 @@ namespace Nellebot.Utils
     public class DiscordResolver
     {
         private readonly IDiscordErrorLogger _discordErrorLogger;
+        private readonly DiscordClient _client;
 
-        public DiscordResolver(IDiscordErrorLogger discordErrorLogger)
+        public DiscordResolver(IDiscordErrorLogger discordErrorLogger, DiscordClient client)
         {
             _discordErrorLogger = discordErrorLogger;
+            _client = client;
         }
 
         public TryResolveResult TryResolveRoleByName(DiscordGuild guild, string discordRoleName, out DiscordRole discordRole)
@@ -41,31 +44,36 @@ namespace Nellebot.Utils
 
         public async Task<DiscordChannel?> ResolveChannel(DiscordGuild guild, ulong channelId)
         {
-            guild.Channels.TryGetValue(channelId, out var discordChannel);
+            var channelExists = guild.Channels.TryGetValue(channelId, out var discordChannel);
 
-            if (discordChannel == null)
+            if (channelExists) return discordChannel;
+
+            try
             {
-                try
-                {
-                    discordChannel = guild.GetChannel(channelId);
-                }
-                catch (Exception ex)
-                {
-                    await _discordErrorLogger.LogDiscordError(ex.ToString());
+                discordChannel = guild.GetChannel(channelId) ?? throw new ArgumentException($"Invalid channelId {channelId}");
+            }
+            catch (Exception ex)
+            {
+                await _discordErrorLogger.LogError(ex.ToString());
 
-                    return null;
-                }
+                return null;
             }
 
             return discordChannel;
+        }
+
+        public async Task<DiscordChannel?> ResolveChannel(ulong guildId, ulong channelId)
+        {
+            var guild = _client.Guilds[guildId];
+
+            return await ResolveChannel(guild, channelId);
         }
 
         public async Task<DiscordMember?> ResolveGuildMember(DiscordGuild guild, ulong userId)
         {
             var memberExists = guild.Members.TryGetValue(userId, out DiscordMember? member);
 
-            if (memberExists)
-                return member;
+            if (memberExists) return member;
 
             try
             {
@@ -73,7 +81,7 @@ namespace Nellebot.Utils
             }
             catch (Exception ex)
             {
-                await _discordErrorLogger.LogDiscordError(ex.ToString());
+                await _discordErrorLogger.LogError(ex.ToString());
 
                 return null;
             }
@@ -89,7 +97,7 @@ namespace Nellebot.Utils
             }
             catch (Exception ex)
             {
-                await _discordErrorLogger.LogDiscordError(ex.ToString());
+                await _discordErrorLogger.LogError(ex.ToString());
 
                 return null;
             }

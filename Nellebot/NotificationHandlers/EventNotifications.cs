@@ -8,17 +8,11 @@ using System.Threading.Tasks;
 
 namespace Nellebot.NotificationHandlers
 {
-    public abstract class EventNotification : INotification
-    {
-    }
+    public abstract record EventNotification() : INotification;
 
-    public class GuildMemberUpdatedNotification : EventNotification
-    {
-        public GuildMemberUpdateEventArgs EventArgs { get; set; }
+    public record GuildMemberUpdatedNotification(GuildMemberUpdateEventArgs EventArgs) : EventNotification;
+    public record GuildMemberAddedNotification(GuildMemberAddEventArgs EventArgs) : EventNotification;
+    public record GuildMemberRemovedNotification(GuildMemberRemoveEventArgs EventArgs) : EventNotification;
 
-        public GuildMemberUpdatedNotification(GuildMemberUpdateEventArgs eventArgs)
-        {
-            EventArgs = eventArgs;
-        }
-    }
+    public record MessageCreatedNotification(MessageCreateEventArgs EventArgs) : EventNotification;
 }

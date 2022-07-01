@@ -1,6 +1,6 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
-using Nellebot.Services;
+using Nellebot.Services.Loggers;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -47,7 +47,7 @@ namespace Nellebot.CommandHandlers
 
             await ctx.RespondAsync(ex.Message);
 
-            await _discordErrorLogger.LogDiscordError(ctx, ex.ToString());
+            await _discordErrorLogger.LogCommandError(ctx, ex.ToString());
 
             _logger.LogError(ex, nameof(HandeCommandRequestException));
         }
