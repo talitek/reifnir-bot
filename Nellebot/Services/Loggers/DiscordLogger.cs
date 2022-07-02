@@ -26,7 +26,7 @@ namespace Nellebot.Services.Loggers
 
         public async Task LogMessage(string message)
         {
-            await LogMessageCore(message, _options.LogChannelId);
+            await LogMessageCore(message, _options.BotLogChannelId);
         }
 
         public async Task LogAuditMessage(string message)

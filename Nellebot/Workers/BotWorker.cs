@@ -85,6 +85,12 @@ namespace Nellebot
                 _eventQueue.Enqueue(new MessageDeletedNotification(args));
                 return Task.CompletedTask;
             };
+
+            _client.MessagesBulkDeleted += (sender, args) =>
+            {
+                _eventQueue.Enqueue(new MessageBulkDeletedNotification(args));
+                return Task.CompletedTask;
+            };
         }
 
         private void RegisterGuildEventHandlers()
