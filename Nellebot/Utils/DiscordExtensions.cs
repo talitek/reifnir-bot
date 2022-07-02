@@ -1,19 +1,20 @@
 ﻿using DSharpPlus.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Nellebot.Utils
+namespace Nellebot.Utils;
+
+public static class DiscordExtensions
 {
-    public static class DiscordExtensions
+    public static string GetNicknameOrDisplayName(this DiscordMember member)
     {
-        public static string GetNicknameOrDisplayName(this DiscordMember member)
-        {
-            var username = !string.IsNullOrWhiteSpace(member.Nickname)
-                ? member.Nickname
-                : member.DisplayName;
+        var username = !string.IsNullOrWhiteSpace(member.Nickname)
+            ? member.Nickname
+            : member.DisplayName;
 
-            return username;
-        }
+        return username;
+    }
+
+    public static string GetDetailedMemberIdentifier(this DiscordMember member)
+    {
+        return $"{member.Username}#{member.Discriminator}, User Id: {member.Id}";
     }
 }

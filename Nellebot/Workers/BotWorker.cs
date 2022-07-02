@@ -79,6 +79,12 @@ namespace Nellebot
                 _eventQueue.Enqueue(new MessageCreatedNotification(args));
                 return Task.CompletedTask;
             };
+
+            _client.MessageDeleted += (sender, args) =>
+            {
+                _eventQueue.Enqueue(new MessageDeletedNotification(args));
+                return Task.CompletedTask;
+            };
         }
 
         private void RegisterGuildEventHandlers()
@@ -98,6 +104,18 @@ namespace Nellebot
             _client.GuildMemberUpdated += (sender, args) =>
             {
                 _eventQueue.Enqueue(new GuildMemberUpdatedNotification(args));
+                return Task.CompletedTask;
+            };
+
+            _client.GuildBanAdded += (sender, args) =>
+            {
+                _eventQueue.Enqueue(new GuildBanAddedNotification(args));
+                return Task.CompletedTask;
+            };
+
+            _client.GuildBanRemoved += (sender, args) =>
+            {
+                _eventQueue.Enqueue(new GuildBanRemovedNotification(args));
                 return Task.CompletedTask;
             };
         }

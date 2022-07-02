@@ -21,15 +21,28 @@ namespace Nellebot.Services.Loggers
 
         public async Task LogGreetingMessage(string message)
         {
-            var guildId  = _options.GuildId;
-            var channelId = _options.GreetingsChannelId;
+            await LogMessageCore(message, _options.GreetingsChannelId);
+        }
 
-            var greetingChannel = await _discordResolver.ResolveChannel(guildId, channelId);
+        public async Task LogMessage(string message)
+        {
+            await LogMessageCore(message, _options.LogChannelId);
+        }
 
-            if (greetingChannel != null)
-            {
-                await greetingChannel.SendMessageAsync(message);
-            }
+        public async Task LogAuditMessage(string message)
+        {
+            await LogMessageCore(message, _options.AuditLogChannelId);
+        }
+
+        private async Task LogMessageCore(string message, ulong channelId)
+        {
+            var guildId = _options.GuildId;
+
+            var channel = await _discordResolver.ResolveChannel(guildId, channelId);
+
+            if (channel == null) return;
+
+            await channel.SendMessageAsync(message);
         }
 
     }

@@ -56,20 +56,8 @@ namespace Nellebot.Workers
                     {
                         _logger.LogDebug($"Dequeued event. {_eventQueue.Count} left in queue");
 
-                        //                        var eventType = @event.GetType();
-
                         await _mediator.Publish(@event, stoppingToken);
-
-                        //switch (@event)
-                        //{
-                        //    case GuildMemberUpdateNotification guildMemberUpdated:
-                        //        await _mediator.Publish(guildMemberUpdated, stoppingToken);
-                        //        break;
-                        //    default:
-                        //        _logger.LogWarning($"Unknown EventNotification type");
-                        //        break;
-                        //};
-
+      
                         nextDelay = BusyDelay;
                     }
                 }
