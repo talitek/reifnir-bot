@@ -14,7 +14,9 @@ namespace Nellebot.NotificationHandlers
 {
     public class AuditLogHandler : INotificationHandler<GuildMemberUpdatedNotification>,
                                     INotificationHandler<MessageDeletedNotification>,
-                                    INotificationHandler<MessageBulkDeletedNotification>
+                                    INotificationHandler<MessageBulkDeletedNotification>,
+                                    INotificationHandler<GuildMemberAddedNotification>,
+                                    INotificationHandler<GuildMemberRemovedNotification>
     {
         private readonly DiscordLogger _discordLogger;
         private readonly DiscordResolver _discordResolver;
@@ -113,6 +115,28 @@ namespace Nellebot.NotificationHandlers
             }
 
             await _discordLogger.LogAuditMessage(sb.ToString());
+        }
+
+        public async Task Handle(GuildMemberAddedNotification notification, CancellationToken cancellationToken)
+        {
+            var member = notification.EventArgs.Member;
+
+            if (member == null) return;
+
+            var memberFullIdentifier = $"**{member.GetNicknameOrDisplayName()}** [{member.GetDetailedMemberIdentifier()}]";
+
+            await _discordLogger.LogAuditMessage($"{memberFullIdentifier} joined the server");
+        }
+
+        public async Task Handle(GuildMemberRemovedNotification notification, CancellationToken cancellationToken)
+        {
+            var member = notification.EventArgs.Member;
+
+            if (member == null) return;
+
+            var memberFullIdentifier = $"**{member.GetNicknameOrDisplayName()}** [{member.GetDetailedMemberIdentifier()}]";
+
+            await _discordLogger.LogAuditMessage($"{memberFullIdentifier} left the server");
         }
     }
 }

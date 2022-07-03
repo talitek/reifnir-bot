@@ -39,7 +39,7 @@ namespace Nellebot.NotificationHandlers
         {
             var memberName = notification.EventArgs.Member.GetNicknameOrDisplayName();
 
-            await _discordLogger.LogGreetingMessage($"{memberName} has left the server. Goodbye!");
+            await _discordLogger.LogGreetingMessage($"**{memberName}** has left the server. Goodbye!");
         }
     }
 }
