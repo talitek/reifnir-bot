@@ -364,35 +364,5 @@ namespace Nellebot.CommandModules
                 await ctx.RespondAsync($"Updated {updatedRoleCount} {(updatedRoleCount == 1 ? "role" : "roles")}");
             }
         }
-
-        [Command("help")]
-        public Task GetHelp(CommandContext ctx)
-        {
-            var sb = new StringBuilder();
-
-            var command = $"{_options.CommandPrefix}user-role";
-
-            sb.AppendLine("User role commands");
-
-            sb.AppendLine($"`{command} create-role [role] [?alias-list]`");
-            sb.AppendLine($"`{command} delete-role [role]`");
-            sb.AppendLine($"`{command} get-role [role]`");
-            sb.AppendLine($"`{command} add-alias [role] [alias-name]`");
-            sb.AppendLine($"`{command} remove-alias [role] [alias-name]`");
-            sb.AppendLine($"`{command} set-group [role] [group-number]`");
-            sb.AppendLine($"`{command} unset-group [role]`");
-            sb.AppendLine($"`{command} update-roles`");
-
-            sb.AppendLine();
-            sb.AppendLine($"Command arguments:");
-            sb.AppendLine($"`role           .. Discord role name, Discord role Id or Discord role @mention`");
-            sb.AppendLine($"`alias-name     .. User role alias (used when assigning role)`");
-            sb.AppendLine($"`alias-list     .. Alias names (comma separated values, optional)`");
-            sb.AppendLine($"`group-number   .. User role group number (positive whole number)`");
-
-            var message = sb.ToString();
-
-            return ctx.RespondAsync(message);
-        }
     }
 }

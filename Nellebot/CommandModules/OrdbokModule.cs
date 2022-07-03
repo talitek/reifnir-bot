@@ -20,6 +20,7 @@ namespace Nellebot.CommandModules
         }
 
         [Command("bm")]
+        [Aliases("nb")]
         public Task OrdbokSearchBokmal(CommandContext ctx, [RemainingText] string query)
         {
             var searchOrdbokRequest = new SearchOrdbokRequest(ctx)
