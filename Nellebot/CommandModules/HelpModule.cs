@@ -47,7 +47,7 @@ namespace Nellebot.CommandModules
             sb.AppendLine($"`{commandPrefix}help admin-misc`");
 
             sb.AppendLine();
-            sb.AppendLine("Reifnir source code: github.com/NELLE-reifnir-bot/reifnir-bot");
+            sb.AppendLine("Reifnir source code: [github.com/NELLE-reifnir-bot/reifnir-bot](https://github.com/NELLE-reifnir-bot/reifnir-bot)");
 
             var eb = EmbedBuilderHelper.BuildSimpleEmbed("Roles on NELLE", sb.ToString());
 

@@ -16,7 +16,8 @@ namespace Nellebot.NotificationHandlers
                                     INotificationHandler<MessageDeletedNotification>,
                                     INotificationHandler<MessageBulkDeletedNotification>,
                                     INotificationHandler<GuildMemberAddedNotification>,
-                                    INotificationHandler<GuildMemberRemovedNotification>
+                                    INotificationHandler<GuildMemberRemovedNotification>,
+                                    INotificationHandler<PresenceUpdatedNotification>
     {
         private readonly DiscordLogger _discordLogger;
         private readonly DiscordResolver _discordResolver;
@@ -45,12 +46,18 @@ namespace Nellebot.NotificationHandlers
                 await _discordLogger.LogAuditMessage($"Role change for {memberMention}: Added {addedRole.Name}.");
             }
 
-            var oldNickname = args.NicknameBefore;
-            var newNickname = args.NicknameAfter;
+            var nicknameBefore = args.NicknameBefore;
+            var nicknameAfter = args.NicknameAfter;
 
-            if (oldNickname != newNickname)
+            if (nicknameBefore != nicknameAfter)
             {
-                await _discordLogger.LogAuditMessage($"Nickname change for {memberMention}: Previous nickname: {oldNickname}.");
+                var message = $"Nickname change for {memberMention}.";
+
+                message += string.IsNullOrWhiteSpace(nicknameBefore)
+                            ? " No previous nickname."
+                            : $" Previous nickname: {nicknameBefore}.";
+
+                await _discordLogger.LogAuditMessage(message);
             }
         }
 
@@ -88,7 +95,10 @@ namespace Nellebot.NotificationHandlers
             var args = notification.EventArgs;
 
             var messages = args.Messages;
-            var author = args.Messages.FirstOrDefault()?.Author;
+
+            if (messages.Count == 0) return;
+
+            var author = args.Messages[0].Author;
 
             if (author == null) return;
 
@@ -111,7 +121,7 @@ namespace Nellebot.NotificationHandlers
             {
                 sb.AppendLine();
                 sb.AppendLine($"In {message.Channel.Name} at {message.CreationTimestamp}:");
-                sb.AppendLine($"> {message.Content}");
+                if (!string.IsNullOrWhiteSpace(message.Content)) sb.AppendLine($"> {message.Content}");
             }
 
             await _discordLogger.LogAuditMessage(sb.ToString());
@@ -123,7 +133,7 @@ namespace Nellebot.NotificationHandlers
 
             if (member == null) return;
 
-            var memberFullIdentifier = $"**{member.GetNicknameOrDisplayName()}** [{member.GetDetailedMemberIdentifier()}]";
+            var memberFullIdentifier = $"{member.Mention} [{member.GetDetailedMemberIdentifier()}]";
 
             await _discordLogger.LogAuditMessage($"{memberFullIdentifier} joined the server");
         }
@@ -137,6 +147,21 @@ namespace Nellebot.NotificationHandlers
             var memberFullIdentifier = $"**{member.GetNicknameOrDisplayName()}** [{member.GetDetailedMemberIdentifier()}]";
 
             await _discordLogger.LogAuditMessage($"{memberFullIdentifier} left the server");
+        }
+
+        public async Task Handle(PresenceUpdatedNotification notification, CancellationToken cancellationToken)
+        {
+            var args = notification.EventArgs;
+
+            var usernameBefore = args.UserBefore?.GetUserFullUsername();
+            var usernameAfter = args.UserAfter?.GetUserFullUsername();
+
+            if (string.IsNullOrEmpty(usernameBefore) || string.IsNullOrEmpty(usernameAfter)) return;
+
+            if (usernameBefore != usernameAfter)
+            {
+                await _discordLogger.LogAuditMessage($"Username change for {usernameAfter}: Previous username: {usernameBefore}.");
+            }
         }
     }
 }

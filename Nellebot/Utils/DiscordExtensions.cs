@@ -18,12 +18,16 @@ public static class DiscordExtensions
 
     public static string GetDetailedMemberIdentifier(this DiscordMember member)
     {
-        return $"{member.Username}#{member.Discriminator}, User Id: {member.Id}";
+        return !string.IsNullOrWhiteSpace(member.Username)
+            ? $"{member.Username}#{member.Discriminator}, User Id: {member.Id}"
+            : string.Empty;
     }
 
     public static string GetUserFullUsername(this DiscordUser user)
     {
-        return $"{user.Username}#{user.Discriminator}";
+        return !string.IsNullOrWhiteSpace(user.Username)
+            ? $"{user.Username}#{user.Discriminator}"
+            : string.Empty;
     }
 
     public static async Task<T?> GetLastAuditLogEntry<T>(this DiscordGuild guild, AuditLogActionType logType, Func<T, bool> predicate) where T : DiscordAuditLogEntry

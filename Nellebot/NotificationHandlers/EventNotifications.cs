@@ -19,4 +19,5 @@ namespace Nellebot.NotificationHandlers
     public record MessageCreatedNotification(MessageCreateEventArgs EventArgs) : EventNotification;
     public record MessageDeletedNotification(MessageDeleteEventArgs EventArgs) : EventNotification;
     public record MessageBulkDeletedNotification(MessageBulkDeleteEventArgs EventArgs) : EventNotification;
+    public record PresenceUpdatedNotification(PresenceUpdateEventArgs EventArgs) : EventNotification;
 }
