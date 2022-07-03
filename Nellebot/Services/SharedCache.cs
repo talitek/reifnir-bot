@@ -52,5 +52,6 @@ namespace Nellebot.Services
     public static class SharedCacheKeys
     {
         public static string DiscordChannel => "DiscordChannel_%d";
+        public static string GreetingMessage => "GreetingMessage";
     }
 }

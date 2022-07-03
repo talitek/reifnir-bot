@@ -68,9 +68,11 @@ namespace Nellebot
                     services.AddTransient<WkHtmlToImageClient>();
                     services.AddTransient<GlosbeClient>();
                     services.AddTransient<GlosbeModelMapper>();
+                    services.AddTransient<BotSettingsService>();
 
                     services.AddTransient<IUserRoleRepository, UserRoleRepository>();
                     services.AddTransient<AwardMessageRepository>();
+                    services.AddTransient<BotSettingsRepository>();
 
                     services.AddDbContext<BotDbContext>(builder =>
                     {
