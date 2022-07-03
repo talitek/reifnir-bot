@@ -2,7 +2,7 @@
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Options;
-using Nellebot.Services;
+using Nellebot.Services.Loggers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,14 +33,14 @@ namespace Nellebot.Attributes
 
                 var discordErrorLogger = (DiscordErrorLogger)discordErrorLoggerObj;
 
-                await discordErrorLogger.LogDiscordError(error);
+                await discordErrorLogger.LogError(error);
 
                 return false;
             }
 
             var botOptions = ((IOptions<BotOptions>)botOptionsObj).Value;
 
-            var guildId = botOptions.NelleGuildId;
+            var guildId = botOptions.GuildId;
 
             var channel = ctx.Channel;
 

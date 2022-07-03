@@ -4,7 +4,7 @@ using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.Helpers;
-using Nellebot.Services;
+using Nellebot.Services.Loggers;
 using Nellebot.Utils;
 using Nellebot.Workers;
 using System;
@@ -78,7 +78,7 @@ namespace Nellebot.EventHandlers
                     Guild = eventArgs.Guild
                 };
 
-                await _discordErrorLogger.LogDiscordError(eventContextError, ex.ToString());
+                await _discordErrorLogger.LogEventError(eventContextError, ex.ToString());
             }
         }
 
@@ -115,7 +115,7 @@ namespace Nellebot.EventHandlers
                     Guild = eventArgs.Guild
                 };
 
-                await _discordErrorLogger.LogDiscordError(eventContextError, ex.ToString());
+                await _discordErrorLogger.LogEventError(eventContextError, ex.ToString());
             }
         }
 
@@ -151,7 +151,7 @@ namespace Nellebot.EventHandlers
                     Message = eventArgs.Message
                 };
 
-                await _discordErrorLogger.LogDiscordError(eventContextError, ex.ToString());
+                await _discordErrorLogger.LogEventError(eventContextError, ex.ToString());
             }
         }
 
@@ -186,7 +186,7 @@ namespace Nellebot.EventHandlers
                     Guild = eventArgs.Guild
                 };
 
-                await _discordErrorLogger.LogDiscordError(eventContextError, ex.ToString());
+                await _discordErrorLogger.LogEventError(eventContextError, ex.ToString());
             }
         }
 

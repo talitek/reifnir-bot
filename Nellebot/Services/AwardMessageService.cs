@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.Data.Repositories;
 using Nellebot.Helpers;
+using Nellebot.Services.Loggers;
 using Nellebot.Utils;
 using Nellebot.Workers;
 using System;
@@ -359,7 +360,7 @@ namespace Nellebot.Services
             }
             catch (Exception ex)
             {
-                await _discordErrorLogger.LogDiscordError(ex.ToString());
+                await _discordErrorLogger.LogError(ex.ToString());
             }
 
             return awardReactionCount;

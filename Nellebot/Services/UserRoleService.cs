@@ -1,6 +1,7 @@
 ﻿using Nellebot.Common.AppDiscordModels;
 using Nellebot.Common.Models;
 using Nellebot.Data.Repositories;
+using Nellebot.Services.Loggers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -140,7 +141,7 @@ namespace Nellebot.Services
 
                 if (discordRole == null)
                 {
-                    await _discordErrorLogger.LogDiscordError($"Could not find discord role for user role {userRole.Name} ({userRole.RoleId}). Skipping.");
+                    await _discordErrorLogger.LogError($"Could not find discord role for user role {userRole.Name} ({userRole.RoleId}). Skipping.");
                     continue;
                 }
 

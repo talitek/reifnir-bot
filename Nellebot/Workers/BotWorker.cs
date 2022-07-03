@@ -68,14 +68,60 @@ namespace Nellebot
             _commandEventHandler.RegisterHandlers(commands);
             _awardEventHandler.RegisterHandlers();
 
+            RegisterMessageHandlers();
             RegisterGuildEventHandlers();
+        }
+
+        private void RegisterMessageHandlers()
+        {
+            _client.MessageCreated += (sender, args) =>
+            {
+                _eventQueue.Enqueue(new MessageCreatedNotification(args));
+                return Task.CompletedTask;
+            };
+
+            _client.MessageDeleted += (sender, args) =>
+            {
+                _eventQueue.Enqueue(new MessageDeletedNotification(args));
+                return Task.CompletedTask;
+            };
+
+            _client.MessagesBulkDeleted += (sender, args) =>
+            {
+                _eventQueue.Enqueue(new MessageBulkDeletedNotification(args));
+                return Task.CompletedTask;
+            };
         }
 
         private void RegisterGuildEventHandlers()
         {
+            _client.GuildMemberAdded += (sender, args) =>
+            {
+                _eventQueue.Enqueue(new GuildMemberAddedNotification(args));
+                return Task.CompletedTask;
+            };
+
+            _client.GuildMemberRemoved += (sender, args) =>
+            {
+                _eventQueue.Enqueue(new GuildMemberRemovedNotification(args));
+                return Task.CompletedTask;
+            };
+
             _client.GuildMemberUpdated += (sender, args) =>
             {
                 _eventQueue.Enqueue(new GuildMemberUpdatedNotification(args));
+                return Task.CompletedTask;
+            };
+
+            _client.GuildBanAdded += (sender, args) =>
+            {
+                _eventQueue.Enqueue(new GuildBanAddedNotification(args));
+                return Task.CompletedTask;
+            };
+
+            _client.GuildBanRemoved += (sender, args) =>
+            {
+                _eventQueue.Enqueue(new GuildBanRemovedNotification(args));
                 return Task.CompletedTask;
             };
         }

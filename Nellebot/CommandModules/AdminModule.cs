@@ -90,5 +90,13 @@ namespace Nellebot.CommandModules
 
             return Task.CompletedTask;
         }
+
+        [Command("set-greeting-message")]
+        public Task SetGreetingMessage(CommandContext ctx, [RemainingText] string message)
+        {
+            _commandQueue.Enqueue(new SetGreetingMessageRequest(ctx, message));
+
+            return Task.CompletedTask;
+        }
     }
 }

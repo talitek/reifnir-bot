@@ -10,7 +10,7 @@ using Nellebot.NotificationHandlers;
 
 namespace Nellebot.Workers
 {
-    public class EventQueue : ConcurrentQueue<EventNotification>
+    public class EventQueue : ConcurrentQueue<INotification>
     {
 
     }
@@ -56,16 +56,8 @@ namespace Nellebot.Workers
                     {
                         _logger.LogDebug($"Dequeued event. {_eventQueue.Count} left in queue");
 
-                        switch (@event)
-                        {
-                            case GuildMemberUpdatedNotification guildMemberUpdated:
-                                await _mediator.Publish(guildMemberUpdated, stoppingToken);
-                                break;
-                            default:
-                                _logger.LogWarning($"Unknown EventNotification type");
-                                break;
-                        };
-
+                        await _mediator.Publish(@event, stoppingToken);
+      
                         nextDelay = BusyDelay;
                     }
                 }

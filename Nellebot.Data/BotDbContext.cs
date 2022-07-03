@@ -26,11 +26,16 @@ namespace Nellebot.Data
             builder.Entity<AwardMessage>()
                 .HasIndex(x => x.AwardedMessageId)
                 .IsUnique();
+
+            builder.Entity<BotSettting>()
+                .HasIndex(x => x.Key)
+                .IsUnique();
         }
 
         public DbSet<UserRole> UserRoles { get; set; } = null!;
         public DbSet<UserRoleAlias> UserRoleAliases { get; set; } = null!;
         public DbSet<AwardMessage> AwardMessages { get; set; } = null!;
+        public DbSet<BotSettting> GuildSettings { get; set; } = null!;
 
     }
 }
