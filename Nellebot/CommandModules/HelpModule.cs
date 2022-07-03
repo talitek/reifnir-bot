@@ -37,12 +37,21 @@ namespace Nellebot.CommandModules
             sb.AppendLine("If you have any problems, you can always contact one of the moderators.");
 
             sb.AppendLine();
-            sb.AppendLine("Other useful commands:");
-            sb.AppendLine($"`{commandPrefix}bm [query] .. Search the bokmål dictionary`");
-            sb.AppendLine($"`{commandPrefix}nn [query] .. Search the nynorsk dictionary`");
+            sb.AppendLine("Dictionary commands:");
+            sb.AppendLine($"`{commandPrefix}bm [word] .. Search the bokmål dictionary`");
+            sb.AppendLine($"`{commandPrefix}nn [word] .. Search the nynorsk dictionary`");
+            sb.AppendLine($"`{commandPrefix}nb-en [word] .. Translate Bokmål -> English`");
+            sb.AppendLine($"`{commandPrefix}en-nb [word] .. Translate English -> Bokmål`");
+            sb.AppendLine($"`{commandPrefix}nn-en [word] .. Translate Nynorsk -> English`");
+            sb.AppendLine($"`{commandPrefix}en-nn [word] .. Translate English -> Nynorsk`");
 
             sb.AppendLine();
-            sb.AppendLine("For staff only:");
+            sb.AppendLine("Other useful commands:");
+            sb.AppendLine($"`{commandPrefix}cookie-stats me     .. Show personal cookie stats`");
+            sb.AppendLine($"`{commandPrefix}cookie-stats [user] .. Show another user's cookie stats`");
+
+            sb.AppendLine();
+            sb.AppendLine("Staff commands:");
             sb.AppendLine($"`{commandPrefix}help user-role`");
             sb.AppendLine($"`{commandPrefix}help admin-misc`");
 
@@ -72,7 +81,8 @@ namespace Nellebot.CommandModules
 
             sb.AppendLine();
             sb.AppendLine($"Command arguments:");
-            sb.AppendLine($"`role           .. Discord role name, Discord role Id or Discord role @mention`");
+            sb.AppendLine($"`role           .. Discord role name, Discord role Id`");
+            sb.AppendLine($"`                  or Discord role @mention`");
             sb.AppendLine($"`alias-name     .. User role alias (used when assigning role)`");
             sb.AppendLine($"`alias-list     .. Alias names (comma separated values, optional)`");
             sb.AppendLine($"`group-number   .. User role group number (positive whole number)`");

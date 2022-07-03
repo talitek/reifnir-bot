@@ -50,7 +50,7 @@ namespace Nellebot.CommandModules
             await GetUserAwardStats(ctx, member);
         }
 
-        [Command("user")]
+        [GroupCommand]
         public async Task GetUserAwardStatsOtherUser(CommandContext ctx, DiscordUser user)
         {
             var member = await _discordResolver.ResolveGuildMember(ctx.Guild, user.Id);
