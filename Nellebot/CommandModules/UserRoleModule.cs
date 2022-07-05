@@ -347,22 +347,32 @@ namespace Nellebot.CommandModules
             await UnsetRoleGroup(ctx, discordRole);
         }
 
-        [Command("update-roles")]
-        [Description("Update user role names to match Discord roles")]
+        [Command("sync-roles")]
+        [Description("Sync user roles with Discord roles (update, delete)")]
         public async Task UpdateRoles(CommandContext ctx)
         {
             var guildRoles = ctx.Guild.Roles.Select(r => DiscordRoleMapper.Map(r.Value));
 
-            var updatedRoleCount = await _userRoleService.UpdateRoleNames(guildRoles);
+            var result = await _userRoleService.SyncRoles(guildRoles);
 
-            if (updatedRoleCount == 0)
+            uint updatedCount = result.UpdatedCount;
+            uint deletedCount = result.DeletedCount;
+
+            if (updatedCount == 0 && deletedCount == 0)
             {
                 await ctx.RespondAsync("Roles already up to date");
+                return;
             }
-            else
-            {
-                await ctx.RespondAsync($"Updated {updatedRoleCount} {(updatedRoleCount == 1 ? "role" : "roles")}");
-            }
+
+            var sb = new StringBuilder();
+
+            if (result.UpdatedCount > 0)
+                sb.AppendLine($"Updated {updatedCount} user {(updatedCount == 1 ? "role" : "roles")}");
+
+            if (result.DeletedCount > 0)
+                sb.AppendLine($"Deleted {deletedCount} user {(deletedCount == 1 ? "role" : "roles")}");
+
+            await ctx.RespondAsync(sb.ToString());
         }
     }
 }

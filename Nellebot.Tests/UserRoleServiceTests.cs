@@ -19,14 +19,12 @@ namespace Nellebot.Tests
     {
         private UserRoleService _sut = null!;
         private Mock<IUserRoleRepository> _userRoleRepoMock = null!;
-        private Mock<IDiscordErrorLogger> _discordErrorLoggerMock = null!;
 
         [TestInitialize]
         public void Initialize()
         {
             _sut = null!;
             _userRoleRepoMock = new Mock<IUserRoleRepository>();
-            _discordErrorLoggerMock = new Mock<IDiscordErrorLogger>();
         }
 
         [TestMethod]
@@ -226,7 +224,7 @@ namespace Nellebot.Tests
 
         private UserRoleService BuildSutWithMocks()
         {
-            return new UserRoleService(_userRoleRepoMock.Object, _discordErrorLoggerMock.Object);
+            return new UserRoleService(_userRoleRepoMock.Object);
         }
     }
 }

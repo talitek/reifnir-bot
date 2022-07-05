@@ -8,151 +8,152 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Nellebot.Services
+namespace Nellebot.Services;
+
+public class UserRoleService
 {
-    public class UserRoleService
+    private readonly IUserRoleRepository _userRoleRepo;
+
+    public UserRoleService(IUserRoleRepository userRoleRepo)
     {
-        private readonly IUserRoleRepository _userRoleRepo;
-        private readonly IDiscordErrorLogger _discordErrorLogger;
+        _userRoleRepo = userRoleRepo;
+    }
 
-        public UserRoleService(IUserRoleRepository userRoleRepo, IDiscordErrorLogger discordErrorLogger)
+    public async Task<UserRole> CreateRole(AppDiscordRole role, string? aliasList)
+    {
+        var existingRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
+
+        if (existingRole != null)
+            throw new ArgumentException("User role already exists");
+
+        var userRole = await _userRoleRepo.CreateRole(role.Id, role.Name);
+
+        if (aliasList != null)
         {
-            _userRoleRepo = userRoleRepo;
-            _discordErrorLogger = discordErrorLogger;
-        }
+            var aliases = aliasList.Split(',').Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
 
-        public async Task<UserRole> CreateRole(AppDiscordRole role, string? aliasList)
-        {
-            var existingRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
+            var newAliases = new List<UserRoleAlias>();
 
-            if (existingRole != null)
-                throw new ArgumentException("User role already exists");
-
-            var userRole = await _userRoleRepo.CreateRole(role.Id, role.Name);
-
-            if (aliasList != null)
+            foreach (var alias in aliases)
             {
-                var aliases = aliasList.Split(',').Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
-
-                var newAliases = new List<UserRoleAlias>();
-
-                foreach (var alias in aliases)
-                {
-                    var aliasName = alias.Trim().ToLower();
-                    var newAlias = await _userRoleRepo.CreateRoleAlias(userRole.Id, aliasName);
-                    newAliases.Add(newAlias);
-                }
-
-                userRole.UserRoleAliases = newAliases;
+                var aliasName = alias.Trim().ToLower();
+                var newAlias = await _userRoleRepo.CreateRoleAlias(userRole.Id, aliasName);
+                newAliases.Add(newAlias);
             }
 
-            return userRole;
+            userRole.UserRoleAliases = newAliases;
         }
 
-        public async Task DeleteRole(AppDiscordRole role)
+        return userRole;
+    }
+
+    public async Task DeleteRole(AppDiscordRole role)
+    {
+        var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
+
+        if (userRole == null)
+            throw new ArgumentException("User role doesn't exist");
+
+        await _userRoleRepo.DeleteRole(userRole.Id);
+    }
+
+    public async Task<UserRole> GetRole(AppDiscordRole role)
+    {
+        var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
+
+        if (userRole == null)
+            throw new ArgumentException("User role doesn't exist");
+
+        return userRole;
+    }
+
+    public async Task<IEnumerable<UserRole>> GetRoleList()
+    {
+        return await _userRoleRepo.GetRoleList();
+    }
+
+    public async Task<UserRoleAlias> AddRoleAlias(AppDiscordRole role, string alias)
+    {
+        if (string.IsNullOrWhiteSpace(alias))
+            throw new ArgumentException("Alias cannot be empty");
+
+        var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
+
+        if (userRole == null)
+            throw new ArgumentException("User role doesn't exist");
+
+        var aliasName = alias.Trim().ToLower();
+
+        var existingRoleAlias = await _userRoleRepo.GetRoleAlias(aliasName);
+
+        if (existingRoleAlias != null)
+            throw new ArgumentException("Alias already exists");
+
+        var roleAlias = await _userRoleRepo.CreateRoleAlias(userRole.Id, aliasName);
+
+        return roleAlias;
+    }
+
+    public async Task RemoveRoleAlias(AppDiscordRole role, string alias)
+    {
+        var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
+
+        if (userRole == null)
+            throw new ArgumentException("User role doesn't exist");
+
+        if (!userRole.UserRoleAliases.Any())
+            throw new ArgumentException("User role has no aliases");
+
+        await _userRoleRepo.DeleteRoleAlias(userRole.Id, alias);
+    }
+
+    public async Task SetRoleGroup(AppDiscordRole role, uint groupNumber)
+    {
+        var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
+
+        if (userRole == null)
+            throw new ArgumentException("User role doesn't exist");
+
+        await _userRoleRepo.UpdateRoleGroup(userRole.Id, groupNumber);
+    }
+
+    public async Task UnsetRoleGroup(AppDiscordRole role)
+    {
+        var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
+
+        if (userRole == null)
+            throw new ArgumentException("User role doesn't exist");
+
+        await _userRoleRepo.UpdateRoleGroup(userRole.Id, null);
+    }
+
+    public record SyncRolesResult(uint UpdatedCount, uint DeletedCount);
+
+    public async Task<SyncRolesResult> SyncRoles(IEnumerable<AppDiscordRole> guildRoles)
+    {
+        var userRoles = await _userRoleRepo.GetRoleList();
+
+        uint updatedRoleCount = 0;
+        uint deletedRoleCount = 0;
+
+        foreach (var userRole in userRoles)
         {
-            var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
+            var discordRole = guildRoles.SingleOrDefault(r => r.Id == userRole.RoleId);
 
-            if (userRole == null)
-                throw new ArgumentException("User role doesn't exist");
-
-            await _userRoleRepo.DeleteRole(userRole.Id);
-        }
-
-        public async Task<UserRole> GetRole(AppDiscordRole role)
-        {
-            var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
-
-            if (userRole == null)
-                throw new ArgumentException("User role doesn't exist");
-
-            return userRole;
-        }
-
-        public async Task<IEnumerable<UserRole>> GetRoleList()
-        {
-            return await _userRoleRepo.GetRoleList();
-        }
-
-        public async Task<UserRoleAlias> AddRoleAlias(AppDiscordRole role, string alias)
-        {
-            if (string.IsNullOrWhiteSpace(alias))
-                throw new ArgumentException("Alias cannot be empty");
-
-            var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
-
-            if (userRole == null)
-                throw new ArgumentException("User role doesn't exist");
-
-            var aliasName = alias.Trim().ToLower();
-
-            var existingRoleAlias = await _userRoleRepo.GetRoleAlias(aliasName);
-
-            if (existingRoleAlias != null)
-                throw new ArgumentException("Alias already exists");
-
-            var roleAlias = await _userRoleRepo.CreateRoleAlias(userRole.Id, aliasName);
-
-            return roleAlias;
-        }
-
-        public async Task RemoveRoleAlias(AppDiscordRole role, string alias)
-        {
-            var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
-
-            if (userRole == null)
-                throw new ArgumentException("User role doesn't exist");
-
-            if (!userRole.UserRoleAliases.Any())
-                throw new ArgumentException("User role has no aliases");
-
-            await _userRoleRepo.DeleteRoleAlias(userRole.Id, alias);
-        }
-
-        public async Task SetRoleGroup(AppDiscordRole role, uint groupNumber)
-        {
-            var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
-
-            if (userRole == null)
-                throw new ArgumentException("User role doesn't exist");
-
-            await _userRoleRepo.UpdateRoleGroup(userRole.Id, groupNumber);
-        }
-
-        public async Task UnsetRoleGroup(AppDiscordRole role)
-        {
-            var userRole = await _userRoleRepo.GetRoleByDiscordRoleId(role.Id);
-
-            if (userRole == null)
-                throw new ArgumentException("User role doesn't exist");
-
-            await _userRoleRepo.UpdateRoleGroup(userRole.Id, null);
-        }
-
-        public async Task<uint> UpdateRoleNames(IEnumerable<AppDiscordRole> roles)
-        {
-            var userRoles = await _userRoleRepo.GetRoleList();
-
-            uint updatedRoleCount = 0;
-
-            foreach (var userRole in userRoles)
+            if (discordRole == null)
             {
-                var discordRole = roles.SingleOrDefault(r => r.Id == userRole.RoleId);
-
-                if (discordRole == null)
-                {
-                    await _discordErrorLogger.LogError($"Could not find discord role for user role {userRole.Name} ({userRole.RoleId}). Skipping.");
-                    continue;
-                }
-
-                if (!string.Equals(discordRole.Name, userRole.Name, StringComparison.OrdinalIgnoreCase))
-                {
-                    await _userRoleRepo.UpdateRole(userRole.Id, discordRole.Name);
-                    updatedRoleCount++;
-                }
+                await _userRoleRepo.DeleteRole(userRole.Id);               
+                deletedRoleCount++;
+                continue;
             }
 
-            return updatedRoleCount;
+            if (!string.Equals(discordRole.Name, userRole.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                await _userRoleRepo.UpdateRole(userRole.Id, discordRole.Name);
+                updatedRoleCount++;
+            }
         }
+
+        return new SyncRolesResult(updatedRoleCount, deletedRoleCount);
     }
 }

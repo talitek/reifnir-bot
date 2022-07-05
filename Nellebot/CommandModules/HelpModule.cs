@@ -77,7 +77,8 @@ namespace Nellebot.CommandModules
             sb.AppendLine($"`{command} remove-alias [role] [alias-name]`");
             sb.AppendLine($"`{command} set-group [role] [group-number]`");
             sb.AppendLine($"`{command} unset-group [role]`");
-            sb.AppendLine($"`{command} update-roles`");
+            sb.AppendLine($"`{command} list-roles`");
+            sb.AppendLine($"`{command} sync-roles`");
 
             sb.AppendLine();
             sb.AppendLine($"Command arguments:");
