@@ -30,7 +30,7 @@ namespace Nellebot.CommandModules
         [Command("meowdy")]
         public Task Meowdy(CommandContext ctx)
         {
-            return ctx.RespondAsync(".\n                <:meowcowboy:993856050107256832> are u gonna say meowdy\n　＿ノ ヽ ノ＼＿ back or are we\n/      / ⌒ Ｙ ⌒ Ｙ     ヽ gonna have a\n( 　(三ヽ人　 /　　 | heckin problem\n|　ﾉ⌒＼ ￣￣ヽ　 ノ here partner?\nヽ＿＿＿＞､＿＿_／\n　　 ｜( 王 ﾉ〈\n　　 /ﾐ`ー―彡\n      /      ╰  ╯");
+            return ctx.RespondAsync(".\n                <:meowcowboy:993855998601220166> are u gonna say meowdy\n　＿ノ ヽ ノ＼＿ back or are we\n/      / ⌒ Ｙ ⌒ Ｙ     ヽ gonna have a\n( 　(三ヽ人　 /　　 | heckin problem\n|　ﾉ⌒＼ ￣￣ヽ　 ノ here partner?\nヽ＿＿＿＞､＿＿_／\n　　 ｜( 王 ﾉ〈\n　　 /ﾐ`ー―彡\n      /      ╰  ╯");
         }
     }
 }
