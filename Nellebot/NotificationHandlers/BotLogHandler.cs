@@ -98,7 +98,7 @@ namespace Nellebot.NotificationHandlers
             if (channel.IsPrivate) return;
 
             var auditMessageDeleteEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogMessageEntry>
-                                                    (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == message.Author.Id);
+                                                    (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == message.Id);
 
             if (auditMessageDeleteEntry == null) return;
 
@@ -128,12 +128,12 @@ namespace Nellebot.NotificationHandlers
 
             if (author == null) return;
 
-            var auditUnbanEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogBanEntry>
+            var auditMessageDeleteEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogMessageEntry>
                     (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == author.Id);
 
-            if (auditUnbanEntry == null) return;
+            if (auditMessageDeleteEntry == null) return;
 
-            var memberResponsible = await _discordResolver.ResolveGuildMember(args.Guild, auditUnbanEntry.UserResponsible.Id);
+            var memberResponsible = await _discordResolver.ResolveGuildMember(args.Guild, auditMessageDeleteEntry.UserResponsible.Id);
 
             if (memberResponsible == null) return;
 
