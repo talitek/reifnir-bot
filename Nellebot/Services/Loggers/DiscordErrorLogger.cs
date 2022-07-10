@@ -34,7 +34,7 @@ namespace Nellebot.Services.Loggers
             return LogError("Failed command", fullErrorMessage);
         }
 
-        public Task LogEventError(EventErrorContext ctx, string errorMessage)
+        public Task LogEventError(EventContext ctx, string errorMessage)
         {
             var user = ctx.User != null ? $"{ctx.User.Username}#{ctx.User.Discriminator}" : "Unknown user";
             var channelName = ctx.Channel?.Name ?? "Unknown channel";

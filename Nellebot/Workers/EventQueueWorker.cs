@@ -5,15 +5,13 @@ using System.Threading.Tasks;
 using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Nellebot.CommandHandlers;
 using Nellebot.NotificationHandlers;
+using Nellebot.Services;
+using Nellebot.Services.Loggers;
 
 namespace Nellebot.Workers
 {
-    public class EventQueue : ConcurrentQueue<INotification>
-    {
-
-    }
+    public class EventQueue : ConcurrentQueue<INotification> { }
 
     public class EventQueueWorker : BackgroundService
     {
@@ -22,17 +20,15 @@ namespace Nellebot.Workers
 
         private readonly ILogger<EventQueueWorker> _logger;
         private readonly EventQueue _eventQueue;
-        private readonly IMediator _mediator;
+        private readonly NotificationPublisher _publisher;
+        private readonly IDiscordErrorLogger _discordErrorLogger;
 
-        public EventQueueWorker(
-                ILogger<EventQueueWorker> logger,
-                EventQueue eventQueue,
-                IMediator mediator
-            )
+        public EventQueueWorker(ILogger<EventQueueWorker> logger, EventQueue eventQueue, NotificationPublisher publisher, IDiscordErrorLogger discordErrorLogger)
         {
             _logger = logger;
             _eventQueue = eventQueue;
-            _mediator = mediator;
+            _publisher = publisher;
+            _discordErrorLogger = discordErrorLogger;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -40,6 +36,8 @@ namespace Nellebot.Workers
             while (!stoppingToken.IsCancellationRequested)
             {
                 var nextDelay = IdleDelay;
+
+                INotification? @event = null;
 
                 try
                 {
@@ -50,22 +48,35 @@ namespace Nellebot.Workers
                         continue;
                     }
 
-                    _eventQueue.TryDequeue(out var @event);
+                    if (!_eventQueue.TryDequeue(out @event))
+                        continue;
 
-                    if (@event != null)
+                    _logger.LogDebug($"Dequeued event. {_eventQueue.Count} left in queue");
+
+                    await _publisher.Publish(@event, stoppingToken);
+
+                    nextDelay = BusyDelay;
+                }
+                catch (AggregateException ex)
+                {
+                    foreach (var innerEx in ex.InnerExceptions)
                     {
-                        _logger.LogDebug($"Dequeued event. {_eventQueue.Count} left in queue");
+                        if (@event != null && @event is EventNotification notification)
+                        {
+                            if (notification.Ctx != null)
+                                await _discordErrorLogger.LogEventError(notification.Ctx, innerEx.Message);
+                            else
+                                await _discordErrorLogger.LogError(innerEx.Message);
+                        }
 
-                        await _mediator.Publish(@event, stoppingToken);
-      
-                        nextDelay = BusyDelay;
+                        _logger.LogError(innerEx, nameof(EventQueueWorker));
                     }
                 }
                 catch (Exception ex)
                 {
-                    if (!(ex is TaskCanceledException))
+                    if (ex is not TaskCanceledException)
                     {
-                        _logger.LogError(ex, typeof(CommandQueueWorker).Name);
+                        _logger.LogError(ex, nameof(EventQueueWorker));
                     }
                 }
 

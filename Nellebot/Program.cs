@@ -37,6 +37,7 @@ namespace Nellebot
 
                     services.AddMediatR(typeof(Program));
                     services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CommandRequestPipelineBehaviour<,>));
+                    services.AddSingleton<NotificationPublisher>();
 
                     services.AddSingleton<SharedCache>();
                     services.AddSingleton<ILocalizationService, LocalizationService>();

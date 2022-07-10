@@ -6,8 +6,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
+using Nellebot.NotificationHandlers;
 using Nellebot.Services.Loggers;
 using Nellebot.Utils;
+using Nellebot.Workers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,11 +24,13 @@ namespace Nellebot.CommandModules
     {
         private readonly DiscordResolver _discordResolver;
         private readonly IDiscordErrorLogger _discordErrorLogger;
+        private readonly EventQueue _eventQueue;
 
-        public UtilsModule(DiscordResolver discordResolver, IDiscordErrorLogger discordErrorLogger)
+        public UtilsModule(DiscordResolver discordResolver, IDiscordErrorLogger discordErrorLogger, EventQueue eventQueue)
         {
             _discordResolver = discordResolver;
             _discordErrorLogger = discordErrorLogger;
+            _eventQueue = eventQueue;
         }
 
         [Command("role-id")]
@@ -78,11 +82,25 @@ namespace Nellebot.CommandModules
             await ctx.RespondAsync($"`{result}`");
         }
 
-        [Command("test-error")]
-        public async Task TestError(CommandContext ctx)
+        [Command("test-event-error")]
+        public Task TestError2(CommandContext ctx)
         {
-            await _discordErrorLogger.LogError("Test error", "Test error message");
-            await _discordErrorLogger.LogWarning("Test warning", "Test warning message");
+            var eventCtx = new EventContext()
+            {
+                EventName = nameof(TestError2),
+                Channel = ctx.Channel,
+                Guild = ctx.Guild,
+                Message = ctx.Message,
+                User = ctx.User
+            };
+
+            _eventQueue.Enqueue(new ErrorTestNotification(eventCtx, "Error 1", 0));
+
+            _eventQueue.Enqueue(new ErrorTestNotification(eventCtx, "Error 2", 2000));
+
+            _eventQueue.Enqueue(new ErrorTestNotification(null, "Error 3", 0));
+
+            return Task.CompletedTask;
         }
     }
 }
