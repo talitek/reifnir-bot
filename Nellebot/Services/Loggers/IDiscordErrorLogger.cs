@@ -8,6 +8,8 @@ namespace Nellebot.Services.Loggers
     {
         Task LogCommandError(CommandContext ctx, string errorMessage);
         Task LogEventError(EventErrorContext ctx, string errorMessage);
-        Task LogError(string error);
+        Task LogError(string error, string errorMessage);
+        Task LogError(string errorMessage);
+        Task LogWarning(string warning, string warningMessage);
     }
 }

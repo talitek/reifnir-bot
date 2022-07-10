@@ -91,7 +91,7 @@ namespace Nellebot.CommandHandlers.Ordbok
                 .WithUrl(queryUrl)
                 .WithDescription(truncatedContent)
                 .WithFooter("Universitetet i Bergen og Språkrådet - ordbokene.no")
-                .WithColor(DiscordConstants.EmbedColor);
+                .WithColor(DiscordConstants.DefaultEmbedColor);
 
             var mb = new DiscordMessageBuilder();
 

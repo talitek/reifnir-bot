@@ -1,10 +1,8 @@
 ﻿using DSharpPlus.Entities;
 using MediatR;
-using Microsoft.Extensions.Options;
 using Nellebot.Services.Loggers;
 using Nellebot.Utils;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -70,9 +68,8 @@ namespace Nellebot.NotificationHandlers
 
             if (channel.IsPrivate) return;
 
-            var auditMessageDeleteEntry = await args.Guild
-                                            .GetLastAuditLogEntry<DiscordAuditLogMessageEntry>(
-                                                AuditLogActionType.MessageDelete, (x) => x.Target.Id == message.Author.Id);
+            var auditMessageDeleteEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogMessageEntry>
+                                            (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == message.Author.Id);
 
             if (auditMessageDeleteEntry == null) return;
 
@@ -102,9 +99,8 @@ namespace Nellebot.NotificationHandlers
 
             if (author == null) return;
 
-            var auditUnbanEntry = await args.Guild
-                        .GetLastAuditLogEntry<DiscordAuditLogBanEntry>(
-                            AuditLogActionType.Unban, (x) => x.Target.Id == author.Id);
+            var auditUnbanEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogBanEntry>
+                                (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == author.Id);
 
             if (auditUnbanEntry == null) return;
 
@@ -131,8 +127,6 @@ namespace Nellebot.NotificationHandlers
         {
             var member = notification.EventArgs.Member;
 
-            if (member == null) return;
-
             var memberFullIdentifier = $"{member.Mention} [{member.GetDetailedMemberIdentifier()}]";
 
             await _discordLogger.LogAuditMessage($"{memberFullIdentifier} joined the server");
@@ -141,8 +135,6 @@ namespace Nellebot.NotificationHandlers
         public async Task Handle(GuildMemberRemovedNotification notification, CancellationToken cancellationToken)
         {
             var member = notification.EventArgs.Member;
-
-            if (member == null) return;
 
             var memberFullIdentifier = $"**{member.GetNicknameOrDisplayName()}** [{member.GetDetailedMemberIdentifier()}]";
 

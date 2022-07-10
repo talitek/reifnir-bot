@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
+using Nellebot.Services.Loggers;
 using Nellebot.Utils;
 using System;
 using System.Collections.Generic;
@@ -19,22 +20,13 @@ namespace Nellebot.CommandModules
     [Group("utils")]
     public class UtilsModule : BaseCommandModule
     {
-        private readonly ILogger<UtilsModule> _logger;
-        private readonly DiscordClient _client;
         private readonly DiscordResolver _discordResolver;
-        private readonly BotOptions _options;
+        private readonly IDiscordErrorLogger _discordErrorLogger;
 
-        public UtilsModule(
-            ILogger<UtilsModule> logger,
-            DiscordClient client,
-            IOptions<BotOptions> options,
-            DiscordResolver discordResolver
-            )
+        public UtilsModule(DiscordResolver discordResolver, IDiscordErrorLogger discordErrorLogger)
         {
-            _logger = logger;
-            _client = client;
             _discordResolver = discordResolver;
-            _options = options.Value;
+            _discordErrorLogger = discordErrorLogger;
         }
 
         [Command("role-id")]
@@ -84,6 +76,13 @@ namespace Nellebot.CommandModules
             var result = formattedSb.ToString();
 
             await ctx.RespondAsync($"`{result}`");
+        }
+
+        [Command("test-error")]
+        public async Task TestError(CommandContext ctx)
+        {
+            await _discordErrorLogger.LogError("Test error", "Test error message");
+            await _discordErrorLogger.LogWarning("Test warning", "Test warning message");
         }
     }
 }

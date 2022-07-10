@@ -11,10 +11,15 @@ namespace Nellebot.Utils
     {
         public static DiscordEmbed BuildSimpleEmbed(string title, string message)
         {
+            return BuildSimpleEmbed(title, message, DiscordConstants.DefaultEmbedColor);
+        }
+
+        public static DiscordEmbed BuildSimpleEmbed(string title, string message, int color)
+        {
             var eb = new DiscordEmbedBuilder()
                 .WithTitle(title)
                 .WithDescription(message)
-                .WithColor(DiscordConstants.EmbedColor);
+                .WithColor(color);
 
             return eb.Build();
         }

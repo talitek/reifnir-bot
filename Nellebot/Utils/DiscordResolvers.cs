@@ -50,16 +50,14 @@ namespace Nellebot.Utils
 
             try
             {
-                discordChannel = guild.GetChannel(channelId) ?? throw new ArgumentException($"Invalid channelId {channelId}");
+                return guild.GetChannel(channelId) ?? throw new ArgumentException($"Missing channel with id {channelId}");
             }
             catch (Exception ex)
             {
-                await _discordErrorLogger.LogError(ex.ToString());
+                await _discordErrorLogger.LogError("Missing channel", ex.ToString());
 
                 return null;
             }
-
-            return discordChannel;
         }
 
         public async Task<DiscordChannel?> ResolveChannel(ulong guildId, ulong channelId)
@@ -77,11 +75,11 @@ namespace Nellebot.Utils
 
             try
             {
-                return await guild.GetMemberAsync(userId);
+                return (await guild.GetMemberAsync(userId)) ?? throw new ArgumentException($"Missing member with id {userId}");
             }
             catch (Exception ex)
             {
-                await _discordErrorLogger.LogError(ex.ToString());
+                await _discordErrorLogger.LogError("Missing member", ex.ToString());
 
                 return null;
             }
@@ -91,13 +89,11 @@ namespace Nellebot.Utils
         {
             try
             {
-                var message = await channel.GetMessageAsync(messageId);
-
-                return message;
+                return (await channel.GetMessageAsync(messageId)) ?? throw new ArgumentException($"Missing message with id {messageId}"); ;
             }
             catch (Exception ex)
             {
-                await _discordErrorLogger.LogError(ex.ToString());
+                await _discordErrorLogger.LogError("Missing message", ex.ToString());
 
                 return null;
             }
@@ -115,6 +111,21 @@ namespace Nellebot.Utils
             {
                 return new TryResolveResultObject<DiscordMessage>(false, "Message not found");
             }
+        }
+
+        public async Task<T?> ResolveAuditLogEntry<T>(DiscordGuild guild, AuditLogActionType logType, Func<T, bool> predicate) where T : DiscordAuditLogEntry
+        {
+            var entry = (await guild.GetAuditLogsAsync(limit: 50, by_member: null, action_type: logType))
+                .Cast<T>()
+                .FirstOrDefault(predicate);
+
+            if (entry == null)
+            {
+                await _discordErrorLogger.LogError("Missing audit entry", $"Missing audit entry of type {logType}");
+                return null;
+            }
+
+            return entry;
         }
     }
 }

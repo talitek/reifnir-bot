@@ -13,39 +13,35 @@ namespace Nellebot.Services.Loggers
         private readonly DiscordClient _client;
         private readonly BotOptions _options;
 
-        public DiscordErrorLogger(
-            DiscordClient client,
-            IOptions<BotOptions> options
-            )
+        public DiscordErrorLogger(DiscordClient client, IOptions<BotOptions> options)
         {
             _client = client;
             _options = options.Value;
         }
 
-        public async Task LogCommandError(CommandContext ctx, string errorMessage)
+        public Task LogCommandError(CommandContext ctx, string errorMessage)
         {
             var user = $"{ctx.User.Username}#{ctx.User.Discriminator}";
             var channelName = ctx.Channel.Name;
             var guildName = ctx.Guild.Name;
             var command = EscapeTicks(ctx.Message.Content);
 
-            var contextMessage = $"**Failed command** `{command}` by `{user}` in `{channelName}`(`{guildName}`)";
+            var contextMessage = $"`{command}` by `{user}` in `{channelName}`(`{guildName}`)";
             var escapedErrorMesssage = $"`{EscapeTicks(errorMessage)}`";
 
             var fullErrorMessage = $"{contextMessage}{Environment.NewLine}{escapedErrorMesssage}";
 
-            await LogError(fullErrorMessage);
+            return LogError("Failed command", fullErrorMessage);
         }
 
-        public async Task LogEventError(EventErrorContext ctx, string errorMessage)
+        public Task LogEventError(EventErrorContext ctx, string errorMessage)
         {
             var user = ctx.User != null ? $"{ctx.User.Username}#{ctx.User.Discriminator}" : "Unknown user";
             var channelName = ctx.Channel?.Name ?? "Unknown channel";
-            var guildName = ctx.Guild?.Name ?? "Unknown guild";
             var eventName = ctx.EventName;
             var message = ctx.Message != null ? EscapeTicks(ctx.Message.Content) : string.Empty;
 
-            var contextMessage = $"**Failed event** `{eventName}` by `{user}` in `{channelName}`(`{guildName}`)";
+            var contextMessage = $"`{eventName}` by `{user}` in `{channelName}`";
 
             if (!string.IsNullOrWhiteSpace(message))
                 contextMessage += $"{Environment.NewLine}Message: `{message}`";
@@ -54,20 +50,40 @@ namespace Nellebot.Services.Loggers
 
             var fullErrorMessage = $"{contextMessage}{Environment.NewLine}{escapedErrorMesssage}";
 
-            await LogError(fullErrorMessage);
+            return LogError("Failed event", fullErrorMessage);
         }
 
-        public async Task LogError(string error)
+        public Task LogError(string errorMessage)
+        {
+            return LogError("Error", errorMessage);
+        }
+
+        public async Task LogError(string error, string errorMessage)
         {
             var guildId = _options.GuildId;
             var errorLogChannelId = _options.ErrorLogChannelId;
 
             var errorLogChannel = await ResolveErrorLogChannel(guildId, errorLogChannelId);
 
-            if (errorLogChannel != null)
-            {
-                await errorLogChannel.SendMessageAsync(error);
-            }
+            if (errorLogChannel == null) return;
+
+            var errorEmbed = EmbedBuilderHelper.BuildSimpleEmbed(error, errorMessage, DiscordConstants.ErrorEmbedColor);
+
+            await errorLogChannel.SendMessageAsync(errorEmbed);
+        }
+
+        public async Task LogWarning(string warning, string warningMessage)
+        {
+            var guildId = _options.GuildId;
+            var errorLogChannelId = _options.ErrorLogChannelId;
+
+            var errorLogChannel = await ResolveErrorLogChannel(guildId, errorLogChannelId);
+
+            if (errorLogChannel == null) return;
+
+            var errorEmbed = EmbedBuilderHelper.BuildSimpleEmbed(warning, warningMessage, DiscordConstants.WarningEmbedColor);
+
+            await errorLogChannel.SendMessageAsync(errorEmbed);
         }
 
         private static string EscapeTicks(string value)

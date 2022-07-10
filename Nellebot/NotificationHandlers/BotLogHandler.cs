@@ -1,12 +1,8 @@
 ﻿using DSharpPlus.Entities;
 using MediatR;
-using Microsoft.Extensions.Options;
 using Nellebot.Services.Loggers;
 using Nellebot.Utils;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -34,9 +30,8 @@ namespace Nellebot.NotificationHandlers
             var memberName = args.Member.GetNicknameOrDisplayName();
             var memberIdentifier = args.Member.GetDetailedMemberIdentifier();
 
-            var auditBanEntry = await args.Guild
-                    .GetLastAuditLogEntry<DiscordAuditLogBanEntry>(
-                        AuditLogActionType.Ban, (x) => x.Target.Id == args.Member.Id);
+            var auditBanEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogBanEntry>
+                                    (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == args.Member.Id);
 
             if (auditBanEntry == null) return;
 
@@ -56,9 +51,8 @@ namespace Nellebot.NotificationHandlers
             var memberName = args.Member.GetNicknameOrDisplayName();
             var memberIdentifier = args.Member.GetDetailedMemberIdentifier();
 
-            var auditUnbanEntry = await args.Guild
-                                    .GetLastAuditLogEntry<DiscordAuditLogBanEntry>(
-                                        AuditLogActionType.Unban, (x) => x.Target.Id == args.Member.Id);
+            var auditUnbanEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogBanEntry>
+                                    (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == args.Member.Id);
 
             if (auditUnbanEntry == null) return;
 
@@ -75,13 +69,11 @@ namespace Nellebot.NotificationHandlers
         {
             var args = notification.EventArgs;
 
-            var memberName = args.Member.GetNicknameOrDisplayName();
 
             // It's possible that the audit log entry might not be available right away.
             // If that is the case, consider wrapping this call into some sort of exeponential backoff retry.
-            var auditKickEntry = await args.Guild
-                                .GetLastAuditLogEntry<DiscordAuditLogKickEntry>(
-                                    AuditLogActionType.Kick, (x) => x.Target.Id == args.Member.Id);
+            var auditKickEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogKickEntry>
+                                        (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == args.Member.Id);
 
             if (auditKickEntry == null) return;
 
@@ -90,6 +82,8 @@ namespace Nellebot.NotificationHandlers
             if (memberResponsible == null) return;
 
             var responsibleName = memberResponsible.GetNicknameOrDisplayName();
+
+            var memberName = args.Member.GetNicknameOrDisplayName();
 
             await _discordLogger.LogMessage($"**{memberName}** was kicked by **{responsibleName}**. Reason: {auditKickEntry.Reason}.");
         }
@@ -103,9 +97,8 @@ namespace Nellebot.NotificationHandlers
 
             if (channel.IsPrivate) return;
 
-            var auditMessageDeleteEntry = await args.Guild
-                                            .GetLastAuditLogEntry<DiscordAuditLogMessageEntry>(
-                                                AuditLogActionType.MessageDelete, (x) => x.Target.Id == message.Author.Id);
+            var auditMessageDeleteEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogMessageEntry>
+                                                    (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == message.Author.Id);
 
             if (auditMessageDeleteEntry == null) return;
 
@@ -115,13 +108,13 @@ namespace Nellebot.NotificationHandlers
 
             if (authorAsMember == null) return;
 
-            var authorName = authorAsMember.GetNicknameOrDisplayName();
-
             var memberResponsible = await _discordResolver.ResolveGuildMember(args.Guild, auditMessageDeleteEntry.UserResponsible.Id);
 
             if (memberResponsible == null) return;
 
             var responsibleName = memberResponsible.GetNicknameOrDisplayName();
+
+            var authorName = authorAsMember.GetNicknameOrDisplayName();
 
             await _discordLogger.LogMessage($"Message written by **{authorName}** in **{channel.Name}** was removed by **{responsibleName}**.");
         }
@@ -135,19 +128,18 @@ namespace Nellebot.NotificationHandlers
 
             if (author == null) return;
 
-            var auditUnbanEntry = await args.Guild
-                        .GetLastAuditLogEntry<DiscordAuditLogBanEntry>(
-                            AuditLogActionType.Unban, (x) => x.Target.Id == author.Id);
+            var auditUnbanEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogBanEntry>
+                    (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == author.Id);
 
             if (auditUnbanEntry == null) return;
-
-            var authorName = author.GetUserFullUsername();
 
             var memberResponsible = await _discordResolver.ResolveGuildMember(args.Guild, auditUnbanEntry.UserResponsible.Id);
 
             if (memberResponsible == null) return;
 
             var responsibleName = memberResponsible.GetNicknameOrDisplayName();
+
+            var authorName = author.GetUserFullUsername();
 
             await _discordLogger.LogMessage($"{messages.Count} messages written by **{authorName}** were removed by **{responsibleName}**.");
         }

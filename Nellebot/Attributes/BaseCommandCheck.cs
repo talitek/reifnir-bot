@@ -33,7 +33,7 @@ namespace Nellebot.Attributes
 
                 var discordErrorLogger = (DiscordErrorLogger)discordErrorLoggerObj;
 
-                await discordErrorLogger.LogError(error);
+                await discordErrorLogger.LogError("WTF", error);
 
                 return false;
             }

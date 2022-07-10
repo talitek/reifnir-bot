@@ -69,7 +69,7 @@ namespace Nellebot.CommandHandlers.Glosbe
                 .WithUrl(model.QueryUrl)
                 .WithDescription(truncatedContent)
                 .WithFooter("Glosbe.com")
-                .WithColor(DiscordConstants.EmbedColor);
+                .WithColor(DiscordConstants.DefaultEmbedColor);
 
             await ctx.RespondAsync(eb.Build());
         }
