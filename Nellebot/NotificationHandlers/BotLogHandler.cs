@@ -69,13 +69,15 @@ namespace Nellebot.NotificationHandlers
         {
             var args = notification.EventArgs;
 
-
             // It's possible that the audit log entry might not be available right away.
-            // If that is the case, consider wrapping this call into some sort of exeponential backoff retry.
-            var auditKickEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogKickEntry>
-                                        (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == args.Member.Id);
+            // If that turns out to be the case, consider wrapping this call into some sort of exeponential backoff retry.
+            var auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogKickEntry>
+                                        (args.Guild, AuditLogActionType.Kick, (x) => x.Target.Id == args.Member.Id);
 
-            if (auditKickEntry == null) return;
+            // User left the server on their own
+            if (!auditResolveResult.Resolved) return;
+
+            var auditKickEntry = auditResolveResult.Result;
 
             var memberResponsible = await _discordResolver.ResolveGuildMember(args.Guild, auditKickEntry.UserResponsible.Id);
 
@@ -92,15 +94,20 @@ namespace Nellebot.NotificationHandlers
         {
             var args = notification.EventArgs;
 
-            var message = args.Message;
-            var channel = args.Channel;
+            if (args.Channel.IsPrivate) return;
 
-            if (channel.IsPrivate) return;
+            var message = await _discordResolver.ResolveMessage(args.Channel, args.Message.Id);
 
-            var auditMessageDeleteEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogMessageEntry>
-                                                    (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == message.Id);
+            if (message == null) return;
 
-            if (auditMessageDeleteEntry == null) return;
+            var auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogMessageEntry>
+                                                (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == message.Id);
+
+
+            // User deleted their own message
+            if (!auditResolveResult.Resolved) return;
+
+            var auditMessageDeleteEntry = auditResolveResult.Result;
 
             if (message.Author.Id == auditMessageDeleteEntry.UserResponsible.Id) return;
 
@@ -116,7 +123,7 @@ namespace Nellebot.NotificationHandlers
 
             var authorName = authorAsMember.GetNicknameOrDisplayName();
 
-            await _discordLogger.LogMessage($"Message written by **{authorName}** in **{channel.Name}** was removed by **{responsibleName}**.");
+            await _discordLogger.LogMessage($"Message written by **{authorName}** in **{args.Channel.Name}** was removed by **{responsibleName}**.");
         }
 
         public async Task Handle(MessageBulkDeletedNotification notification, CancellationToken cancellationToken)
@@ -129,7 +136,7 @@ namespace Nellebot.NotificationHandlers
             if (author == null) return;
 
             var auditMessageDeleteEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogMessageEntry>
-                    (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == author.Id);
+                                            (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == author.Id);
 
             if (auditMessageDeleteEntry == null) return;
 

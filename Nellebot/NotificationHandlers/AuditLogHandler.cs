@@ -63,17 +63,20 @@ namespace Nellebot.NotificationHandlers
         {
             var args = notification.EventArgs;
 
-            var message = args.Message;
-            var channel = args.Channel;
+            if (args.Channel.IsPrivate) return;
 
-            if (channel.IsPrivate) return;
+            var message = await _discordResolver.ResolveMessage(args.Channel, args.Message.Id);
 
-            var auditMessageDeleteEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogMessageEntry>
-                                            (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == message.Id);
+            if (message == null) return;
 
-            if (auditMessageDeleteEntry == null) return;
+            var auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogMessageEntry>
+                                                // the target is supposed to be a Message but the id corresponds to a user
+                                                (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == message.Author.Id);
 
-            if (message.Author.Id == auditMessageDeleteEntry.UserResponsible.Id) return;
+            // User likely deleted their own message
+            if (!auditResolveResult.Resolved) return;
+
+            var auditMessageDeleteEntry = auditResolveResult.Result;
 
             var memberMention = message.Author.Mention;
 
@@ -84,7 +87,7 @@ namespace Nellebot.NotificationHandlers
             var responsibleName = memberResponsible.GetNicknameOrDisplayName();
 
             await _discordLogger.LogAuditMessage(
-                $"Message written by **{memberMention}** in **{channel.Name}** was removed by **{responsibleName}**. Original message:{Environment.NewLine}> {message.Content}");
+                $"Message written by **{memberMention}** in **{args.Channel.Name}** was removed by **{responsibleName}**. Original message:{Environment.NewLine}> {message.Content}");
         }
 
         public async Task Handle(MessageBulkDeletedNotification notification, CancellationToken cancellationToken)

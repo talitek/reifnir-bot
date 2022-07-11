@@ -127,5 +127,19 @@ namespace Nellebot.Utils
 
             return entry;
         }
+
+        public async Task<TryResolveResultObject<T>> TryResolveAuditLogEntry<T>(DiscordGuild guild, AuditLogActionType logType, Func<T, bool> predicate) where T : DiscordAuditLogEntry
+        {
+            var entry = (await guild.GetAuditLogsAsync(limit: 50, by_member: null, action_type: logType))
+                .Cast<T>()
+                .FirstOrDefault(predicate);
+
+            if (entry == null)
+            {
+                return new TryResolveResultObject<T>(false, "Audit log entry not found");
+            }
+
+            return new TryResolveResultObject<T>(entry);
+        }
     }
 }
