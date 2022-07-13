@@ -16,6 +16,7 @@ namespace Nellebot.Services
 {
     public class AwardMessageService
     {
+        private const string SpoilerImageAttachmentPrefix = "SPOILER_";
         private readonly AwardMessageRepository _awardMessageRepo;
         private readonly ILogger<AwardMessageService> _logger;
         private readonly IDiscordErrorLogger _discordErrorLogger;
@@ -295,7 +296,12 @@ namespace Nellebot.Services
                             messageContentSb.AppendLine($"`Video attachment: {attachment.FileName}`");
                             break;
                         case string s when s.StartsWith("image"):
-                            if (!addedEmbedImage)
+                            if(attachment.FileName.StartsWith(SpoilerImageAttachmentPrefix))
+                            {
+                                messageContentSb.AppendLine();
+                                messageContentSb.AppendLine($"`Spoiler image hidden. Use the jump link to view it.`");
+                            }
+                            else if (!addedEmbedImage)
                             {
                                 embedBuilder = embedBuilder.WithImageUrl(attachment.Url);
                                 addedEmbedImage = true;
