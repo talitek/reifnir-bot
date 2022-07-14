@@ -24,14 +24,14 @@ namespace Nellebot.Services.Loggers
             await LogMessageCore(message, _options.GreetingsChannelId);
         }
 
-        public async Task LogMessage(string message)
+        public async Task LogActivityMessage(string message)
         {
-            await LogMessageCore(message, _options.BotLogChannelId);
+            await LogMessageCore(message, _options.ActivityLogChannelId);
         }
 
-        public async Task LogAuditMessage(string message)
+        public async Task LogExtendedActivityMessage(string message)
         {
-            await LogMessageCore(message, _options.AuditLogChannelId);
+            await LogMessageCore(message, _options.ExtendedActivityLogChannelId);
         }
 
         private async Task LogMessageCore(string message, ulong channelId)

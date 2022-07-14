@@ -169,7 +169,7 @@ namespace Nellebot.CommandModules
 
         private async Task LogRoleAdded(DiscordGuild guild, string roleName, DiscordMember member)
         {
-            var logChannelId = _options.BotLogChannelId;
+            var logChannelId = _options.ActivityLogChannelId;
 
             var logChannel = guild.Channels[logChannelId];
 
@@ -184,7 +184,7 @@ namespace Nellebot.CommandModules
 
         private async Task LogRoleRemoved(DiscordGuild guild, string roleName, DiscordMember member)
         {
-            var logChannelId = _options.BotLogChannelId;
+            var logChannelId = _options.ActivityLogChannelId;
 
             var logChannel = guild.Channels[logChannelId];
 
