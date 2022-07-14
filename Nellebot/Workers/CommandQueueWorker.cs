@@ -17,7 +17,7 @@ namespace Nellebot.Workers
     public class CommandQueueWorker : BackgroundService
     {
         private const int IdleDelay = 1000;
-        private const int BusyDelay = 10;
+        private const int BusyDelay = 0;
 
         private readonly ILogger<CommandQueueWorker> _logger;
         private readonly CommandQueue _commandQueue;
@@ -42,23 +42,19 @@ namespace Nellebot.Workers
 
                 try
                 {
-                    if (_commandQueue.Count == 0)
+                    if (_commandQueue.Count == 0 || !_commandQueue.TryDequeue(out var command))
                     {
                         await Task.Delay(nextDelay, stoppingToken);
 
                         continue;
                     }
 
-                    _commandQueue.TryDequeue(out var command);
+                    _logger.LogDebug($"Dequeued command. {_commandQueue.Count} left in queue");
 
-                    if (command != null)
-                    {
-                        _logger.LogDebug($"Dequeued command. {_commandQueue.Count} left in queue");
+                    await _mediator.Send(command, stoppingToken);
 
-                        await _mediator.Send(command);
+                    nextDelay = BusyDelay;
 
-                        nextDelay = BusyDelay;
-                    }
                 }
                 catch (Exception ex)
                 {

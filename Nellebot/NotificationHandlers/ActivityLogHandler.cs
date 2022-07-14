@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Nellebot.NotificationHandlers
 {
-    public class ActivityLogHandler :   INotificationHandler<GuildBanAddedNotification>,
+    public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification>,
                                         INotificationHandler<GuildBanRemovedNotification>,
                                         INotificationHandler<MessageDeletedNotification>,
                                         INotificationHandler<MessageBulkDeletedNotification>,
@@ -113,7 +113,7 @@ namespace Nellebot.NotificationHandlers
                 $"Message written by **{authorName}** in **{channel.Name}** was removed by **{responsibleName}**.");
 
             await _discordLogger.LogExtendedActivityMessage(
-                $"Message written by **{authorMention}** in **{channel.Name}** was removed by **{responsibleName}**." 
+                $"Message written by **{authorMention}** in **{channel.Name}** was removed by **{responsibleName}**."
                 + $" Original message:{Environment.NewLine}> {message.Content}");
         }
 

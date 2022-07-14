@@ -46,7 +46,7 @@ namespace Nellebot
                     services.AddHostedService<BotWorker>();
                     services.AddHostedService<CommandQueueWorker>();
                     services.AddHostedService<EventQueueWorker>();
-                    services.AddHostedService<MessageAwardQueueWorker>();                    
+                    services.AddHostedService<MessageAwardQueueWorker>();
 
                     services.AddSingleton<CommandQueue>();
                     services.AddSingleton<EventQueue>();
@@ -74,6 +74,7 @@ namespace Nellebot
                     services.AddTransient<IUserRoleRepository, UserRoleRepository>();
                     services.AddTransient<AwardMessageRepository>();
                     services.AddTransient<BotSettingsRepository>();
+                    services.AddTransient<MessageRefRepository>();
 
                     services.AddDbContext<BotDbContext>(builder =>
                     {

@@ -11,7 +11,6 @@ namespace Nellebot.Common.Models
     {
         public Guid Id { get; set; }
         public ulong RoleId { get; set; }
-        [MaxLength(256)]
         public string Name { get; set; } = null!;
         public uint? GroupNumber { get; set; }
         public virtual IEnumerable<UserRoleAlias> UserRoleAliases { get; set; }

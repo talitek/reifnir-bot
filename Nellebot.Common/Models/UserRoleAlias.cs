@@ -12,7 +12,6 @@ namespace Nellebot.Common.Models
         public Guid Id { get; set; }
         public Guid UserRoleId { get; set; }
         public UserRole UserRole { get; set; } = null!;
-        [MaxLength(256)]
         public string Alias { get; set; } = null!;
     }
 }
