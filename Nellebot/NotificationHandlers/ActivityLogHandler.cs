@@ -1,5 +1,8 @@
 ﻿using DSharpPlus.Entities;
 using MediatR;
+using Nellebot.Common.AppDiscordModels;
+using Nellebot.Data.Repositories;
+using Nellebot.DiscordModelMappers;
 using Nellebot.Services.Loggers;
 using Nellebot.Utils;
 using System;
@@ -21,11 +24,13 @@ namespace Nellebot.NotificationHandlers
     {
         private readonly DiscordLogger _discordLogger;
         private readonly DiscordResolver _discordResolver;
+        private readonly MessageRefRepository _messageRefRepo;
 
-        public ActivityLogHandler(DiscordLogger discordLogger, DiscordResolver discordResolver)
+        public ActivityLogHandler(DiscordLogger discordLogger, DiscordResolver discordResolver, MessageRefRepository messageRefRepo)
         {
             _discordLogger = discordLogger;
             _discordResolver = discordResolver;
+            _messageRefRepo = messageRefRepo;
         }
 
         public async Task Handle(GuildBanAddedNotification notification, CancellationToken cancellationToken)
@@ -70,7 +75,6 @@ namespace Nellebot.NotificationHandlers
             await _discordLogger.LogActivityMessage($"**{memberName}** was unbanned by **{responsibleName}**. [{memberIdentifier}]");
         }
 
-        // Borked
         public async Task Handle(MessageDeletedNotification notification, CancellationToken cancellationToken)
         {
             var args = notification.EventArgs;
@@ -81,33 +85,27 @@ namespace Nellebot.NotificationHandlers
 
             if (channel.IsPrivate) return;
 
-            var message = await _discordResolver.ResolveMessage(channel, deletedMessage.Id);
+            var message = await ResolveMessage(deletedMessage);
 
             if (message == null) return;
 
             var auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogMessageEntry>
                                                             // the target is supposed to be a Message but the id corresponds to a user
-                                                            (guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == message.Author?.Id);
+                                                            (guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == message.Author.Id);
 
             // User deleted their own message
             if (!auditResolveResult.Resolved) return;
 
-            var auditMessageDeleteEntry = auditResolveResult.Result;
-
-            if (message.Author.Id == auditMessageDeleteEntry.UserResponsible.Id) return;
+            var auditMessageDeleteEntry = auditResolveResult.Value;
 
             var authorAsMember = await _discordResolver.ResolveGuildMember(guild, message.Author.Id);
 
-            if (authorAsMember == null) return;
-
             var memberResponsible = await _discordResolver.ResolveGuildMember(guild, auditMessageDeleteEntry.UserResponsible.Id);
 
-            if (memberResponsible == null) return;
+            var responsibleName = memberResponsible?.GetNicknameOrDisplayName() ?? "Unknown mod";
 
-            var responsibleName = memberResponsible.GetNicknameOrDisplayName();
-
-            var authorName = authorAsMember.GetNicknameOrDisplayName();
-            var authorMention = authorAsMember.Mention;
+            var authorName = authorAsMember?.GetNicknameOrDisplayName() ?? "Unknown user";
+            var authorMention = authorAsMember?.Mention ?? "Unknow user";
 
             await _discordLogger.LogActivityMessage(
                 $"Message written by **{authorName}** in **{channel.Name}** was removed by **{responsibleName}**.");
@@ -191,7 +189,7 @@ namespace Nellebot.NotificationHandlers
 
             if (userWasKicked)
             {
-                var auditKickEntry = auditResolveResult.Result;
+                var auditKickEntry = auditResolveResult.Value;
 
                 var memberResponsible = await _discordResolver.ResolveGuildMember(guild, auditKickEntry.UserResponsible.Id);
 
@@ -257,6 +255,24 @@ namespace Nellebot.NotificationHandlers
             {
                 await _discordLogger.LogExtendedActivityMessage($"Username change for {usernameAfter}: Previous username: {usernameBefore}.");
             }
+        }
+
+        private async Task<AppDiscordMessage?> ResolveMessage(DiscordMessage deletedMessage)
+        {
+            if (deletedMessage == null) return null;
+
+            var appDiscordMessage = DiscordMessageMapper.Map(deletedMessage);
+
+            if (appDiscordMessage.Author == null)
+            {
+                var messageRef = await _messageRefRepo.GetMessageRef(deletedMessage.Id);
+
+                if (messageRef == null) return null;
+
+                appDiscordMessage.Author = new AppDiscordMember() { Id = messageRef.UserId };
+            }
+
+            return appDiscordMessage;
         }
     }
 }

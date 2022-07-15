@@ -12,9 +12,8 @@ namespace Nellebot.DiscordModelMappers
     {
         public static AppDiscordMember Map(DiscordMember discordMember)
         {
-            var appDiscordMember = new AppDiscordMember();
+            var appDiscordMember = (AppDiscordMember)DiscordUserMapper.Map(discordMember);
 
-            appDiscordMember.Id = discordMember.Id;
             appDiscordMember.Roles = discordMember.Roles.Select(DiscordRoleMapper.Map);
 
             return appDiscordMember;

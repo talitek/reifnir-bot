@@ -111,7 +111,7 @@ namespace Nellebot.CommandModules
 
                 if (messageResolveResult.Resolved)
                 {
-                    var message = messageResolveResult.Result;
+                    var message = messageResolveResult.Value;
 
                     var shortenedMessage = message.Content.Length > _maxMessageLength
                         ? $"{message.Content.Substring(0, _maxMessageLength)}..."

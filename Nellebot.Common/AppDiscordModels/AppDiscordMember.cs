@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
-namespace Nellebot.Common.AppDiscordModels
+namespace Nellebot.Common.AppDiscordModels;
+
+public class AppDiscordMember : AppDiscordUser
 {
-    public class AppDiscordMember
-    {
-        public ulong Id { get; set; }
-        public IEnumerable<AppDiscordRole> Roles { get; set; } = null!;
-    }
+    public string? Nickname { get; set; }
+    public IEnumerable<AppDiscordRole> Roles { get; set; } = null!;
 }

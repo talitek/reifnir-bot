@@ -1,45 +1,39 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Nellebot.Utils
 {
-    public class TryResolveResult
+    public class TryResolveResult<T>
     {
+        private T _value = default!;
+
         public bool Resolved { get; private set; }
         public string ErrorMessage { get; private set; } = string.Empty;
+        public T Value
+        {
+            get => _value ?? throw new NullReferenceException();
+            private set => _value = value;
+        }
 
-        public TryResolveResult(bool resolved, string errorMessage)
+        private TryResolveResult(bool resolved, string errorMessage)
         {
             Resolved = resolved;
             ErrorMessage = errorMessage;
         }
 
-        public TryResolveResult(bool resolved)
-        {
-            Resolved = resolved;
-        }
-    }
-
-    public class TryResolveResultObject<T> where T: class
-    {
-        public bool Resolved { get; private set; }
-        public string ErrorMessage { get; private set; } = string.Empty;
-        public T Result { get; private set; }
-
-        public TryResolveResultObject(bool resolved, string errorMessage)
-        {
-            Resolved = resolved;
-            ErrorMessage = errorMessage;
-            Result = null!;
-        }
-
-        public TryResolveResultObject(T result)
+        private TryResolveResult(T value)
         {
             Resolved = true;
-            Result = result;
+            Value = value;
+        }
+
+        public static TryResolveResult<T> FromValue(T result)
+        {
+            return new TryResolveResult<T>(result);
+        }
+
+        public static TryResolveResult<T> FromError(string errorMessage)
+        {
+            return new TryResolveResult<T>(false, errorMessage);
         }
     }
 }

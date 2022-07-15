@@ -36,15 +36,15 @@ namespace Nellebot.CommandModules
         [Command("role-id")]
         public async Task GetRoleId(CommandContext ctx, string roleName)
         {
-            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, roleName, out var discordRole);
+            var resolveResult = _discordResolver.TryResolveRoleByName(ctx.Guild, roleName);
 
-            if (!result.Resolved)
+            if (!resolveResult.Resolved)
             {
-                await ctx.RespondAsync(result.ErrorMessage);
+                await ctx.RespondAsync(resolveResult.ErrorMessage);
                 return;
             }
 
-            await ctx.RespondAsync($"Role {roleName} has id {discordRole.Id}");
+            await ctx.RespondAsync($"Role {roleName} has id {resolveResult.Value.Id}");
         }
 
         [Command("emoji-code")]

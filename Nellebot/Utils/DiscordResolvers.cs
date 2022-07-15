@@ -20,7 +20,7 @@ namespace Nellebot.Utils
             _client = client;
         }
 
-        public TryResolveResult TryResolveRoleByName(DiscordGuild guild, string discordRoleName, out DiscordRole discordRole)
+        public TryResolveResult<DiscordRole> TryResolveRoleByName(DiscordGuild guild, string discordRoleName)
         {
             var matchingDiscordRoles = guild.Roles
                              .Where(kv => kv.Value.Name.Contains(discordRoleName, StringComparison.OrdinalIgnoreCase))
@@ -28,18 +28,16 @@ namespace Nellebot.Utils
 
             if (matchingDiscordRoles.Count == 0)
             {
-                discordRole = null!;
-                return new TryResolveResult(false, $"No role matches the name {discordRoleName}");
+                return TryResolveResult<DiscordRole>.FromError($"No role matches the name {discordRoleName}");
             }
             else if (matchingDiscordRoles.Count > 1)
             {
-                discordRole = null!;
-                return new TryResolveResult(false, $"More than 1 role matches the name {discordRoleName}");
+                return TryResolveResult<DiscordRole>.FromError($"More than 1 role matches the name {discordRoleName}");
             }
 
-            discordRole = matchingDiscordRoles[0].Value;
+            var discordRole = matchingDiscordRoles[0].Value;
 
-            return new TryResolveResult(true);
+            return TryResolveResult<DiscordRole>.FromValue(discordRole);
         }
 
         public async Task<DiscordChannel?> ResolveChannel(DiscordGuild guild, ulong channelId)
@@ -99,17 +97,17 @@ namespace Nellebot.Utils
             }
         }
 
-        public async Task<TryResolveResultObject<DiscordMessage>> TryResolveMessage(DiscordChannel channel, ulong messageId)
+        public async Task<TryResolveResult<DiscordMessage>> TryResolveMessage(DiscordChannel channel, ulong messageId)
         {
             try
             {
                 var message = await channel.GetMessageAsync(messageId);
 
-                return new TryResolveResultObject<DiscordMessage>(message);
+                return TryResolveResult<DiscordMessage>.FromValue(message);
             }
             catch (Exception)
             {
-                return new TryResolveResultObject<DiscordMessage>(false, "Message not found");
+                return TryResolveResult<DiscordMessage>.FromError("Message not found");
             }
         }
 
@@ -128,7 +126,7 @@ namespace Nellebot.Utils
             return entry;
         }
 
-        public async Task<TryResolveResultObject<T>> TryResolveAuditLogEntry<T>(DiscordGuild guild, AuditLogActionType logType, Func<T, bool> predicate) where T : DiscordAuditLogEntry
+        public async Task<TryResolveResult<T>> TryResolveAuditLogEntry<T>(DiscordGuild guild, AuditLogActionType logType, Func<T, bool> predicate) where T : DiscordAuditLogEntry
         {
             var entry = (await guild.GetAuditLogsAsync(limit: 50, by_member: null, action_type: logType))
                 .Cast<T>()
@@ -136,10 +134,10 @@ namespace Nellebot.Utils
 
             if (entry == null)
             {
-                return new TryResolveResultObject<T>(false, "Audit log entry not found");
+                return TryResolveResult<T>.FromError("Audit log entry not found");
             }
 
-            return new TryResolveResultObject<T>(entry);
+            return TryResolveResult<T>.FromValue(entry);
         }
     }
 }

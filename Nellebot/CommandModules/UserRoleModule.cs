@@ -61,7 +61,7 @@ namespace Nellebot.CommandModules
         [Command("create-role")]
         public async Task CreateRole(CommandContext ctx, string discordRoleName, string? aliasList = null)
         {
-            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName, out var discordRole);
+            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName);
 
             if (!result.Resolved)
             {
@@ -69,7 +69,7 @@ namespace Nellebot.CommandModules
                 return;
             }
 
-            await CreateRole(ctx, discordRole, aliasList);
+            await CreateRole(ctx, result.Value, aliasList);
         }
 
         [Command("delete-role")]
@@ -99,7 +99,7 @@ namespace Nellebot.CommandModules
         [Command("delete-role")]
         public async Task DeleteRole(CommandContext ctx, string discordRoleName)
         {
-            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName, out var discordRole);
+            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName);
 
             if (!result.Resolved)
             {
@@ -107,7 +107,7 @@ namespace Nellebot.CommandModules
                 return;
             }
 
-            await DeleteRole(ctx, discordRole);
+            await DeleteRole(ctx, result.Value);
         }
 
         [Command("get-role")]
@@ -149,7 +149,7 @@ namespace Nellebot.CommandModules
         [Command("get-role")]
         public async Task GetRole(CommandContext ctx, string discordRoleName)
         {
-            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName, out var discordRole);
+            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName);
 
             if (!result.Resolved)
             {
@@ -157,7 +157,7 @@ namespace Nellebot.CommandModules
                 return;
             }
 
-            await GetRole(ctx, discordRole);
+            await GetRole(ctx, result.Value);
         }
 
         [Command("list-roles")]
@@ -222,7 +222,7 @@ namespace Nellebot.CommandModules
         [Command("add-alias")]
         public async Task AddRoleAlias(CommandContext ctx, string discordRoleName, string alias)
         {
-            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName, out var discordRole);
+            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName);
 
             if (!result.Resolved)
             {
@@ -230,7 +230,7 @@ namespace Nellebot.CommandModules
                 return;
             }
 
-            await AddRoleAlias(ctx, discordRole, alias);
+            await AddRoleAlias(ctx, result.Value, alias);
         }
 
         [Command("remove-alias")]
@@ -260,7 +260,7 @@ namespace Nellebot.CommandModules
         [Command("remove-alias")]
         public async Task RemoveRoleAlias(CommandContext ctx, string discordRoleName, string alias)
         {
-            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName, out var discordRole);
+            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName);
 
             if (!result.Resolved)
             {
@@ -268,7 +268,7 @@ namespace Nellebot.CommandModules
                 return;
             }
 
-            await RemoveRoleAlias(ctx, discordRole, alias);
+            await RemoveRoleAlias(ctx, result.Value, alias);
         }
 
         [Command("set-group")]
@@ -298,7 +298,7 @@ namespace Nellebot.CommandModules
         [Command("set-group")]
         public async Task SetRoleGroup(CommandContext ctx, string discordRoleName, uint groupNumber)
         {
-            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName, out var discordRole);
+            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName);
 
             if (!result.Resolved)
             {
@@ -306,7 +306,7 @@ namespace Nellebot.CommandModules
                 return;
             }
 
-            await SetRoleGroup(ctx, discordRole, groupNumber);
+            await SetRoleGroup(ctx, result.Value, groupNumber);
         }
 
         [Command("unset-group")]
@@ -336,7 +336,7 @@ namespace Nellebot.CommandModules
         [Command("unset-group")]
         public async Task UnsetRoleGroup(CommandContext ctx, string discordRoleName)
         {
-            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName, out var discordRole);
+            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName);
 
             if (!result.Resolved)
             {
@@ -344,7 +344,7 @@ namespace Nellebot.CommandModules
                 return;
             }
 
-            await UnsetRoleGroup(ctx, discordRole);
+            await UnsetRoleGroup(ctx, result.Value);
         }
 
         [Command("sync-roles")]
