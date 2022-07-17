@@ -16,8 +16,8 @@ namespace Nellebot
         public string OrdbokApiKey { get; set; } = null!;
         public ulong GuildId { get; set; }
 
-        public ulong BotLogChannelId { get; set; }
-        public ulong AuditLogChannelId { get; set; }
+        public ulong ActivityLogChannelId { get; set; }
+        public ulong ExtendedActivityLogChannelId { get; set; }
         public ulong GreetingsChannelId { get; set; }
         public ulong ErrorLogChannelId { get; set; }
         public ulong SuggestionsChannelId { get; set; }

@@ -9,23 +9,23 @@ using Nellebot.CommandHandlers;
 
 namespace Nellebot.Workers
 {
-    public class CommandQueue : ConcurrentQueue<CommandRequest>
+    public class CommandParallelQueue : ConcurrentQueue<CommandRequest>
     {
 
     }
 
-    public class CommandQueueWorker : BackgroundService
+    public class CommandParallelQueueWorker : BackgroundService
     {
         private const int IdleDelay = 1000;
         private const int BusyDelay = 0;
 
         private readonly ILogger<CommandQueueWorker> _logger;
-        private readonly CommandQueue _commandQueue;
+        private readonly CommandParallelQueue _commandQueue;
         private readonly IMediator _mediator;
 
-        public CommandQueueWorker(
+        public CommandParallelQueueWorker(
                 ILogger<CommandQueueWorker> logger,
-                CommandQueue commandQueue,
+                CommandParallelQueue commandQueue,
                 IMediator mediator
             )
         {
@@ -49,9 +49,9 @@ namespace Nellebot.Workers
                         continue;
                     }
 
-                    _logger.LogDebug($"Dequeued command. {_commandQueue.Count} left in queue");
+                    _logger.LogDebug($"Dequeued (parallel) command. {_commandQueue.Count} left in queue");
 
-                    await _mediator.Send(command, stoppingToken);
+                    _ = Task.Run(() => _mediator.Send(command, stoppingToken));
 
                     nextDelay = BusyDelay;
 

@@ -1,47 +1,60 @@
 ﻿using Nellebot.Data.Repositories;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
-namespace Nellebot.Services
+namespace Nellebot.Services;
+
+public class BotSettingsService
 {
-    public class BotSettingsService
+    private readonly BotSettingsRepository _botSettingsRepo;
+    private readonly SharedCache _cache;
+
+    private static readonly string GreetingMessageKey = "GreetingMessage";
+    private static readonly string GreetingMessageUserVariable = "$USER";
+    private static readonly string LastHeartbeatKey = "LastHeartbeat";
+
+    public BotSettingsService(BotSettingsRepository botSettingsRepos, SharedCache cache)
     {
-        private readonly BotSettingsRepository _botSettingsRepo;
-        private readonly SharedCache _cache;
+        _botSettingsRepo = botSettingsRepos;
+        _cache = cache;
+    }
 
-        private static readonly string GreetingMessage = "GreetingMessage";
-        private static readonly string GreetingMessageUserVariable = "$USER";
+    public async Task SetGreetingMessage(string message)
+    {
+        await _botSettingsRepo.SaveBotSetting(GreetingMessageKey, message);
 
-        public BotSettingsService(
-            BotSettingsRepository botSettingsRepos,
-            SharedCache cache
-            )
-        {
-            _botSettingsRepo = botSettingsRepos;
-            _cache = cache;
-        }
+        _cache.FlushCache(SharedCacheKeys.GreetingMessage);
+    }
 
-        public async Task SetGreetingMessage(string message)
-        {
-            await _botSettingsRepo.SaveBotSetting(GreetingMessage, message);
+    public async Task<string?> GetGreetingsMessage(string userMention)
+    {
+        var messageTemplate = await _cache.LoadFromCacheAsync(SharedCacheKeys.GreetingMessage, async () =>
+            await _botSettingsRepo.GetBotSetting(SharedCacheKeys.GreetingMessage),
+            TimeSpan.FromMinutes(10));
 
-            _cache.FlushCache(SharedCacheKeys.GreetingMessage);
-        }
+        if (messageTemplate == null) return null;
 
-        public async Task<string?> GetGreetingsMessage(string userMention)
-        {
-            var messageTemplate = await _cache.LoadFromCacheAsync(SharedCacheKeys.GreetingMessage, async () =>
-                await _botSettingsRepo.GetBotSetting(SharedCacheKeys.GreetingMessage),
-                TimeSpan.FromMinutes(10));
+        var message = messageTemplate.Replace(GreetingMessageUserVariable, userMention);
 
-            if(messageTemplate == null) return null;
+        return message;
+    }
 
-            var message = messageTemplate.Replace(GreetingMessageUserVariable, userMention);
+    public Task SetLastHeartbeat(DateTimeOffset heartbeatDateTime)
+    {
+        return _botSettingsRepo.SaveBotSetting(LastHeartbeatKey, heartbeatDateTime.ToUnixTimeMilliseconds().ToString());
+    }
 
-            return message;
-        }
+    public async Task<DateTimeOffset?> GetLastHeartbeat()
+    {
+        var lastHeartBeatStringValue = await _botSettingsRepo.GetBotSetting(LastHeartbeatKey);
+
+        if (lastHeartBeatStringValue == null) return null;
+
+        var parsed = long.TryParse(lastHeartBeatStringValue,  out var lastHeartBeatTicks);
+
+        if (!parsed) return null;
+
+        return DateTimeOffset.FromUnixTimeMilliseconds(lastHeartBeatTicks);
     }
 }
+

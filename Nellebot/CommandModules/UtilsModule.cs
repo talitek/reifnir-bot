@@ -36,15 +36,15 @@ namespace Nellebot.CommandModules
         [Command("role-id")]
         public async Task GetRoleId(CommandContext ctx, string roleName)
         {
-            var result = _discordResolver.TryResolveRoleByName(ctx.Guild, roleName, out var discordRole);
+            var resolveResult = _discordResolver.TryResolveRoleByName(ctx.Guild, roleName);
 
-            if (!result.Resolved)
+            if (!resolveResult.Resolved)
             {
-                await ctx.RespondAsync(result.ErrorMessage);
+                await ctx.RespondAsync(resolveResult.ErrorMessage);
                 return;
             }
 
-            await ctx.RespondAsync($"Role {roleName} has id {discordRole.Id}");
+            await ctx.RespondAsync($"Role {roleName} has id {resolveResult.Value.Id}");
         }
 
         [Command("emoji-code")]
@@ -80,27 +80,6 @@ namespace Nellebot.CommandModules
             var result = formattedSb.ToString();
 
             await ctx.RespondAsync($"`{result}`");
-        }
-
-        [Command("test-event-error")]
-        public Task TestError2(CommandContext ctx)
-        {
-            var eventCtx = new EventContext()
-            {
-                EventName = nameof(TestError2),
-                Channel = ctx.Channel,
-                Guild = ctx.Guild,
-                Message = ctx.Message,
-                User = ctx.User
-            };
-
-            _eventQueue.Enqueue(new ErrorTestNotification(eventCtx, "Error 1", 0));
-
-            _eventQueue.Enqueue(new ErrorTestNotification(eventCtx, "Error 2", 2000));
-
-            _eventQueue.Enqueue(new ErrorTestNotification(null, "Error 3", 0));
-
-            return Task.CompletedTask;
         }
     }
 }

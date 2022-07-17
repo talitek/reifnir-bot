@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Threading;
-using System.Threading.Tasks;
-using MediatR;
+﻿using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nellebot.NotificationHandlers;
 using Nellebot.Services;
 using Nellebot.Services.Loggers;
+using System;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Nellebot.Workers
 {
@@ -16,14 +16,18 @@ namespace Nellebot.Workers
     public class EventQueueWorker : BackgroundService
     {
         private const int IdleDelay = 1000;
-        private const int BusyDelay = 10;
+        private const int BusyDelay = 0;
 
         private readonly ILogger<EventQueueWorker> _logger;
         private readonly EventQueue _eventQueue;
         private readonly NotificationPublisher _publisher;
         private readonly IDiscordErrorLogger _discordErrorLogger;
 
-        public EventQueueWorker(ILogger<EventQueueWorker> logger, EventQueue eventQueue, NotificationPublisher publisher, IDiscordErrorLogger discordErrorLogger)
+        public EventQueueWorker(
+            ILogger<EventQueueWorker> logger,
+            EventQueue eventQueue,
+            NotificationPublisher publisher,
+            IDiscordErrorLogger discordErrorLogger)
         {
             _logger = logger;
             _eventQueue = eventQueue;
@@ -41,15 +45,12 @@ namespace Nellebot.Workers
 
                 try
                 {
-                    if (_eventQueue.Count == 0)
+                    if (_eventQueue.Count == 0 || !_eventQueue.TryDequeue(out @event))
                     {
                         await Task.Delay(nextDelay, stoppingToken);
 
                         continue;
                     }
-
-                    if (!_eventQueue.TryDequeue(out @event))
-                        continue;
 
                     _logger.LogDebug($"Dequeued event. {_eventQueue.Count} left in queue");
 

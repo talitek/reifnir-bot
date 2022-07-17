@@ -64,6 +64,8 @@ namespace Nellebot
             _client.SocketOpened += OnClientConnected;
             _client.SocketClosed += OnClientDisconnected;
             _client.Ready += OnClientReady;
+            _client.Heartbeated += OnClientHeartbeat;
+            _client.Resumed += OnClientResumed;
 
             _commandEventHandler.RegisterHandlers(commands);
             _awardEventHandler.RegisterHandlers();
@@ -80,17 +82,17 @@ namespace Nellebot
                 return Task.CompletedTask;
             };
 
-            //_client.MessageDeleted += (sender, args) =>
-            //{
-            //    _eventQueue.Enqueue(new MessageDeletedNotification(args));
-            //    return Task.CompletedTask;
-            //};
+            _client.MessageDeleted += (sender, args) =>
+            {
+                _eventQueue.Enqueue(new MessageDeletedNotification(args));
+                return Task.CompletedTask;
+            };
 
-            //_client.MessagesBulkDeleted += (sender, args) =>
-            //{
-            //    _eventQueue.Enqueue(new MessageBulkDeletedNotification(args));
-            //    return Task.CompletedTask;
-            //};
+            _client.MessagesBulkDeleted += (sender, args) =>
+            {
+                _eventQueue.Enqueue(new MessageBulkDeletedNotification(args));
+                return Task.CompletedTask;
+            };
         }
 
         private void RegisterGuildEventHandlers()
@@ -132,6 +134,15 @@ namespace Nellebot
             };
         }
 
+        private Task OnClientHeartbeat(DiscordClient sender, HeartbeatEventArgs e)
+        {
+            _logger.LogInformation($"Heartbeated at {e.Timestamp}");
+
+            _eventQueue.Enqueue(new ClientHeartbeatNotification(e));
+
+            return Task.CompletedTask;
+        }
+
         private Task OnClientDisconnected(DiscordClient sender, SocketCloseEventArgs e)
         {
             _logger.LogInformation($"Bot disconected {e.CloseMessage}");
@@ -150,6 +161,8 @@ namespace Nellebot
         {
             _logger.LogInformation("Bot ready");
 
+            _eventQueue.Enqueue(new ClientReadyOrResumedNotification());
+
             try
             {
                 var commandPrefix = _options.CommandPrefix;
@@ -162,6 +175,15 @@ namespace Nellebot
             {
                 _logger.LogError(ex, "OnClientReady");
             }
+        }
+
+        private Task OnClientResumed(DiscordClient sender, ReadyEventArgs e)
+        {
+            _logger.LogInformation("Bot resumed");
+
+            _eventQueue.Enqueue(new ClientReadyOrResumedNotification());
+
+            return Task.CompletedTask;
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)

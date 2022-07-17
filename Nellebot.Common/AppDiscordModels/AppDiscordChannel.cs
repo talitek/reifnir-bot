@@ -1,7 +1,7 @@
 ﻿namespace Nellebot.Common.AppDiscordModels;
 
-public class AppDiscordUser
+public class AppDiscordChannel
 {
     public ulong Id { get; set; }
-    public string Username { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 }
