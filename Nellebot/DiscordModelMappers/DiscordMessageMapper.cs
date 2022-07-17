@@ -7,10 +7,17 @@ public static class DiscordMessageMapper
 {
     public static AppDiscordMessage Map(DiscordMessage discordMessage)
     {
-        var appDiscordMessage = new AppDiscordMessage();
+        var appDiscordMessage = new AppDiscordMessage
+        {
+            Content = discordMessage.Content,
+            CreationTimestamp = discordMessage.CreationTimestamp
+        };
 
-        appDiscordMessage.Author = DiscordUserMapper.Map(discordMessage.Author);
-        appDiscordMessage.Content = discordMessage.Content;
+        if (discordMessage.Author != null) 
+            appDiscordMessage.Author = DiscordUserMapper.Map(discordMessage.Author);
+
+        if (discordMessage.Channel != null)
+            appDiscordMessage.Channel = DiscordChannelMapper.Map(discordMessage.Channel);
 
         return appDiscordMessage;
     }

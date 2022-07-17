@@ -81,26 +81,5 @@ namespace Nellebot.CommandModules
 
             await ctx.RespondAsync($"`{result}`");
         }
-
-        [Command("test-event-error")]
-        public Task TestError2(CommandContext ctx)
-        {
-            var eventCtx = new EventContext()
-            {
-                EventName = nameof(TestError2),
-                Channel = ctx.Channel,
-                Guild = ctx.Guild,
-                Message = ctx.Message,
-                User = ctx.User
-            };
-
-            _eventQueue.Enqueue(new ErrorTestNotification(eventCtx, "Error 1", 0));
-
-            _eventQueue.Enqueue(new ErrorTestNotification(eventCtx, "Error 2", 2000));
-
-            _eventQueue.Enqueue(new ErrorTestNotification(null, "Error 3", 0));
-
-            return Task.CompletedTask;
-        }
     }
 }

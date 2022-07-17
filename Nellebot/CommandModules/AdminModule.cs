@@ -26,15 +26,18 @@ namespace Nellebot.CommandModules
     {
         private readonly ILogger<AdminModule> _logger;
         private readonly CommandQueue _commandQueue;
+        private readonly CommandParallelQueue _commandParallelQueue;
         private readonly BotOptions _options;
 
         public AdminModule(
             ILogger<AdminModule> logger,
             IOptions<BotOptions> options,
-            CommandQueue commandQueue)
+            CommandQueue commandQueue,
+            CommandParallelQueue commandParallelQueue)
         {
             _logger = logger;
             _commandQueue = commandQueue;
+            _commandParallelQueue = commandParallelQueue;
             _options = options.Value;
         }
 
@@ -87,6 +90,14 @@ namespace Nellebot.CommandModules
         public Task SetGreetingMessage(CommandContext ctx, [RemainingText] string message)
         {
             _commandQueue.Enqueue(new SetGreetingMessageRequest(ctx, message));
+
+            return Task.CompletedTask;
+        }
+
+        [Command("populate-messages")]
+        public Task PopulateMessages(CommandContext ctx)
+        {
+            _commandParallelQueue.Enqueue(new PopulateMessagesRequest(ctx));
 
             return Task.CompletedTask;
         }

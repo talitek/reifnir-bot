@@ -2,9 +2,7 @@
 using DSharpPlus.Entities;
 using Nellebot.Services.Loggers;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Nellebot.Utils
@@ -18,6 +16,11 @@ namespace Nellebot.Utils
         {
             _discordErrorLogger = discordErrorLogger;
             _client = client;
+        }
+
+        public DiscordGuild ResolveGuild()
+        {
+            return _client.Guilds.Select(x => x.Value).First();
         }
 
         public TryResolveResult<DiscordRole> TryResolveRoleByName(DiscordGuild guild, string discordRoleName)

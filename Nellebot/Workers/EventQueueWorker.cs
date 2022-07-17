@@ -23,7 +23,11 @@ namespace Nellebot.Workers
         private readonly NotificationPublisher _publisher;
         private readonly IDiscordErrorLogger _discordErrorLogger;
 
-        public EventQueueWorker(ILogger<EventQueueWorker> logger, EventQueue eventQueue, NotificationPublisher publisher, IDiscordErrorLogger discordErrorLogger)
+        public EventQueueWorker(
+            ILogger<EventQueueWorker> logger,
+            EventQueue eventQueue,
+            NotificationPublisher publisher,
+            IDiscordErrorLogger discordErrorLogger)
         {
             _logger = logger;
             _eventQueue = eventQueue;

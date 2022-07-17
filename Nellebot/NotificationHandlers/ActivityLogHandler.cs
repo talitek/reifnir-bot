@@ -23,12 +23,14 @@ namespace Nellebot.NotificationHandlers
                                         INotificationHandler<PresenceUpdatedNotification>
     {
         private readonly DiscordLogger _discordLogger;
+        private readonly IDiscordErrorLogger _discordErrorLogger;
         private readonly DiscordResolver _discordResolver;
         private readonly MessageRefRepository _messageRefRepo;
 
-        public ActivityLogHandler(DiscordLogger discordLogger, DiscordResolver discordResolver, MessageRefRepository messageRefRepo)
+        public ActivityLogHandler(DiscordLogger discordLogger, IDiscordErrorLogger discordErrorLogger, DiscordResolver discordResolver, MessageRefRepository messageRefRepo)
         {
             _discordLogger = discordLogger;
+            _discordErrorLogger = discordErrorLogger;
             _discordResolver = discordResolver;
             _messageRefRepo = messageRefRepo;
         }
@@ -41,7 +43,7 @@ namespace Nellebot.NotificationHandlers
             var memberIdentifier = args.Member.GetDetailedMemberIdentifier();
 
             var auditBanEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogBanEntry>
-                                    (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == args.Member.Id);
+                                    (args.Guild, AuditLogActionType.Ban, (x) => x.Target.Id == args.Member.Id);
 
             if (auditBanEntry == null) return;
 
@@ -62,7 +64,7 @@ namespace Nellebot.NotificationHandlers
             var memberIdentifier = args.Member.GetDetailedMemberIdentifier();
 
             var auditUnbanEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogBanEntry>
-                                    (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == args.Member.Id);
+                                    (args.Guild, AuditLogActionType.Unban, (x) => x.Target.Id == args.Member.Id);
 
             if (auditUnbanEntry == null) return;
 
@@ -87,7 +89,14 @@ namespace Nellebot.NotificationHandlers
 
             var message = await ResolveMessage(deletedMessage);
 
-            if (message == null) return;
+            if (message == null)
+            {
+                await _discordErrorLogger.LogWarning($"{nameof(MessageDeletedNotification)}", $"Could not resolve message id {deletedMessage.Id}");
+
+                await _discordLogger.LogExtendedActivityMessage($"An unknown message in **{channel.Name}** was removed");
+
+                return;
+            }
 
             var auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogMessageEntry>
                                                             // the target is supposed to be a Message but the id corresponds to a user
@@ -110,36 +119,46 @@ namespace Nellebot.NotificationHandlers
             await _discordLogger.LogActivityMessage(
                 $"Message written by **{authorName}** in **{channel.Name}** was removed by **{responsibleName}**.");
 
-            await _discordLogger.LogExtendedActivityMessage(
-                $"Message written by **{authorMention}** in **{channel.Name}** was removed by **{responsibleName}**."
-                + $" Original message:{Environment.NewLine}> {message.Content}");
+            var extendedMessage = $"Message written by **{authorMention}** in **{channel.Name}** was removed by **{responsibleName}**.";
+
+            if (!string.IsNullOrWhiteSpace(message.Content))
+                extendedMessage += $" Original message:{Environment.NewLine}> {message.Content}";
+
+            await _discordLogger.LogExtendedActivityMessage(extendedMessage);
         }
 
-        // Borked
+        // TODO handle bulk deletion of messages belonging to different authors
         public async Task Handle(MessageBulkDeletedNotification notification, CancellationToken cancellationToken)
         {
             var args = notification.EventArgs;
 
-            var messages = args.Messages;
+            if (args.Messages.Count == 0) return;
 
-            if (messages.Count == 0) return;
+            var messages = (await Task.WhenAll(args.Messages.Select(ResolveMessage))).ToList();
 
-            var author = args.Messages[0].Author;
+            var author = args.Messages.Where(m => m?.Author != null).Select(m => m.Author).FirstOrDefault();
 
-            if (author == null) return;
+            if (author == null)
+            {
+                await _discordErrorLogger.LogWarning($"{nameof(MessageBulkDeletedNotification)}", $"Could not find any message authors");
+
+                await _discordLogger.LogExtendedActivityMessage($"{messages.Count} unknown messages were removed.");
+
+                return;
+            }
 
             var authorName = author.GetUserFullUsername();
 
-            var auditMessageDeleteEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogMessageEntry>
+            var auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogMessageEntry>
                                 (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == author.Id);
 
-            if (auditMessageDeleteEntry == null) return;
+            if (!auditResolveResult.Resolved) return;
+
+            var auditMessageDeleteEntry = auditResolveResult.Value;
 
             var memberResponsible = await _discordResolver.ResolveGuildMember(args.Guild, auditMessageDeleteEntry.UserResponsible.Id);
 
-            if (memberResponsible == null) return;
-
-            var responsibleName = memberResponsible.GetNicknameOrDisplayName();
+            var responsibleName = memberResponsible?.GetNicknameOrDisplayName() ?? "Unknown mod";
 
             await _discordLogger.LogActivityMessage($"{messages.Count} messages written by **{authorName}** were removed by **{responsibleName}**.");
 
@@ -147,7 +166,7 @@ namespace Nellebot.NotificationHandlers
 
             sb.AppendLine($"{messages.Count} messages written by **{authorName}** were removed by **{responsibleName}**.");
 
-            foreach (var message in messages)
+            foreach (var message in messages.Where(x => x != null).Cast<AppDiscordMessage>())
             {
                 sb.AppendLine();
                 sb.AppendLine($"In {message.Channel.Name} at {message.CreationTimestamp}:");
@@ -263,14 +282,15 @@ namespace Nellebot.NotificationHandlers
 
             var appDiscordMessage = DiscordMessageMapper.Map(deletedMessage);
 
-            if (appDiscordMessage.Author == null)
-            {
-                var messageRef = await _messageRefRepo.GetMessageRef(deletedMessage.Id);
+            var isCompletedMessage = !string.IsNullOrWhiteSpace(appDiscordMessage.Content) && appDiscordMessage.Author != null;
 
-                if (messageRef == null) return null;
+            if (isCompletedMessage) return appDiscordMessage;
 
-                appDiscordMessage.Author = new AppDiscordMember() { Id = messageRef.UserId };
-            }
+            var messageRef = await _messageRefRepo.GetMessageRef(deletedMessage.Id);
+
+            if (messageRef == null) return null;
+
+            appDiscordMessage.Author = new AppDiscordMember() { Id = messageRef.UserId };
 
             return appDiscordMessage;
         }

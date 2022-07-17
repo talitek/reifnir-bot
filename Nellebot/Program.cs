@@ -37,7 +37,7 @@ namespace Nellebot
 
                     services.AddMediatR(typeof(Program));
                     services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CommandRequestPipelineBehaviour<,>));
-                    services.AddSingleton<NotificationPublisher>();
+                    services.AddTransient<NotificationPublisher>();
 
                     services.AddSingleton<SharedCache>();
                     services.AddSingleton<ILocalizationService, LocalizationService>();
@@ -45,10 +45,12 @@ namespace Nellebot
 
                     services.AddHostedService<BotWorker>();
                     services.AddHostedService<CommandQueueWorker>();
+                    services.AddHostedService<CommandParallelQueueWorker>();
                     services.AddHostedService<EventQueueWorker>();
                     services.AddHostedService<MessageAwardQueueWorker>();
 
                     services.AddSingleton<CommandQueue>();
+                    services.AddSingleton<CommandParallelQueue>();
                     services.AddSingleton<EventQueue>();
                     services.AddSingleton<MessageAwardQueue>();
 
@@ -70,6 +72,7 @@ namespace Nellebot
                     services.AddTransient<GlosbeClient>();
                     services.AddTransient<GlosbeModelMapper>();
                     services.AddTransient<BotSettingsService>();
+                    services.AddTransient<MessageRefsService>();
 
                     services.AddTransient<IUserRoleRepository, UserRoleRepository>();
                     services.AddTransient<AwardMessageRepository>();
