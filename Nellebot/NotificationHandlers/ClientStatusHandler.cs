@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Nellebot.Services;
 using Nellebot.Services.Loggers;
+using Nellebot.Utils;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,12 +30,11 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
     {
         var lastHeartbeat = await _botSettingsService.GetLastHeartbeat() ?? DateTimeOffset.Now.AddHours(-1);
 
-        await _discordLogger.LogExtendedActivityMessage($"Client ready or resumed. Last heartbeat: {lastHeartbeat}");
-
         var createdCount = await _messageRefsService.PopulateMessageRefs(lastHeartbeat);
 
-        if (createdCount == 0) return;
+        if (createdCount > 0)
+            await _discordLogger.LogExtendedActivityMessage($"Populated {createdCount} message refs");
 
-        await _discordLogger.LogExtendedActivityMessage($"Populated {createdCount} message refs");
+        await _discordLogger.LogExtendedActivityMessage($"Client ready or resumed. Last heartbeat: {lastHeartbeat.ToIsoDateTimeString()}");
     }
 }
