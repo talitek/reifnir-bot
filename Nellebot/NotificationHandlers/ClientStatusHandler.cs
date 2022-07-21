@@ -30,7 +30,7 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
 
     public Task Handle(ClientHeartbeatNotification notification, CancellationToken cancellationToken)
     {
-        _logger.LogDebug($"Heartbeated: {notification.EventArgs.Timestamp.ToIsoDateTimeString()}");
+        _logger.LogTrace($"Heartbeated: {notification.EventArgs.Timestamp.ToIsoDateTimeString()}");
 
         if (!IsClientActuallyReady)
         {

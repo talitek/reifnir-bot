@@ -279,7 +279,7 @@ namespace Nellebot.Services
             }
 
             var embedBuilder = new DiscordEmbedBuilder()
-                .WithAuthor(authorDisplayName, null, author.AvatarUrl)
+                .WithAuthor(authorDisplayName, null, author.GuildAvatarUrl ?? author.AvatarUrl)
                 .WithFooter($"#{channel}")
                 .WithTimestamp(message.Id)
                 .WithColor(9648895); // #933aff 
