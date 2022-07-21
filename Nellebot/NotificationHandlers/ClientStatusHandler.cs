@@ -35,7 +35,7 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
         if (!IsClientActuallyReady)
         {
             _logger.LogDebug("Client not actually ready. Skipping heartbeat save.");
-            return Task.CompletedTask; ;
+            return Task.CompletedTask;
         }
 
         return _botSettingsService.SetLastHeartbeat(notification.EventArgs.Timestamp);

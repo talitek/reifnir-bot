@@ -17,6 +17,7 @@ namespace Nellebot.Services
     public class AwardMessageService
     {
         private const string SpoilerImageAttachmentPrefix = "SPOILER_";
+        private const string InvisibleChar = "‎ ";
         private readonly AwardMessageRepository _awardMessageRepo;
         private readonly ILogger<AwardMessageService> _logger;
         private readonly IDiscordErrorLogger _discordErrorLogger;
@@ -334,7 +335,9 @@ namespace Nellebot.Services
                 }
             }
 
-            embedBuilder = embedBuilder.WithDescription(messageContentSb.ToString());
+            var messageContent = messageContentSb.ToString().Replace(" ", InvisibleChar);
+
+            embedBuilder = embedBuilder.WithDescription(messageContent);
 
             var embed = embedBuilder.Build();
 
