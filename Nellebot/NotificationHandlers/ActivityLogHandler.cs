@@ -185,7 +185,7 @@ namespace Nellebot.NotificationHandlers
             var memberName = member.GetNicknameOrDisplayName();
             var memberFullIdentifier = $"{member.Mention} [{member.GetDetailedMemberIdentifier()}]";
 
-            await _discordLogger.LogActivityMessage($"{memberName} joined the server");
+            await _discordLogger.LogActivityMessage($"**{memberName}** joined the server");
             await _discordLogger.LogExtendedActivityMessage($"{memberFullIdentifier} joined the server");
         }
 

@@ -136,8 +136,6 @@ namespace Nellebot
 
         private Task OnClientHeartbeat(DiscordClient sender, HeartbeatEventArgs e)
         {
-            _logger.LogInformation($"Heartbeated at {e.Timestamp}");
-
             _eventQueue.Enqueue(new ClientHeartbeatNotification(e));
 
             return Task.CompletedTask;
@@ -145,7 +143,7 @@ namespace Nellebot
 
         private Task OnClientDisconnected(DiscordClient sender, SocketCloseEventArgs e)
         {
-            _logger.LogInformation($"Bot disconected {e.CloseMessage}");
+            _eventQueue.Enqueue(new ClientDisconnected(e));
 
             return Task.CompletedTask;
         }
@@ -159,8 +157,6 @@ namespace Nellebot
 
         private async Task OnClientReady(DiscordClient sender, ReadyEventArgs e)
         {
-            _logger.LogInformation("Bot ready");
-
             _eventQueue.Enqueue(new ClientReadyOrResumedNotification());
 
             try

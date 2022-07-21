@@ -52,7 +52,7 @@ namespace Nellebot.Workers
                         continue;
                     }
 
-                    _logger.LogDebug($"Dequeued event. {_eventQueue.Count} left in queue");
+                    _logger.LogTrace($"Dequeued event. {_eventQueue.Count} left in queue");
 
                     await _publisher.Publish(@event, stoppingToken);
 

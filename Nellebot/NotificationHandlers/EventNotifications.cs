@@ -20,3 +20,4 @@ public record PresenceUpdatedNotification(PresenceUpdateEventArgs EventArgs) : E
 
 public record ClientHeartbeatNotification(HeartbeatEventArgs EventArgs) : EventNotification;
 public record ClientReadyOrResumedNotification() : EventNotification();
+public record ClientDisconnected(SocketCloseEventArgs EventArgs) : EventNotification();

@@ -43,7 +43,7 @@ namespace Nellebot.Workers
                         continue;
                     }
 
-                    _logger.LogDebug($"Dequeued message. {_awardQueue.Count} left in queue");
+                    _logger.LogTrace($"Dequeued message. {_awardQueue.Count} left in queue");
 
                     using var scope = _serviceProvider.CreateScope();
 

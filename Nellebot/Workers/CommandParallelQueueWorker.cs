@@ -49,7 +49,7 @@ namespace Nellebot.Workers
                         continue;
                     }
 
-                    _logger.LogDebug($"Dequeued (parallel) command. {_commandQueue.Count} left in queue");
+                    _logger.LogTrace($"Dequeued (parallel) command. {_commandQueue.Count} left in queue");
 
                     _ = Task.Run(() => _mediator.Send(command, stoppingToken));
 
@@ -60,7 +60,7 @@ namespace Nellebot.Workers
                 {
                     if (!(ex is TaskCanceledException))
                     {
-                        _logger.LogError(ex, typeof(CommandQueueWorker).Name);
+                        _logger.LogError(ex, nameof(CommandQueueWorker));
                     }
                 }
 

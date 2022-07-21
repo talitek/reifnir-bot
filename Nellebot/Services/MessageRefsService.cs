@@ -22,7 +22,7 @@ public class MessageRefsService
     {
         var guild = _discordResolver.ResolveGuild();
 
-        var channels = guild.Channels.Values;
+        var channels = guild.Channels.Values.Where(c => c.Type == DSharpPlus.ChannelType.Text);
 
         var messageRefCreatedCount = 0;
 
@@ -45,9 +45,12 @@ public class MessageRefsService
                     if (created) messageRefCreatedCount++;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                continue;
+                if(ex.Message == "Unauthorized: 403")
+                    continue;
+
+                throw;
             }
         }
 
