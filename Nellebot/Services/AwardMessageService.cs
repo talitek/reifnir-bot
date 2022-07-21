@@ -335,7 +335,7 @@ namespace Nellebot.Services
                 }
             }
 
-            var messageContent = messageContentSb.ToString().Replace(" ", InvisibleChar);
+            var messageContent = messageContentSb.ToString().Replace("  ", $" {InvisibleChar}");
 
             embedBuilder = embedBuilder.WithDescription(messageContent);
 
