@@ -4,6 +4,7 @@ using Nellebot.Services;
 using Nellebot.Services.Loggers;
 using Nellebot.Utils;
 using System;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -44,15 +45,27 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
     public async Task Handle(ClientReadyOrResumedNotification notification, CancellationToken cancellationToken)
     {
         var lastHeartbeat = await _botSettingsService.GetLastHeartbeat() ?? DateTimeOffset.UtcNow;
+        
+        var timeSinceLastHeartbeat = DateTimeOffset.UtcNow - lastHeartbeat;
 
-        _logger.LogDebug($"Client ready or resumed. Last heartbeat: {lastHeartbeat.ToIsoDateTimeString()}");
+        var message = new StringBuilder();
+
+        message.AppendLine($"Client ready or resumed. Last heartbeat: {lastHeartbeat.ToIsoDateTimeString()}.");
+
+        if (timeSinceLastHeartbeat.TotalMinutes > 5)
+            message.AppendLine($"More than {timeSinceLastHeartbeat.TotalMinutes:0} minutes since last heartbeat");
+
+        _logger.LogDebug(message.ToString());
+
+        await _discordLogger.LogExtendedActivityMessage(message.ToString());
 
         var createdCount = await _messageRefsService.PopulateMessageRefs(lastHeartbeat);
 
         if (createdCount > 0)
+        {
+            _logger.LogDebug($"Populated {createdCount} message refs");
             await _discordLogger.LogExtendedActivityMessage($"Populated {createdCount} message refs");
-
-        await _discordLogger.LogExtendedActivityMessage($"Client ready or resumed. Last heartbeat: {lastHeartbeat.ToIsoDateTimeString()}.");
+        }
 
         IsClientActuallyReady = true;
     }
@@ -63,6 +76,6 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
 
         _logger.LogInformation($"Bot disconected {notification.EventArgs.CloseMessage}");
 
-        return _discordLogger.LogExtendedActivityMessage($"Client disconnected.");
+        return Task.CompletedTask;
     }
 }

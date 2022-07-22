@@ -36,7 +36,9 @@ public class MessageRefsService
         {
             try
             {
-                var messages = await channel.GetMessagesAfterAsync(lastHeartbeatSnowflake, messageBatchSize);
+                var messages = (await channel.GetMessagesAfterAsync(lastHeartbeatSnowflake, messageBatchSize))
+                                .Where(m => !m.Author.IsCurrent)
+                                .ToList();
 
                 foreach (var message in messages)
                 {
@@ -64,7 +66,7 @@ public class MessageRefsService
         var channels = guild.Channels.Values;
 
         var messageRefCountTotal = 0;
-        ;
+        
         const int messageBatchSize = 100;
         const int messageBatches = 10;
 
@@ -80,7 +82,9 @@ public class MessageRefsService
 
                 for (int i = 0; i < messageBatches; i++)
                 {
-                    var messages = await channel.GetMessagesBeforeAsync((ulong)lastMessageSnowflake, messageBatchSize);
+                    var messages = (await channel.GetMessagesBeforeAsync((ulong)lastMessageSnowflake, messageBatchSize))
+                                    .Where(m => !m.Author.IsCurrent)
+                                    .ToList();
 
                     if (messages.Count == 0) break;
 
