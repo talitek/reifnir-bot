@@ -1,6 +1,7 @@
 ﻿using DSharpPlus.Entities;
 using MediatR;
 using Nellebot.Common.AppDiscordModels;
+using Nellebot.Common.Models.UserLogs;
 using Nellebot.Data.Repositories;
 using Nellebot.DiscordModelMappers;
 using Nellebot.Services.Loggers;
@@ -26,13 +27,15 @@ namespace Nellebot.NotificationHandlers
         private readonly IDiscordErrorLogger _discordErrorLogger;
         private readonly DiscordResolver _discordResolver;
         private readonly MessageRefRepository _messageRefRepo;
+        private readonly UserLogRepository _userLogRepo;
 
-        public ActivityLogHandler(DiscordLogger discordLogger, IDiscordErrorLogger discordErrorLogger, DiscordResolver discordResolver, MessageRefRepository messageRefRepo)
+        public ActivityLogHandler(DiscordLogger discordLogger, IDiscordErrorLogger discordErrorLogger, DiscordResolver discordResolver, MessageRefRepository messageRefRepo, UserLogRepository userLogRepo)
         {
             _discordLogger = discordLogger;
             _discordErrorLogger = discordErrorLogger;
             _discordResolver = discordResolver;
             _messageRefRepo = messageRefRepo;
+            _userLogRepo = userLogRepo;
         }
 
         public async Task Handle(GuildBanAddedNotification notification, CancellationToken cancellationToken)
@@ -147,7 +150,7 @@ namespace Nellebot.NotificationHandlers
                 return;
             }
 
-            var authorName = author.GetUserFullUsername();
+            var authorName = author.GetFullUsername();
 
             var auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogMessageEntry>
                                 (args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == author.Id);
@@ -187,6 +190,7 @@ namespace Nellebot.NotificationHandlers
 
             await _discordLogger.LogActivityMessage($"**{memberName}** joined the server");
             await _discordLogger.LogExtendedActivityMessage($"{memberFullIdentifier} joined the server");
+            await _userLogRepo.CreateUserLog(member.Id, DateTime.UtcNow, UserLogType.JoinedServer);
         }
 
         public async Task Handle(GuildMemberRemovedNotification notification, CancellationToken cancellationToken)
@@ -218,36 +222,41 @@ namespace Nellebot.NotificationHandlers
 
                 await _discordLogger.LogActivityMessage($"**{memberName}** was kicked by **{responsibleName}**. Reason: {auditKickEntry.Reason}.");
                 await _discordLogger.LogActivityMessage($"**{memberFullIdentifier}** was kicked by **{responsibleName}**. Reason: {auditKickEntry.Reason}.");
+                await _userLogRepo.CreateUserLog(member.Id, DateTime.UtcNow, UserLogType.LeftServer, memberResponsible.Id);
             }
             else
             {
                 await _discordLogger.LogActivityMessage($"**{memberName}** left the server");
                 await _discordLogger.LogExtendedActivityMessage($"{memberFullIdentifier} left the server");
+                await _userLogRepo.CreateUserLog(member.Id, DateTime.UtcNow, UserLogType.LeftServer);
             }
         }
 
-        // Borked
         public async Task Handle(GuildMemberUpdatedNotification notification, CancellationToken cancellationToken)
         {
             var args = notification.EventArgs;
 
-            var removedRole = args.RolesBefore.ExceptBy(args.RolesAfter.Select(r => r.Id), x => x.Id).FirstOrDefault();
             var addedRole = args.RolesAfter.ExceptBy(args.RolesBefore.Select(r => r.Id), x => x.Id).FirstOrDefault();
+            var removedRole = args.RolesBefore.ExceptBy(args.RolesAfter.Select(r => r.Id), x => x.Id).FirstOrDefault();            
 
             var memberMention = args.Member.Mention;
 
-            if (removedRole != null)
-            {
-                await _discordLogger.LogExtendedActivityMessage($"Role change for {memberMention}: Removed {removedRole.Name}.");
-            }
-            else if (addedRole != null)
+            if (addedRole != null)
             {
                 await _discordLogger.LogExtendedActivityMessage($"Role change for {memberMention}: Added {addedRole.Name}.");
             }
+            else if (removedRole != null)
+            {
+                await _discordLogger.LogExtendedActivityMessage($"Role change for {memberMention}: Removed {removedRole.Name}.");
+            }
 
-            var nicknameBefore = args.NicknameBefore;
             var nicknameAfter = args.NicknameAfter;
+            var nicknameBefore = args.NicknameBefore;
 
+            if (string.IsNullOrWhiteSpace(nicknameBefore) || nicknameBefore == nicknameAfter)
+                nicknameBefore = (await _userLogRepo.GetLatestFieldForUser(args.Member.Id, UserLogType.NicknameChange))?.GetValue<string>();
+
+            // TODO check if member's nickname was changed by moderator
             if (nicknameBefore != nicknameAfter)
             {
                 var message = $"Nickname change for {memberMention}.";
@@ -257,22 +266,58 @@ namespace Nellebot.NotificationHandlers
                             : $" Previous nickname: {nicknameBefore}.";
 
                 await _discordLogger.LogExtendedActivityMessage(message);
+                await _userLogRepo.CreateUserLog(args.Member.Id, nicknameAfter, UserLogType.NicknameChange);
+            }
+
+            var guildAvatarHashAfter = args.Member.GuildAvatarHash;
+
+            var guildAvatarHashBefore = (await _userLogRepo.GetLatestFieldForUser(args.Member.Id, UserLogType.GuildAvatarHashChange))?.GetValue<string>();
+
+            if (guildAvatarHashBefore != guildAvatarHashAfter)
+            {
+                var message = $"Avatar change for {memberMention}.";
+
+                await _discordLogger.LogExtendedActivityMessage(message);
+                await _userLogRepo.CreateUserLog(args.Member.Id, guildAvatarHashAfter, UserLogType.GuildAvatarHashChange);
             }
         }
 
-        // Borked
         public async Task Handle(PresenceUpdatedNotification notification, CancellationToken cancellationToken)
         {
             var args = notification.EventArgs;
 
-            var usernameBefore = args.UserBefore?.GetUserFullUsername();
-            var usernameAfter = args.UserAfter?.GetUserFullUsername();
+            var userAfter = args.UserAfter;
+            var userBefore = args.UserBefore;
 
-            if (string.IsNullOrEmpty(usernameBefore) || string.IsNullOrEmpty(usernameAfter)) return;
+            // If user status changes, ignore other checks since they're very unlikely
+            // TODO remove need for workaround by cache user logs
+            if (userBefore != null && userAfter.Presence.Status != userBefore.Presence.Status)
+                return;
+
+            var usernameAfter = userAfter.GetFullUsername();
+            var usernameBefore = userBefore?.GetFullUsername();            
+
+            if (string.IsNullOrWhiteSpace(usernameBefore) || usernameBefore == usernameAfter)
+                usernameBefore = (await _userLogRepo.GetLatestFieldForUser(userAfter.Id, UserLogType.UsernameChange))?.GetValue<string>();
 
             if (usernameBefore != usernameAfter)
             {
-                await _discordLogger.LogExtendedActivityMessage($"Username change for {usernameAfter}: Previous username: {usernameBefore}.");
+                await _discordLogger.LogExtendedActivityMessage($"Username change for {userAfter.Mention}: Previous username: {usernameBefore}.");
+                await _userLogRepo.CreateUserLog(userAfter.Id, usernameAfter, UserLogType.UsernameChange);
+            }
+
+            var avatarAfter = userAfter.AvatarHash;
+            var avatarBefore = userBefore?.AvatarHash;            
+
+            if (string.IsNullOrWhiteSpace(avatarBefore) || avatarBefore == avatarAfter)
+                avatarBefore = (await _userLogRepo.GetLatestFieldForUser(userAfter.Id, UserLogType.AvatarHashChange))?.GetValue<string>();
+
+            if (avatarBefore != avatarAfter)
+            {
+                var message = $"Avatar change for {userAfter.Mention}.";
+
+                await _discordLogger.LogExtendedActivityMessage(message);
+                await _userLogRepo.CreateUserLog(userAfter.Id, avatarAfter, UserLogType.AvatarHashChange);
             }
         }
 

@@ -59,10 +59,8 @@ public class MessageRefsService
         return messageRefCreatedCount;
     }
 
-    public async Task<int> PopulateMessageRefsInit(DiscordChannel outputChannel)
+    public async Task<int> PopulateMessageRefsInit(DiscordGuild guild, DiscordChannel outputChannel)
     {
-        var guild = _discordResolver.ResolveGuild();
-
         var channels = guild.Channels.Values;
 
         var messageRefCountTotal = 0;

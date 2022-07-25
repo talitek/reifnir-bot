@@ -23,6 +23,7 @@ namespace Nellebot.Services
         public bool IsOwnerOrAdmin(AppDiscordMember member, AppDiscordApplication discordApplication)
         {
             var adminRoleId = _options.AdminRoleId;
+            var coOwnerUserId = _options.CoOwnerUserId;
 
             var currentMember = member;
 
@@ -31,6 +32,9 @@ namespace Nellebot.Services
             var isBotOwner = botApp.Owners.Any(x => x.Id == currentMember.Id);
 
             if (isBotOwner)
+                return true;
+
+            if (member.Id == coOwnerUserId)
                 return true;
 
             var currentUserIsAdmin = currentMember.Roles.Select(r => r.Id).Contains(adminRoleId);

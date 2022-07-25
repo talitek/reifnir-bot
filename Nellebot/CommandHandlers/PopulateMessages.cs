@@ -11,20 +11,21 @@ public class PopulateMessagesRequest : CommandRequest
     public PopulateMessagesRequest(CommandContext ctx) : base(ctx) { }
 }
 
-public class PopulateMessages : AsyncRequestHandler<PopulateMessagesRequest>
+public class PopulateMessagesHandler : AsyncRequestHandler<PopulateMessagesRequest>
 {
     private readonly MessageRefsService _messageRefsService;
 
-    public PopulateMessages(MessageRefsService messageRefsService)
+    public PopulateMessagesHandler(MessageRefsService messageRefsService)
     {
         _messageRefsService = messageRefsService;
     }
 
     protected override async Task Handle(PopulateMessagesRequest request, CancellationToken cancellationToken)
     {
-        var outputChannel = request.Ctx.Channel;
+        var guild = request.Ctx.Guild;
+        var outputChannel = request.Ctx.Channel;        
 
-        var createdCount = await _messageRefsService.PopulateMessageRefsInit(outputChannel);
+        var createdCount = await _messageRefsService.PopulateMessageRefsInit(guild, outputChannel);
 
         if (createdCount != 0)
             await outputChannel.SendMessageAsync($"Populated a total of {createdCount} message refs");

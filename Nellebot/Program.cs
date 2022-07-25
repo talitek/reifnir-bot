@@ -78,6 +78,7 @@ namespace Nellebot
                     services.AddTransient<AwardMessageRepository>();
                     services.AddTransient<BotSettingsRepository>();
                     services.AddTransient<MessageRefRepository>();
+                    services.AddTransient<UserLogRepository>();
 
                     services.AddDbContext<BotDbContext>(builder =>
                     {

@@ -23,7 +23,7 @@ public static class DiscordExtensions
             : string.Empty;
     }
 
-    public static string GetUserFullUsername(this DiscordUser user)
+    public static string GetFullUsername(this DiscordUser user)
     {
         return !string.IsNullOrWhiteSpace(user.Username)
             ? $"{user.Username}#{user.Discriminator}"

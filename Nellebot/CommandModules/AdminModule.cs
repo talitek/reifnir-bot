@@ -101,5 +101,13 @@ namespace Nellebot.CommandModules
 
             return Task.CompletedTask;
         }
+
+        [Command("populate-user-log")]
+        public Task PopulateUserLog(CommandContext ctx)
+        {
+            _commandParallelQueue.Enqueue(new PopulateUserLogRequest(ctx));
+
+            return Task.CompletedTask;
+        }
     }
 }

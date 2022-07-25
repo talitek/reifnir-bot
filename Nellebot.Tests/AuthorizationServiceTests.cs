@@ -93,6 +93,34 @@ namespace Nellebot.Tests
         }
 
         [TestMethod]
+        public void IsOwnerOrAdmin_WhenCoOwner_ReturnTrue()
+        {
+            // Arrange
+            _optionsMock.Setup(s => s.Value).Returns(new BotOptions()
+            {
+                CoOwnerUserId = 1
+            });
+
+            _sut = new AuthorizationService(_optionsMock.Object);
+
+            var member = new AppDiscordMember()
+            {
+                Id = 1
+            };
+
+            var discordApplication = new AppDiscordApplication()
+            {
+                Owners = new List<AppDiscordUser>() {}
+            };
+
+            // Act
+            var result = _sut.IsOwnerOrAdmin(member, discordApplication);
+
+            // Assert
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
         public void IsOwnerOrAdmin_WhenNeitherAdminOrOwner_ReturnFalse()
         {
             // Arrange
