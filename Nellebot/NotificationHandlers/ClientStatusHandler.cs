@@ -48,14 +48,14 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
         
         var timeSinceLastHeartbeat = DateTimeOffset.UtcNow - lastHeartbeat;
 
-        var message = new StringBuilder();
+        var message = $"Client ready or resumed. Last heartbeat: {lastHeartbeat.ToIsoDateTimeString()}";
+        message += $" which was {timeSinceLastHeartbeat.TotalMinutes:0.00} minutes ago.";
 
-        message.AppendLine($"Client ready or resumed. Last heartbeat: {lastHeartbeat.ToIsoDateTimeString()}.");
+        //if (timeSinceLastHeartbeat.TotalMinutes > 5)
+        //    var message = $"Client ready or resumed. Last heartbeat: {lastHeartbeat.ToIsoDateTimeString()}.";
+        //    message += $" More than {timeSinceLastHeartbeat.TotalMinutes:0} minutes since last heartbeat";
 
-        if (timeSinceLastHeartbeat.TotalMinutes > 5)
-            message.AppendLine($"More than {timeSinceLastHeartbeat.TotalMinutes:0} minutes since last heartbeat");
-
-        _logger.LogDebug(message.ToString());
+        _logger.LogDebug(message);
 
         await _discordLogger.LogExtendedActivityMessage(message.ToString());
 
