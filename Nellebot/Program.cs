@@ -73,6 +73,7 @@ namespace Nellebot
                     services.AddTransient<GlosbeModelMapper>();
                     services.AddTransient<BotSettingsService>();
                     services.AddTransient<MessageRefsService>();
+                    services.AddTransient<UserLogService>();
 
                     services.AddTransient<IUserRoleRepository, UserRoleRepository>();
                     services.AddTransient<AwardMessageRepository>();

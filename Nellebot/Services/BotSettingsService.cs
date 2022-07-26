@@ -28,9 +28,9 @@ public class BotSettingsService
 
     public async Task<string?> GetGreetingsMessage(string userMention)
     {
-        var messageTemplate = await _cache.LoadFromCacheAsync(SharedCacheKeys.GreetingMessage, async () =>
-            await _botSettingsRepo.GetBotSetting(SharedCacheKeys.GreetingMessage),
-            TimeSpan.FromMinutes(10));
+        var messageTemplate = await _cache.LoadFromCacheAsync(SharedCacheKeys.GreetingMessage, 
+                                () => _botSettingsRepo.GetBotSetting(SharedCacheKeys.GreetingMessage),
+                                TimeSpan.FromMinutes(5));
 
         if (messageTemplate == null) return null;
 
