@@ -109,5 +109,15 @@ namespace Nellebot.CommandModules
 
             return Task.CompletedTask;
         }
+
+        [Command("delete-spam-after")]
+        public async Task DeleteSpam(CommandContext ctx, ulong messageId)
+        {
+            var messagesToDelete = await ctx.Channel.GetMessagesAfterAsync(messageId, 1000);
+
+            await ctx.Channel.DeleteMessagesAsync(messagesToDelete);
+
+            await ctx.RespondAsync($"Deleted {messagesToDelete.Count} messages");
+        }
     }
 }
