@@ -68,7 +68,7 @@ public class PopulateUserLogHandler : AsyncRequestHandler<PopulateUserLogRequest
                 if ((currentProgress - progressPercentLastUpdate >= 10) || (currentProgress == 100))
                 {
                     progressPercentLastUpdate = currentProgress;
-                    await ctx.Channel.SendMessageAsync($"Progress: {currentProgress}%");
+                    await ctx.Channel.SendMessageAsync($"Progress: {currentProgress:##}%");
                 }
             }
             catch (Exception)
