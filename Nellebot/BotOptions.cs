@@ -42,7 +42,8 @@ namespace Nellebot
         /// <summary>
         /// Feature flag for populating message refs on Ready event 
         /// </summary>
-        public bool AutoPopulateMessagesEnabled { get; set; }
+        public bool AutoPopulateMessagesOnReadyEnabled { get; set; }
+        public bool AutoCreateUserLogsEnabled { get; set; } 
     }
 }
 

@@ -1,7 +1,7 @@
-﻿using Nellebot.Common.Models.UserLogs;
+﻿using Microsoft.Extensions.Options;
+using Nellebot.Common.Models.UserLogs;
 using Nellebot.Data.Repositories;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Nellebot.Services;
@@ -10,15 +10,14 @@ public class UserLogService
 {
     private readonly UserLogRepository _userLogRepo;
     private readonly SharedCache _cache;
+    private readonly BotOptions _options;
 
-    public UserLogService(UserLogRepository userLogRepo, SharedCache cache)
+    public UserLogService(UserLogRepository userLogRepo, SharedCache cache, IOptions<BotOptions> options)
     {
         _userLogRepo = userLogRepo;
         _cache = cache;
+        _options = options.Value;
     }
-
-    public Task<List<UserLog>> GetLatestFieldsForUser(ulong userId)
-        => _userLogRepo.GetLatestFieldsForUser(userId);
 
     public Task<UserLog?> GetLatestFieldForUser(ulong userId, UserLogType logType)
     {
@@ -33,6 +32,9 @@ public class UserLogService
 
     public async Task CreateUserLog<T>(ulong userId, T value, UserLogType logType, ulong? responsibleUserId = null)
     {
+        // Likely temporary
+        if (!_options.AutoCreateUserLogsEnabled) return;
+
         var cacheKey = string.Format(SharedCacheKeys.UserLog, userId, logType);
 
         await _userLogRepo.CreateUserLog(userId, value, logType, responsibleUserId);
