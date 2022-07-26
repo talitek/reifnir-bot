@@ -1,10 +1,10 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Nellebot.Common.Extensions;
 using Nellebot.Services;
 using Nellebot.Services.Loggers;
-using Nellebot.Utils;
 using System;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,13 +20,15 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
     private readonly MessageRefsService _messageRefsService;
     private readonly DiscordLogger _discordLogger;
     private readonly ILogger<ClientStatusHandler> _logger;
+    private readonly BotOptions _options;
 
-    public ClientStatusHandler(BotSettingsService botSettingsService, MessageRefsService messageRefsService, DiscordLogger discordLogger, ILogger<ClientStatusHandler> logger)
+    public ClientStatusHandler(BotSettingsService botSettingsService, MessageRefsService messageRefsService, DiscordLogger discordLogger, ILogger<ClientStatusHandler> logger, IOptions<BotOptions> options)
     {
         _botSettingsService = botSettingsService;
         _messageRefsService = messageRefsService;
         _discordLogger = discordLogger;
         _logger = logger;
+        _options = options.Value;
     }
 
     public Task Handle(ClientHeartbeatNotification notification, CancellationToken cancellationToken)
@@ -45,26 +47,27 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
     public async Task Handle(ClientReadyOrResumedNotification notification, CancellationToken cancellationToken)
     {
         var lastHeartbeat = await _botSettingsService.GetLastHeartbeat() ?? DateTimeOffset.UtcNow;
-        
+
         var timeSinceLastHeartbeat = DateTimeOffset.UtcNow - lastHeartbeat;
 
-        var message = $"Client ready or resumed. Last heartbeat: {lastHeartbeat.ToIsoDateTimeString()}";
-        message += $" which was {timeSinceLastHeartbeat.TotalMinutes:0.00} minutes ago.";
+        if (timeSinceLastHeartbeat.TotalMinutes > 1) {
+            var message = $"Client ready or resumed. Last heartbeat: {lastHeartbeat.ToIsoDateTimeString()}.";
+            message += $" More than {timeSinceLastHeartbeat.TotalMinutes:0.00} minutes since last heartbeat";
 
-        //if (timeSinceLastHeartbeat.TotalMinutes > 5)
-        //    var message = $"Client ready or resumed. Last heartbeat: {lastHeartbeat.ToIsoDateTimeString()}.";
-        //    message += $" More than {timeSinceLastHeartbeat.TotalMinutes:0} minutes since last heartbeat";
+            _logger.LogDebug(message);
 
-        _logger.LogDebug(message);
+            await _discordLogger.LogExtendedActivityMessage(message.ToString());
+        }        
 
-        await _discordLogger.LogExtendedActivityMessage(message.ToString());
-
-        var createdCount = await _messageRefsService.PopulateMessageRefs(lastHeartbeat);
-
-        if (createdCount > 0)
+        if (_options.AutoPopulateMessagesOnReadyEnabled)
         {
-            _logger.LogDebug($"Populated {createdCount} message refs");
-            await _discordLogger.LogExtendedActivityMessage($"Populated {createdCount} message refs");
+            var createdCount = await _messageRefsService.PopulateMessageRefs(lastHeartbeat);
+
+            if (createdCount > 0)
+            {
+                _logger.LogDebug($"Populated {createdCount} message refs");
+                await _discordLogger.LogExtendedActivityMessage($"Populated {createdCount} message refs");
+            }
         }
 
         IsClientActuallyReady = true;
