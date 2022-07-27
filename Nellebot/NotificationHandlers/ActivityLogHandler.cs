@@ -268,9 +268,9 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         var avatarBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.AvatarHashChange))?.GetValue<string>();
 
         if (avatarBefore == avatarAfter)
-            return false;        
+            return false;
 
-        var message = $"Avatar change for {args.Member.Mention}.";
+        var message = $"Avatar change for {args.Member.Mention}. {avatarBefore ?? "*no avatar*"} => {avatarAfter ?? "*no avatar*"}.";
 
         await _discordLogger.LogExtendedActivityMessage(message);
         await _userLogService.CreateUserLog(args.Member.Id, avatarAfter, UserLogType.AvatarHashChange);
@@ -285,8 +285,8 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
         if (usernameBefore == usernameAfter)
             return false;
-        
-        await _discordLogger.LogExtendedActivityMessage($"Username change for {args.Member.Mention}: Previous username: {usernameBefore}.");
+
+        await _discordLogger.LogExtendedActivityMessage($"Username change for {args.Member.Mention}. {usernameBefore ?? "??"} => {usernameAfter ?? "??"}.");
         await _userLogService.CreateUserLog(args.Member.Id, usernameAfter, UserLogType.UsernameChange);
 
         return true;
@@ -302,8 +302,8 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
         if (guildAvatarHashBefore == guildAvatarHashAfter)
             return false;
-        
-        var message = $"Guild avatar change for {args.Member.Mention}.";
+
+        var message = $"Guild avatar change for {args.Member.Mention}. {guildAvatarHashBefore ?? "*no avatar*"} => {guildAvatarHashAfter ?? "*no avatar*"}.";
 
         await _discordLogger.LogExtendedActivityMessage(message);
         await _userLogService.CreateUserLog(args.Member.Id, guildAvatarHashAfter, UserLogType.GuildAvatarHashChange);
@@ -322,12 +322,8 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         // TODO check if member's nickname was changed by moderator
         if (nicknameBefore == nicknameAfter)
             return false;
-        
-        var message = $"Nickname change for {args.Member.Mention}.";
 
-        message += string.IsNullOrWhiteSpace(nicknameBefore)
-                    ? " No previous nickname."
-                    : $" Previous nickname: {nicknameBefore}.";
+        var message = $"Nickname change for {args.Member.Mention}. {nicknameBefore ?? "*no nickname*"} => {nicknameAfter ?? "*no nickname*"}.";
 
         await _discordLogger.LogExtendedActivityMessage(message);
         await _userLogService.CreateUserLog(args.Member.Id, nicknameAfter, UserLogType.NicknameChange);
