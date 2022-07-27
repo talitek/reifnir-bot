@@ -1,4 +1,5 @@
 ﻿using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using MediatR;
 using Nellebot.Common.AppDiscordModels;
 using Nellebot.Common.Models.UserLogs;
@@ -191,7 +192,9 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
         await _discordLogger.LogActivityMessage($"**{memberName}** joined the server");
         await _discordLogger.LogExtendedActivityMessage($"{memberFullIdentifier} joined the server");
+
         await _userLogService.CreateUserLog(member.Id, DateTime.UtcNow, UserLogType.JoinedServer);
+        await _userLogService.CreateUserLog(member.Id, member.GetFullUsername, UserLogType.UsernameChange);
     }
 
     public async Task Handle(GuildMemberRemovedNotification notification, CancellationToken cancellationToken)
@@ -239,6 +242,101 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
         var args = notification.EventArgs;
 
+        var rolesUpdated = await CheckForRolesUpdate(args);
+        if (rolesUpdated) totalChanges++;
+
+        var nicknameUpdated = await CheckForNicknameUpdate(args);
+        if (nicknameUpdated) totalChanges++;
+
+        var guildAvatarUpdated = await CheckForGuildAvatarUpdate(args);
+        if (guildAvatarUpdated) totalChanges++;
+
+        var usernameUpdated = await CheckForUsernameUpdate(args);
+        if (usernameUpdated) totalChanges++;
+
+        var avatarUpdated = await CheckForAvatarUpdate(args);
+        if (avatarUpdated) totalChanges++;
+
+        // Test if there actually are several changes in the same event
+        if (totalChanges > 1)
+            await _discordLogger.LogExtendedActivityMessage($"{nameof(GuildMemberUpdatedNotification)} contained more than 1 changes");
+    }
+
+    private async Task<bool> CheckForAvatarUpdate(GuildMemberUpdateEventArgs args)
+    {
+        var avatarAfter = args.Member.AvatarHash;
+        var avatarBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.AvatarHashChange))?.GetValue<string>();
+
+        if (avatarBefore == avatarAfter)
+            return false;        
+
+        var message = $"Avatar change for {args.Member.Mention}.";
+
+        await _discordLogger.LogExtendedActivityMessage(message);
+        await _userLogService.CreateUserLog(args.Member.Id, avatarAfter, UserLogType.AvatarHashChange);
+
+        return true;
+    }
+
+    private async Task<bool> CheckForUsernameUpdate(GuildMemberUpdateEventArgs args)
+    {
+        var usernameAfter = args.Member.GetFullUsername();
+        var usernameBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.UsernameChange))?.GetValue<string>();
+
+        if (usernameBefore == usernameAfter)
+            return false;
+        
+        await _discordLogger.LogExtendedActivityMessage($"Username change for {args.Member.Mention}: Previous username: {usernameBefore}.");
+        await _userLogService.CreateUserLog(args.Member.Id, usernameAfter, UserLogType.UsernameChange);
+
+        return true;
+    }
+
+    private async Task<bool> CheckForGuildAvatarUpdate(GuildMemberUpdateEventArgs args)
+    {
+        var guildAvatarHashAfter = args.AvatarHashAfter;
+        var guildAvatarHashBefore = args.AvatarHashBefore;
+
+        if (string.IsNullOrWhiteSpace(guildAvatarHashBefore) || guildAvatarHashBefore == guildAvatarHashAfter)
+            guildAvatarHashBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.GuildAvatarHashChange))?.GetValue<string>();
+
+        if (guildAvatarHashBefore == guildAvatarHashAfter)
+            return false;
+        
+        var message = $"Guild avatar change for {args.Member.Mention}.";
+
+        await _discordLogger.LogExtendedActivityMessage(message);
+        await _userLogService.CreateUserLog(args.Member.Id, guildAvatarHashAfter, UserLogType.GuildAvatarHashChange);
+
+        return true;
+    }
+
+    private async Task<bool> CheckForNicknameUpdate(GuildMemberUpdateEventArgs args)
+    {
+        var nicknameAfter = args.NicknameAfter;
+        var nicknameBefore = args.NicknameBefore;
+
+        if (string.IsNullOrWhiteSpace(nicknameBefore) || nicknameBefore == nicknameAfter)
+            nicknameBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.NicknameChange))?.GetValue<string>();
+
+        // TODO check if member's nickname was changed by moderator
+        if (nicknameBefore == nicknameAfter)
+            return false;
+        
+        var message = $"Nickname change for {args.Member.Mention}.";
+
+        message += string.IsNullOrWhiteSpace(nicknameBefore)
+                    ? " No previous nickname."
+                    : $" Previous nickname: {nicknameBefore}.";
+
+        await _discordLogger.LogExtendedActivityMessage(message);
+        await _userLogService.CreateUserLog(args.Member.Id, nicknameAfter, UserLogType.NicknameChange);
+
+        return true;
+    }
+
+    private async Task<bool> CheckForRolesUpdate(GuildMemberUpdateEventArgs args)
+    {
         var addedRole = args.RolesAfter.ExceptBy(args.RolesBefore.Select(r => r.Id), x => x.Id).FirstOrDefault();
         var removedRole = args.RolesBefore.ExceptBy(args.RolesAfter.Select(r => r.Id), x => x.Id).FirstOrDefault();
 
@@ -247,52 +345,19 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         if (addedRole != null)
         {
             await _discordLogger.LogExtendedActivityMessage($"Role change for {memberMention}: Added {addedRole.Name}.");
-            totalChanges++;
+            return true;
         }
-        else if (removedRole != null)
+
+        if (removedRole != null)
         {
             await _discordLogger.LogExtendedActivityMessage($"Role change for {memberMention}: Removed {removedRole.Name}.");
-            totalChanges++;
+            return true;
         }
 
-        var nicknameAfter = args.NicknameAfter;
-        var nicknameBefore = args.NicknameBefore;
-
-        if (string.IsNullOrWhiteSpace(nicknameBefore) || nicknameBefore == nicknameAfter)
-            nicknameBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.NicknameChange))?.GetValue<string>();
-
-        // TODO check if member's nickname was changed by moderator
-        if (nicknameBefore != nicknameAfter)
-        {
-            var message = $"Nickname change for {memberMention}.";
-
-            message += string.IsNullOrWhiteSpace(nicknameBefore)
-                        ? " No previous nickname."
-                        : $" Previous nickname: {nicknameBefore}.";
-
-            await _discordLogger.LogExtendedActivityMessage(message);
-            await _userLogService.CreateUserLog(args.Member.Id, nicknameAfter, UserLogType.NicknameChange);
-            totalChanges++;
-        }
-
-        var guildAvatarHashAfter = args.Member.GuildAvatarHash;
-
-        var guildAvatarHashBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.GuildAvatarHashChange))?.GetValue<string>();
-
-        if (guildAvatarHashBefore != guildAvatarHashAfter)
-        {
-            var message = $"Avatar change for {memberMention}.";
-
-            await _discordLogger.LogExtendedActivityMessage(message);
-            await _userLogService.CreateUserLog(args.Member.Id, guildAvatarHashAfter, UserLogType.GuildAvatarHashChange);
-            totalChanges++;
-        }
-
-        // Test if there actually are several changes in the same event
-        if (totalChanges > 1)
-            await _discordLogger.LogExtendedActivityMessage($"{nameof(GuildMemberUpdatedNotification)} contained more than 1 changes");
+        return false;
     }
 
+    // Possibly obsolete
     public async Task Handle(PresenceUpdatedNotification notification, CancellationToken cancellationToken)
     {
         var totalChanges = 0;
@@ -331,7 +396,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         }
 
         // Test if there actually are several changes in the same event
-        if(totalChanges > 1)
+        if (totalChanges > 1)
             await _discordLogger.LogExtendedActivityMessage($"{nameof(PresenceUpdatedNotification)} contained more than 1 changes");
     }
 
