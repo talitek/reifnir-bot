@@ -264,13 +264,16 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
     private async Task<bool> CheckForAvatarUpdate(GuildMemberUpdateEventArgs args)
     {
-        var avatarAfter = args.Member.AvatarHash;
-        var avatarBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.AvatarHashChange))?.GetValue<string>();
+        var avatarAfter = args.MemberAfter.AvatarHash;
+        var avatarBefore = args.MemberBefore?.AvatarHash;
+
+        if (string.IsNullOrWhiteSpace(avatarBefore) || avatarBefore == avatarAfter)
+            avatarBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.AvatarHashChange))?.GetValue<string>();
 
         if (avatarBefore == avatarAfter)
-            return false;        
+            return false;
 
-        var message = $"Avatar change for {args.Member.Mention}.";
+        var message = $"Avatar change for {args.Member.Mention}. {avatarBefore ?? "*no avatar*"} => {avatarAfter ?? "*no avatar*"}.";
 
         await _discordLogger.LogExtendedActivityMessage(message);
         await _userLogService.CreateUserLog(args.Member.Id, avatarAfter, UserLogType.AvatarHashChange);
@@ -280,13 +283,16 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
     private async Task<bool> CheckForUsernameUpdate(GuildMemberUpdateEventArgs args)
     {
-        var usernameAfter = args.Member.GetFullUsername();
-        var usernameBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.UsernameChange))?.GetValue<string>();
+        var usernameAfter = args.MemberAfter.GetFullUsername();
+        var usernameBefore = args.MemberBefore?.GetFullUsername();
+
+        if (string.IsNullOrWhiteSpace(usernameBefore) || usernameBefore == usernameAfter)
+            usernameBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.UsernameChange))?.GetValue<string>();
 
         if (usernameBefore == usernameAfter)
             return false;
-        
-        await _discordLogger.LogExtendedActivityMessage($"Username change for {args.Member.Mention}: Previous username: {usernameBefore}.");
+
+        await _discordLogger.LogExtendedActivityMessage($"Username change for {args.Member.Mention}. {usernameBefore ?? "??"} => {usernameAfter ?? "??"}.");
         await _userLogService.CreateUserLog(args.Member.Id, usernameAfter, UserLogType.UsernameChange);
 
         return true;
@@ -294,16 +300,16 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
     private async Task<bool> CheckForGuildAvatarUpdate(GuildMemberUpdateEventArgs args)
     {
-        var guildAvatarHashAfter = args.AvatarHashAfter;
-        var guildAvatarHashBefore = args.AvatarHashBefore;
+        var guildAvatarHashAfter = args.GuildAvatarHashAfter;
+        var guildAvatarHashBefore = args.GuildAvatarHashAfter;
 
         if (string.IsNullOrWhiteSpace(guildAvatarHashBefore) || guildAvatarHashBefore == guildAvatarHashAfter)
             guildAvatarHashBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.GuildAvatarHashChange))?.GetValue<string>();
 
         if (guildAvatarHashBefore == guildAvatarHashAfter)
             return false;
-        
-        var message = $"Guild avatar change for {args.Member.Mention}.";
+
+        var message = $"Guild avatar change for {args.Member.Mention}. {guildAvatarHashBefore ?? "*no avatar*"} => {guildAvatarHashAfter ?? "*no avatar*"}.";
 
         await _discordLogger.LogExtendedActivityMessage(message);
         await _userLogService.CreateUserLog(args.Member.Id, guildAvatarHashAfter, UserLogType.GuildAvatarHashChange);
@@ -322,12 +328,8 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         // TODO check if member's nickname was changed by moderator
         if (nicknameBefore == nicknameAfter)
             return false;
-        
-        var message = $"Nickname change for {args.Member.Mention}.";
 
-        message += string.IsNullOrWhiteSpace(nicknameBefore)
-                    ? " No previous nickname."
-                    : $" Previous nickname: {nicknameBefore}.";
+        var message = $"Nickname change for {args.Member.Mention}. {nicknameBefore ?? "*no nickname*"} => {nicknameAfter ?? "*no nickname*"}.";
 
         await _discordLogger.LogExtendedActivityMessage(message);
         await _userLogService.CreateUserLog(args.Member.Id, nicknameAfter, UserLogType.NicknameChange);
