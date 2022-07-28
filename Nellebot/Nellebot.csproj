@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!--<PackageReference Include="DSharpPlus" Version="4.2.0" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.2.0" />-->
+    <PackageReference Include="DSharpPlus" Version="4.3.0-nightly-01160" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.2.0" />
     <PackageReference Include="MediatR" Version="10.0.1" />
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
@@ -19,8 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\DSharpPlus\DSharpPlus.CommandsNext\DSharpPlus.CommandsNext.csproj" />
-    <ProjectReference Include="..\..\DSharpPlus\DSharpPlus\DSharpPlus.csproj" />
     <ProjectReference Include="..\Nellebot.Common\Nellebot.Common.csproj" />
     <ProjectReference Include="..\Nellebot.Data\Nellebot.Data.csproj" />
   </ItemGroup>

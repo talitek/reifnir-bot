@@ -262,6 +262,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
             await _discordLogger.LogExtendedActivityMessage($"{nameof(GuildMemberUpdatedNotification)} contained more than 1 changes");
     }
 
+    // Borked
     private async Task<bool> CheckForAvatarUpdate(GuildMemberUpdateEventArgs args)
     {
         var avatarAfter = args.MemberAfter.AvatarHash;
