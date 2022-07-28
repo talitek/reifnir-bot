@@ -262,10 +262,14 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
             await _discordLogger.LogExtendedActivityMessage($"{nameof(GuildMemberUpdatedNotification)} contained more than 1 changes");
     }
 
+    // Borked
     private async Task<bool> CheckForAvatarUpdate(GuildMemberUpdateEventArgs args)
     {
-        var avatarAfter = args.Member.AvatarHash;
-        var avatarBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.AvatarHashChange))?.GetValue<string>();
+        var avatarAfter = args.MemberAfter.AvatarHash;
+        var avatarBefore = args.MemberBefore?.AvatarHash;
+
+        if (string.IsNullOrWhiteSpace(avatarBefore) || avatarBefore == avatarAfter)
+            avatarBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.AvatarHashChange))?.GetValue<string>();
 
         if (avatarBefore == avatarAfter)
             return false;
@@ -280,8 +284,11 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
     private async Task<bool> CheckForUsernameUpdate(GuildMemberUpdateEventArgs args)
     {
-        var usernameAfter = args.Member.GetFullUsername();
-        var usernameBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.UsernameChange))?.GetValue<string>();
+        var usernameAfter = args.MemberAfter.GetFullUsername();
+        var usernameBefore = args.MemberBefore?.GetFullUsername();
+
+        if (string.IsNullOrWhiteSpace(usernameBefore) || usernameBefore == usernameAfter)
+            usernameBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.UsernameChange))?.GetValue<string>();
 
         if (usernameBefore == usernameAfter)
             return false;
@@ -294,8 +301,8 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
     private async Task<bool> CheckForGuildAvatarUpdate(GuildMemberUpdateEventArgs args)
     {
-        var guildAvatarHashAfter = args.AvatarHashAfter;
-        var guildAvatarHashBefore = args.AvatarHashBefore;
+        var guildAvatarHashAfter = args.GuildAvatarHashAfter;
+        var guildAvatarHashBefore = args.GuildAvatarHashAfter;
 
         if (string.IsNullOrWhiteSpace(guildAvatarHashBefore) || guildAvatarHashBefore == guildAvatarHashAfter)
             guildAvatarHashBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.GuildAvatarHashChange))?.GetValue<string>();

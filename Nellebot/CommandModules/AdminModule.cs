@@ -2,14 +2,11 @@
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
 using Nellebot.CommandHandlers;
 using Nellebot.Common.Extensions;
-using Nellebot.Helpers;
-using Nellebot.Services;
 using Nellebot.Workers;
 using System;
 using System.Collections.Generic;

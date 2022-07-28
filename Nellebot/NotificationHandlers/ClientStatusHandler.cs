@@ -52,12 +52,12 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
 
         if (timeSinceLastHeartbeat.TotalMinutes > 1) {
             var message = $"Client ready or resumed. Last heartbeat: {lastHeartbeat.ToIsoDateTimeString()}.";
-            message += $" More than {timeSinceLastHeartbeat.TotalMinutes:0.00} minutes since last heartbeat";
+            message += $" More than {timeSinceLastHeartbeat.TotalMinutes:0.00} minutes since last heartbeat.";
 
             _logger.LogDebug(message);
 
             await _discordLogger.LogExtendedActivityMessage(message.ToString());
-        }        
+        }
 
         if (_options.AutoPopulateMessagesOnReadyEnabled)
         {
