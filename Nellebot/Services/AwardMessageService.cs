@@ -369,7 +369,7 @@ namespace Nellebot.Services
             }
             catch (Exception ex)
             {
-                await _discordErrorLogger.LogError(ex.ToString());
+                await _discordErrorLogger.LogError(ex, nameof(GetAwardReactionCount));
             }
 
             return awardReactionCount;

@@ -1,5 +1,6 @@
 ﻿using DSharpPlus.CommandsNext;
 using Nellebot.Utils;
+using System;
 using System.Threading.Tasks;
 
 namespace Nellebot.Services.Loggers
@@ -11,5 +12,6 @@ namespace Nellebot.Services.Loggers
         Task LogError(string error, string errorMessage);
         Task LogError(string errorMessage);
         Task LogWarning(string warning, string warningMessage);
+        Task LogError(Exception ex, string message);
     }
 }

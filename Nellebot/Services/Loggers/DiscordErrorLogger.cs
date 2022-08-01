@@ -53,6 +53,11 @@ namespace Nellebot.Services.Loggers
             return LogError("Failed event", fullErrorMessage);
         }
 
+        public Task LogError(Exception ex, string message)
+        {
+            return LogError(message, ex.ToString());
+        }
+
         public Task LogError(string errorMessage)
         {
             return LogError("Error", errorMessage);

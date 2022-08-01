@@ -117,7 +117,7 @@ namespace Nellebot.CommandHandlers.Ordbok
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, typeof(SearchOrdbokRequest).FullName);
+                _logger.LogError(ex, nameof(SearchOrdbokRequest));
             }
 
             mb = mb.WithEmbed(eb.Build());

@@ -71,7 +71,7 @@ namespace Nellebot.Workers
                 {
                     if (!(ex is TaskCanceledException))
                     {
-                        _logger.LogError(ex, "MessageAwardQueueWorker");
+                        _logger.LogError(ex, nameof(MessageAwardQueueWorker));
                     }
                 }
 

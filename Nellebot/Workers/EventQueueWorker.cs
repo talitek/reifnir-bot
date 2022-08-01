@@ -65,9 +65,9 @@ namespace Nellebot.Workers
                         if (@event != null && @event is EventNotification notification)
                         {
                             if (notification.Ctx != null)
-                                await _discordErrorLogger.LogEventError(notification.Ctx, innerEx.Message);
+                                await _discordErrorLogger.LogEventError(notification.Ctx, innerEx.ToString());
                             else
-                                await _discordErrorLogger.LogError(innerEx.Message);
+                                await _discordErrorLogger.LogError(innerEx, nameof(EventQueueWorker));
                         }
 
                         _logger.LogError(innerEx, nameof(EventQueueWorker));

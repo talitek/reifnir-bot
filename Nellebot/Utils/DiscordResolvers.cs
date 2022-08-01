@@ -55,7 +55,7 @@ namespace Nellebot.Utils
             }
             catch (Exception ex)
             {
-                await _discordErrorLogger.LogError("Missing channel", ex.ToString());
+                await _discordErrorLogger.LogError(ex, "Missing channel");
 
                 return null;
             }
@@ -80,7 +80,7 @@ namespace Nellebot.Utils
             }
             catch (Exception ex)
             {
-                await _discordErrorLogger.LogError("Missing member", ex.ToString());
+                await _discordErrorLogger.LogError(ex, "Missing member");
 
                 return null;
             }
@@ -94,7 +94,7 @@ namespace Nellebot.Utils
             }
             catch (Exception ex)
             {
-                await _discordErrorLogger.LogError("Missing message", ex.ToString());
+                await _discordErrorLogger.LogError(ex, "Missing message");
 
                 return null;
             }
