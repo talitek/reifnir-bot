@@ -126,12 +126,6 @@ namespace Nellebot
                 _eventQueue.Enqueue(new GuildBanRemovedNotification(args));
                 return Task.CompletedTask;
             };
-
-            //_client.PresenceUpdated += (sender, args) =>
-            //{
-            //    _eventQueue.Enqueue(new PresenceUpdatedNotification(args));
-            //    return Task.CompletedTask;
-            //};
         }
 
         private Task OnClientHeartbeat(DiscordClient sender, HeartbeatEventArgs e)

@@ -22,8 +22,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
                                         INotificationHandler<MessageBulkDeletedNotification>,
                                         INotificationHandler<GuildMemberAddedNotification>,
                                         INotificationHandler<GuildMemberRemovedNotification>,
-                                        INotificationHandler<GuildMemberUpdatedNotification>,
-                                        INotificationHandler<PresenceUpdatedNotification>
+                                        INotificationHandler<GuildMemberUpdatedNotification>
 {
     private readonly DiscordLogger _discordLogger;
     private readonly IDiscordErrorLogger _discordErrorLogger;
@@ -263,7 +262,6 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
             await _discordLogger.LogExtendedActivityMessage($"{nameof(GuildMemberUpdatedNotification)} contained more than 1 changes");
     }
 
-    // Borked
     private async Task<bool> CheckForAvatarUpdate(GuildMemberUpdateEventArgs args)
     {
         var avatarAfter = args.MemberAfter.AvatarHash;
@@ -359,49 +357,6 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         }
 
         return false;
-    }
-
-    // Possibly obsolete
-    public async Task Handle(PresenceUpdatedNotification notification, CancellationToken cancellationToken)
-    {
-        var totalChanges = 0;
-
-        var args = notification.EventArgs;
-
-        var userAfter = args.UserAfter;
-        var userBefore = args.UserBefore;
-
-        var usernameAfter = userAfter.GetFullUsername();
-        var usernameBefore = userBefore?.GetFullUsername();
-
-        if (string.IsNullOrWhiteSpace(usernameBefore) || usernameBefore == usernameAfter)
-            usernameBefore = (await _userLogService.GetLatestFieldForUser(userAfter.Id, UserLogType.UsernameChange))?.GetValue<string>();
-
-        if (usernameBefore != usernameAfter)
-        {
-            await _discordLogger.LogExtendedActivityMessage($"Username change for {userAfter.Mention}: Previous username: {usernameBefore}.");
-            await _userLogService.CreateUserLog(userAfter.Id, usernameAfter, UserLogType.UsernameChange);
-            totalChanges++;
-        }
-
-        var avatarAfter = userAfter.AvatarHash;
-        var avatarBefore = userBefore?.AvatarHash;
-
-        if (string.IsNullOrWhiteSpace(avatarBefore) || avatarBefore == avatarAfter)
-            avatarBefore = (await _userLogService.GetLatestFieldForUser(userAfter.Id, UserLogType.AvatarHashChange))?.GetValue<string>();
-
-        if (avatarBefore != avatarAfter)
-        {
-            var message = $"Avatar change for {userAfter.Mention}.";
-
-            await _discordLogger.LogExtendedActivityMessage(message);
-            await _userLogService.CreateUserLog(userAfter.Id, avatarAfter, UserLogType.AvatarHashChange);
-            totalChanges++;
-        }
-
-        // Test if there actually are several changes in the same event
-        if (totalChanges > 1)
-            await _discordLogger.LogExtendedActivityMessage($"{nameof(PresenceUpdatedNotification)} contained more than 1 changes");
     }
 
     private async Task<AppDiscordMessage?> ResolveMessage(DiscordMessage deletedMessage)
