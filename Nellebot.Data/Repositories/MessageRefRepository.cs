@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Nellebot.Common.Models;
 using System;
 using System.Threading.Tasks;
@@ -8,10 +9,12 @@ namespace Nellebot.Data.Repositories
     public class MessageRefRepository
     {
         private readonly BotDbContext _dbContext;
+        private readonly ILogger<MessageRefRepository> _logger;
 
-        public MessageRefRepository(BotDbContext dbContext)
+        public MessageRefRepository(BotDbContext dbContext, ILogger<MessageRefRepository> logger)
         {
             _dbContext = dbContext;
+            _logger = logger;
         }
 
         public async Task CreateMessageRef(ulong messageId, ulong channelId, ulong userId)
@@ -31,10 +34,11 @@ namespace Nellebot.Data.Repositories
             }
             catch (DbUpdateException ex)
             {
-                if (ex.InnerException != null && ex.InnerException is Npgsql.PostgresException pgEx)
+                if (ex.InnerException != null
+                    && ex.InnerException is Npgsql.PostgresException pgEx
+                    && pgEx.SqlState == Npgsql.PostgresErrorCodes.UniqueViolation)
                 {
-                    if (pgEx.SqlState != Npgsql.PostgresErrorCodes.UniqueViolation)
-                        throw;
+                    _logger.LogDebug($"{nameof(CreateMessageRef)}: MessageRef for MessageId {messageId} already exists");
                 }
                 else
                 {

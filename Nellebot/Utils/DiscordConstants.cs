@@ -16,5 +16,7 @@ namespace Nellebot.Utils
         public const int DefaultEmbedColor = 2346204; // #23ccdc
         public const int ErrorEmbedColor = 14431557; // #dc3545
         public const int WarningEmbedColor = 16612884; // #fd7e14
+
+        public const string UnauthorizedErrorMessage = "Unauthorized: 403";
     }
 }

@@ -1,7 +1,10 @@
 ﻿using DSharpPlus.Entities;
+using Microsoft.Extensions.Logging;
 using Nellebot.Data.Repositories;
+using Nellebot.Services.Loggers;
 using Nellebot.Utils;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -10,11 +13,15 @@ namespace Nellebot.Services;
 public class MessageRefsService
 {
     private readonly DiscordResolver _discordResolver;
+    private readonly IDiscordErrorLogger _discordErrorLogger;
+    private readonly ILogger<MessageRefsService> _logger;
     private readonly MessageRefRepository _messageRefRepo;
 
-    public MessageRefsService(DiscordResolver discordResolver, MessageRefRepository messageRefRepo)
+    public MessageRefsService(DiscordResolver discordResolver, IDiscordErrorLogger discordErrorLogger, ILogger<MessageRefsService> logger, MessageRefRepository messageRefRepo)
     {
         _discordResolver = discordResolver;
+        _discordErrorLogger = discordErrorLogger;
+        _logger = logger;
         _messageRefRepo = messageRefRepo;
     }
 
@@ -49,22 +56,25 @@ public class MessageRefsService
             }
             catch (Exception ex)
             {
-                if(ex.Message == "Unauthorized: 403")
+                if (ex.Message == DiscordConstants.UnauthorizedErrorMessage)
                     continue;
 
-                throw;
+                string errorMessage = $"{nameof(PopulateMessageRefs)}: {channel.Name}";
+
+                await _discordErrorLogger.LogError(ex, errorMessage);
+                _logger.LogError(ex, errorMessage);
             }
         }
 
         return messageRefCreatedCount;
     }
 
-    public async Task<int> PopulateMessageRefsInit(DiscordGuild guild, DiscordChannel outputChannel)
+    public async Task<IList<DiscordMessage>> PopulateMessageRefsInit(DiscordGuild guild)
     {
+        var createdMessages = new List<DiscordMessage>();
+
         var channels = guild.Channels.Values;
 
-        var messageRefCountTotal = 0;
-        
         const int messageBatchSize = 100;
         const int messageBatches = 10;
 
@@ -72,8 +82,6 @@ public class MessageRefsService
         {
             try
             {
-                var messageRefCountChannel = 0;
-
                 var lastMessageSnowflake = channel.LastMessageId;
 
                 if (lastMessageSnowflake == null) continue;
@@ -90,24 +98,27 @@ public class MessageRefsService
                     {
                         var created = await _messageRefRepo.CreateMessageRefIfNotExists(message.Id, message.Channel.Id, message.Author.Id);
 
-                        if (created) messageRefCountChannel++;
+                        if (created) createdMessages.Add(message);
                     }
 
                     lastMessageSnowflake = messages.Min(m => m.Id);
                 }
 
-                if (messageRefCountChannel > 0)
-                    await outputChannel.SendMessageAsync($"Populated {messageRefCountChannel} message refs in {channel.Name}");
 
-                messageRefCountTotal += messageRefCountChannel;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                continue;
+                if (ex.Message == DiscordConstants.UnauthorizedErrorMessage)
+                    continue;
+
+                string errorMessage = $"{nameof(PopulateMessageRefsInit)}: {channel.Name}";
+
+                await _discordErrorLogger.LogError(ex, errorMessage);
+                _logger.LogError(ex, errorMessage);
             }
         }
 
-        return messageRefCountTotal;
+        return createdMessages;
     }
 
     private static ulong GetSnowflakeFromDateTimeOffset(DateTimeOffset dateTime)
