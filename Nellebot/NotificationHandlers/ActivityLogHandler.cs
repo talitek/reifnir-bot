@@ -194,7 +194,8 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         await _discordLogger.LogExtendedActivityMessage($"{memberFullIdentifier} joined the server");
 
         await _userLogService.CreateUserLog(member.Id, DateTime.UtcNow, UserLogType.JoinedServer);
-        await _userLogService.CreateUserLog(member.Id, member.GetFullUsername, UserLogType.UsernameChange);
+        await _userLogService.CreateUserLog(member.Id, member.GetFullUsername(), UserLogType.UsernameChange);
+        await _userLogService.CreateUserLog(member.Id, member.AvatarHash, UserLogType.AvatarHashChange);
     }
 
     public async Task Handle(GuildMemberRemovedNotification notification, CancellationToken cancellationToken)

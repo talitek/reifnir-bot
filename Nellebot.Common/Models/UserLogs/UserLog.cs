@@ -21,12 +21,13 @@ public class UserLog
         {
             case nameof(DateTime):
                 var parsed = DateTime.TryParse(RawValue, out var parsedDate);
+
                 if (!parsed) return default;
+
                 return (T?)Convert.ChangeType(parsedDate, ValueType);
             case nameof(String):
             default:
                 return (T?)Convert.ChangeType(RawValue, ValueType);
-
         }
     }
 

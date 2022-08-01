@@ -43,8 +43,6 @@ public class UserLogRepository
     {
         var typeForField = UserLogTypesMap.TypeDictionary[logType];
 
-        if (typeof(T) != typeForField) throw new InvalidOperationException($"{typeof(T)} is not compatible with {typeForField}");
-
         var userLog = new UserLog()
         {
             LogType = logType,
