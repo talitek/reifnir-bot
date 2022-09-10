@@ -5,17 +5,20 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Threading.Tasks;
 using Nellebot.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace Nellebot.Services.Loggers
 {
     public class DiscordErrorLogger : IDiscordErrorLogger
     {
         private readonly DiscordClient _client;
+        private readonly ILogger<DiscordErrorLogger> _logger;
         private readonly BotOptions _options;
 
-        public DiscordErrorLogger(DiscordClient client, IOptions<BotOptions> options)
+        public DiscordErrorLogger(DiscordClient client, IOptions<BotOptions> options, ILogger<DiscordErrorLogger> logger)
         {
             _client = client;
+            _logger = logger;
             _options = options.Value;
         }
 
@@ -63,32 +66,53 @@ namespace Nellebot.Services.Loggers
             return LogError("Error", errorMessage);
         }
 
-        public async Task LogError(string error, string errorMessage)
+        public Task LogError(string error, string errorMessage)
         {
-            var guildId = _options.GuildId;
-            var errorLogChannelId = _options.ErrorLogChannelId;
-
-            var errorLogChannel = await ResolveErrorLogChannel(guildId, errorLogChannelId);
-
-            if (errorLogChannel == null) return;
-
-            var errorEmbed = EmbedBuilderHelper.BuildSimpleEmbed(error, errorMessage, DiscordConstants.ErrorEmbedColor);
-
-            await errorLogChannel.SendMessageAsync(errorEmbed);
+            return SendErrorLogChannelEmbed(error, errorMessage, DiscordConstants.ErrorEmbedColor);
         }
 
-        public async Task LogWarning(string warning, string warningMessage)
+        public Task LogWarning(string warning, string warningMessage)
         {
-            var guildId = _options.GuildId;
-            var errorLogChannelId = _options.ErrorLogChannelId;
+            return SendErrorLogChannelEmbed(warning, warningMessage, DiscordConstants.WarningEmbedColor);
+        }
 
-            var errorLogChannel = await ResolveErrorLogChannel(guildId, errorLogChannelId);
+        private async Task SendErrorLogChannelEmbed(string title, string message, int color)
+        {
+            DiscordChannel? errorLogChannel = null;
 
-            if (errorLogChannel == null) return;
+            try
+            {
+                var guildId = _options.GuildId;
+                var errorLogChannelId = _options.ErrorLogChannelId;
 
-            var errorEmbed = EmbedBuilderHelper.BuildSimpleEmbed(warning, warningMessage, DiscordConstants.WarningEmbedColor);
+                errorLogChannel = await ResolveErrorLogChannel(guildId, errorLogChannelId);
 
-            await errorLogChannel.SendMessageAsync(errorEmbed);
+                var messageEmbed = EmbedBuilderHelper.BuildSimpleEmbed(title, message, color);
+
+                await errorLogChannel.SendMessageAsync(messageEmbed);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, nameof(SendErrorLogChannelEmbed));
+
+                await LogLoggingFailure(errorLogChannel, ex);
+            }
+        }
+
+        private Task LogLoggingFailure(DiscordChannel? errorLogChannel, Exception exception)
+        {
+            try
+            {
+                ArgumentNullException.ThrowIfNull(errorLogChannel);
+
+                return errorLogChannel.SendMessageAsync($"Failed to log original error message. Reason: {exception.Message}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Welp");
+
+                return Task.CompletedTask;
+            }
         }
 
         private static string EscapeTicks(string value)
