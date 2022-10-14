@@ -1,6 +1,7 @@
 ﻿using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using MediatR;
+using Microsoft.Extensions.Options;
 using Nellebot.Common.AppDiscordModels;
 using Nellebot.Common.Models.UserLogs;
 using Nellebot.Data.Repositories;
@@ -29,14 +30,16 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
     private readonly DiscordResolver _discordResolver;
     private readonly MessageRefRepository _messageRefRepo;
     private readonly UserLogService _userLogService;
+    private readonly BotOptions _botOptions;
 
-    public ActivityLogHandler(DiscordLogger discordLogger, IDiscordErrorLogger discordErrorLogger, DiscordResolver discordResolver, MessageRefRepository messageRefRepo, UserLogService userLogService)
+    public ActivityLogHandler(DiscordLogger discordLogger, IDiscordErrorLogger discordErrorLogger, DiscordResolver discordResolver, MessageRefRepository messageRefRepo, UserLogService userLogService, IOptions<BotOptions> botOptions)
     {
         _discordLogger = discordLogger;
         _discordErrorLogger = discordErrorLogger;
         _discordResolver = discordResolver;
         _messageRefRepo = messageRefRepo;
         _userLogService = userLogService;
+        _botOptions = botOptions.Value;
     }
 
     public async Task Handle(GuildBanAddedNotification notification, CancellationToken cancellationToken)
@@ -90,6 +93,8 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         var deletedMessage = args.Message;
 
         if (channel.IsPrivate) return;
+
+        if (channel.Id == _botOptions.ActivityLogChannelId || channel.Id == _botOptions.ExtendedActivityLogChannelId) return;
 
         var message = await ResolveMessage(deletedMessage);
 
