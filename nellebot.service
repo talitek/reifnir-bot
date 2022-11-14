@@ -10,6 +10,8 @@ WorkingDirectory=/home/nellebot-user/nellebot
 Environment=DOTNET_ENVIRONMENT=Production
 Restart=on-failure
 RestartSec=1s
+# Restart daily
+RuntimeMaxSec=86400
 
 [Install]
 WantedBy=default.target
