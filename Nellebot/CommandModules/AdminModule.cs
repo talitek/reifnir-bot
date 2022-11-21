@@ -83,6 +83,14 @@ namespace Nellebot.CommandModules
             await ctx.RespondAsync(sb.ToString());
         }
 
+        [Command("add-missing-members")]
+        public Task AddMissingMemberRoles(CommandContext ctx)
+        {
+            _commandQueue.Enqueue(new AddMissingMemberRolesRequest(ctx));
+
+            return Task.CompletedTask;
+        }
+
         [Command("set-greeting-message")]
         public Task SetGreetingMessage(CommandContext ctx, [RemainingText] string message)
         {
