@@ -1,9 +1,5 @@
 ﻿using DSharpPlus.Entities;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Nellebot.Utils
 {
@@ -16,9 +12,11 @@ namespace Nellebot.Utils
 
         public static DiscordEmbed BuildSimpleEmbed(string title, string message, int color)
         {
+            var truncatedMessage = message.Substring(0, Math.Min(message.Length, DiscordConstants.MaxEmbedContentLength));
+
             var eb = new DiscordEmbedBuilder()
                 .WithTitle(title)
-                .WithDescription(message)
+                .WithDescription(truncatedMessage)
                 .WithColor(color);
 
             return eb.Build();
