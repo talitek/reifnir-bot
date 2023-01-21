@@ -12,12 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-      
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 6.0.x
+    - uses: actions/checkout@v3
 
     - name: Replace tokens in appsettings
       uses: cschleiden/replace-tokens@v1
@@ -30,11 +25,16 @@ jobs:
         BOT_TOKEN: ${{secrets.BOT_TOKEN}}
         ORDBOK_API_KEY: ${{secrets.ORDBOK_API_KEY}}
     
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 6.0.x
+
     - name: Test
       run: dotnet test
     
     - name: Publish
-      run: dotnet publish -c Release -r linux-x64 -o deploy --self-contained false
+      run: dotnet publish -c Release -r linux-x64 -o deploy --no-self-contained
 
     - name: Generate database migration script
       if: github.event.inputs.updateDatabase == 'auto' || github.event.inputs.updateDatabase == 'manual'

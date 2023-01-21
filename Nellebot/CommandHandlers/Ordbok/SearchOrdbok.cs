@@ -108,11 +108,11 @@ namespace Nellebot.CommandHandlers.Ordbok
                 if (!attachTemplate)
                 {
                     eb = eb.WithImageUrl($"attachment://{result.ImageFileName}");
-                    mb = mb.WithFile(result.ImageFileName, result.ImageFileStream);
+                    mb = mb.AddFile(result.ImageFileName, result.ImageFileStream);
                 }
                 else
                 {
-                    mb = mb.WithFile(result.HtmlFileStream);
+                    mb = mb.AddFile(result.HtmlFileStream);
                 }
             }
             catch (Exception ex)
