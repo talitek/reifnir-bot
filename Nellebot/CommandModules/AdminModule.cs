@@ -1,4 +1,9 @@
-﻿using DSharpPlus;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
@@ -8,123 +13,113 @@ using Nellebot.Attributes;
 using Nellebot.CommandHandlers;
 using Nellebot.Common.Extensions;
 using Nellebot.Workers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Nellebot.CommandModules
+namespace Nellebot.CommandModules;
+
+[BaseCommandCheck]
+[RequireOwnerOrAdmin]
+[Group("admin")]
+[ModuleLifespan(ModuleLifespan.Transient)]
+public class AdminModule : BaseCommandModule
 {
-    [BaseCommandCheck, RequireOwnerOrAdmin]
-    [Group("admin")]
-    [ModuleLifespan(ModuleLifespan.Transient)]
-    public class AdminModule : BaseCommandModule
+    private readonly ILogger<AdminModule> _logger;
+    private readonly CommandQueueChannel _commandQueue;
+    private readonly CommandParallelQueueChannel _commandParallelQueue;
+    private readonly BotOptions _options;
+
+    public AdminModule(
+        ILogger<AdminModule> logger,
+        IOptions<BotOptions> options,
+        CommandQueueChannel commandQueue,
+        CommandParallelQueueChannel commandParallelQueue)
     {
-        private readonly ILogger<AdminModule> _logger;
-        private readonly CommandQueue _commandQueue;
-        private readonly CommandParallelQueue _commandParallelQueue;
-        private readonly BotOptions _options;
+        _logger = logger;
+        _commandQueue = commandQueue;
+        _commandParallelQueue = commandParallelQueue;
+        _options = options.Value;
+    }
 
-        public AdminModule(
-            ILogger<AdminModule> logger,
-            IOptions<BotOptions> options,
-            CommandQueue commandQueue,
-            CommandParallelQueue commandParallelQueue)
+    [Command("nickname")]
+    public Task ChangeNickname(CommandContext ctx, [RemainingText] string name)
+    {
+        name = name.RemoveQuotes();
+
+        return ctx.Guild.CurrentMember.ModifyAsync((props) =>
         {
-            _logger = logger;
-            _commandQueue = commandQueue;
-            _commandParallelQueue = commandParallelQueue;
-            _options = options.Value;
+            props.Nickname = name;
+        });
+    }
+
+    [Command("list-award-channels")]
+    public async Task ListCookieChannels(CommandContext ctx)
+    {
+        ulong[] groupIds = _options.AwardVoteGroupIds;
+
+        if (groupIds == null)
+        {
+            return;
         }
 
-        [Command("nickname")]
-        public async Task ChangeNickname(CommandContext ctx, [RemainingText] string name)
+        var sb = new StringBuilder();
+
+        IReadOnlyList<DiscordChannel> guildChannels = await ctx.Guild.GetChannelsAsync();
+
+        var channelGroups = new List<Tuple<string, List<DiscordChannel>>>();
+
+        IEnumerable<DiscordChannel> categoryChannels = guildChannels
+            .Where(c => c.Type == ChannelType.Category
+                        && groupIds.Contains(c.Id));
+
+        foreach (DiscordChannel? category in categoryChannels)
         {
-            name = name.RemoveQuotes();
+            sb.AppendLine($"**{category.Name}**");
 
-            await ctx.Guild.CurrentMember.ModifyAsync((props) =>
+            IEnumerable<DiscordChannel> textChannelsForCategory = guildChannels.Where(c => c.Type == ChannelType.Text && c.ParentId == category.Id);
+
+            foreach (DiscordChannel? channel in textChannelsForCategory)
             {
-                props.Nickname = name;
-            });
-        }
-
-        [Command("list-award-channels")]
-        public async Task ListCookieChannels(CommandContext ctx)
-        {
-            var groupIds = _options.AwardVoteGroupIds;
-
-            if (groupIds == null) return;
-
-            var sb = new StringBuilder();
-
-            var guildChannels = await ctx.Guild.GetChannelsAsync();
-
-            var channelGroups = new List<Tuple<string, List<DiscordChannel>>>();
-
-            var categoryChannels = guildChannels
-                .Where(c => c.Type == ChannelType.Category
-                            && groupIds.Contains(c.Id));
-
-            foreach (var category in categoryChannels)
-            {
-                sb.AppendLine($"**{category.Name}**");
-
-                var textChannelsForCategory = guildChannels.Where(c => c.Type == ChannelType.Text && c.ParentId == category.Id);
-
-                foreach (var channel in textChannelsForCategory)
-                {
-                    sb.AppendLine($"#{channel.Name}");
-                }
-
-                sb.AppendLine();
+                sb.AppendLine($"#{channel.Name}");
             }
 
-            await ctx.RespondAsync(sb.ToString());
+            sb.AppendLine();
         }
 
-        [Command("add-missing-members")]
-        public Task AddMissingMemberRoles(CommandContext ctx)
-        {
-            _commandQueue.Enqueue(new AddMissingMemberRolesRequest(ctx));
+        await ctx.RespondAsync(sb.ToString());
+    }
 
-            return Task.CompletedTask;
-        }
+    [Command("add-missing-members")]
+    public Task AddMissingMemberRoles(CommandContext ctx)
+    {
+        return _commandQueue.Writer.WriteAsync(new AddMissingMemberRolesRequest(ctx)).AsTask();
+    }
 
-        [Command("set-greeting-message")]
-        public Task SetGreetingMessage(CommandContext ctx, [RemainingText] string message)
-        {
-            _commandQueue.Enqueue(new SetGreetingMessageRequest(ctx, message));
+    [Command("set-greeting-message")]
+    public Task SetGreetingMessage(CommandContext ctx, [RemainingText] string message)
+    {
+        return _commandQueue.Writer.WriteAsync(new SetGreetingMessageRequest(ctx, message)).AsTask();
+    }
 
-            return Task.CompletedTask;
-        }
+    [Command("populate-messages")]
+    public Task PopulateMessages(CommandContext ctx)
+    {
+        return _commandParallelQueue.Writer.WriteAsync(new PopulateMessagesRequest(ctx)).AsTask();
+    }
 
-        [Command("populate-messages")]
-        public Task PopulateMessages(CommandContext ctx)
-        {
-            _commandParallelQueue.Enqueue(new PopulateMessagesRequest(ctx));
+    [Command("populate-user-log")]
+    public Task PopulateUserLog(CommandContext ctx)
+    {
+        return _commandParallelQueue.Writer.WriteAsync(new PopulateUserLogRequest(ctx)).AsTask();
+    }
 
-            return Task.CompletedTask;
-        }
+    [Command("delete-spam-after")]
+    public async Task DeleteSpam(CommandContext ctx, ulong channelId, ulong messageId)
+    {
+        DiscordChannel channel = ctx.Guild.GetChannel(channelId);
 
-        [Command("populate-user-log")]
-        public Task PopulateUserLog(CommandContext ctx)
-        {
-            _commandParallelQueue.Enqueue(new PopulateUserLogRequest(ctx));
+        IReadOnlyList<DiscordMessage> messagesToDelete = await channel.GetMessagesAfterAsync(messageId, 1000);
 
-            return Task.CompletedTask;
-        }
+        await channel.DeleteMessagesAsync(messagesToDelete);
 
-        [Command("delete-spam-after")]
-        public async Task DeleteSpam(CommandContext ctx, ulong channelId, ulong messageId)
-        {
-            var channel = ctx.Guild.GetChannel(channelId);
-
-            var messagesToDelete = await channel.GetMessagesAfterAsync(messageId, 1000);
-
-            await channel.DeleteMessagesAsync(messagesToDelete);
-
-            await ctx.RespondAsync($"Deleted {messagesToDelete.Count} messages");
-        }
+        await ctx.RespondAsync($"Deleted {messagesToDelete.Count} messages");
     }
 }

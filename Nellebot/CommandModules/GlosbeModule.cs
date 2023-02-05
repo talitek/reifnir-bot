@@ -1,82 +1,73 @@
-﻿using DSharpPlus.CommandsNext;
+﻿using System.Threading.Tasks;
+using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using Nellebot.Attributes;
 using Nellebot.CommandHandlers.Glosbe;
 using Nellebot.Common.Models.Glosbe;
 using Nellebot.Workers;
-using System.Threading.Tasks;
 
-namespace Nellebot.CommandModules
+namespace Nellebot.CommandModules;
+
+[BaseCommandCheck]
+[ModuleLifespan(ModuleLifespan.Transient)]
+public class GlosbeModule : BaseCommandModule
 {
-    [BaseCommandCheck]
-    [ModuleLifespan(ModuleLifespan.Transient)]
-    public class GlosbeModule : BaseCommandModule
+    private readonly CommandQueueChannel _commandQueue;
+
+    public GlosbeModule(CommandQueueChannel commandQueue)
     {
-        private readonly CommandQueue _commandQueue;
+        _commandQueue = commandQueue;
+    }
 
-        public GlosbeModule(CommandQueue commandQueue)
+    [Command("nb-en")]
+    public Task TranslateBokmalToEnglish(CommandContext ctx, [RemainingText] string query)
+    {
+        var searchGlosbeRequest = new SearchGlosbeRequest(ctx)
         {
-            _commandQueue = commandQueue;
-        }
+            Query = query,
+            OriginalLanguage = GlosbeLanguageMap.Bokmal,
+            TargetLanguage = GlosbeLanguageMap.English,
+        };
 
-        [Command("nb-en")]
-        public Task TranslateBokmalToEnglish(CommandContext ctx, [RemainingText] string query)
+        return _commandQueue.Writer.WriteAsync(searchGlosbeRequest).AsTask();
+    }
+
+    [Command("en-nb")]
+    public Task TranslateEnglishToBokmal(CommandContext ctx, [RemainingText] string query)
+    {
+        var searchGlosbeRequest = new SearchGlosbeRequest(ctx)
         {
-            var searchGlosbeRequest = new SearchGlosbeRequest(ctx)
-            {
-                Query = query,
-                OriginalLanguage = GlosbeLanguageMap.Bokmal,
-                TargetLanguage = GlosbeLanguageMap.English
-            };
+            Query = query,
+            OriginalLanguage = GlosbeLanguageMap.English,
+            TargetLanguage = GlosbeLanguageMap.Bokmal,
+        };
 
-            _commandQueue.Enqueue(searchGlosbeRequest);
+        return _commandQueue.Writer.WriteAsync(searchGlosbeRequest).AsTask();
+    }
 
-            return Task.CompletedTask;
-        }
-
-        [Command("en-nb")]
-        public Task TranslateEnglishToBokmal(CommandContext ctx, [RemainingText] string query)
+    [Command("nn-en")]
+    public Task TranslateNynorskToEnglish(CommandContext ctx, [RemainingText] string query)
+    {
+        var searchGlosbeRequest = new SearchGlosbeRequest(ctx)
         {
-            var searchGlosbeRequest = new SearchGlosbeRequest(ctx)
-            {
-                Query = query,
-                OriginalLanguage = GlosbeLanguageMap.English,
-                TargetLanguage = GlosbeLanguageMap.Bokmal
-            };
+            Query = query,
+            OriginalLanguage = GlosbeLanguageMap.Nynorsk,
+            TargetLanguage = GlosbeLanguageMap.English,
+        };
 
-            _commandQueue.Enqueue(searchGlosbeRequest);
+        return _commandQueue.Writer.WriteAsync(searchGlosbeRequest).AsTask();
+    }
 
-            return Task.CompletedTask;
-        }
-
-        [Command("nn-en")]
-        public Task TranslateNynorskToEnglish(CommandContext ctx, [RemainingText] string query)
+    [Command("en-nn")]
+    public Task TranslateEnglishToNynorsk(CommandContext ctx, [RemainingText] string query)
+    {
+        var searchGlosbeRequest = new SearchGlosbeRequest(ctx)
         {
-            var searchGlosbeRequest = new SearchGlosbeRequest(ctx)
-            {
-                Query = query,
-                OriginalLanguage = GlosbeLanguageMap.Nynorsk,
-                TargetLanguage = GlosbeLanguageMap.English
-            };
+            Query = query,
+            OriginalLanguage = GlosbeLanguageMap.English,
+            TargetLanguage = GlosbeLanguageMap.Nynorsk,
+        };
 
-            _commandQueue.Enqueue(searchGlosbeRequest);
-
-            return Task.CompletedTask;
-        }
-
-        [Command("en-nn")]
-        public Task TranslateEnglishToNynorsk(CommandContext ctx, [RemainingText] string query)
-        {
-            var searchGlosbeRequest = new SearchGlosbeRequest(ctx)
-            {
-                Query = query,
-                OriginalLanguage = GlosbeLanguageMap.English,
-                TargetLanguage = GlosbeLanguageMap.Nynorsk
-            };
-
-            _commandQueue.Enqueue(searchGlosbeRequest);
-
-            return Task.CompletedTask;
-        }
+        return _commandQueue.Writer.WriteAsync(searchGlosbeRequest).AsTask();
     }
 }

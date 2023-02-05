@@ -1,45 +1,46 @@
-﻿using MediatR;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using MediatR;
 using Nellebot.Services;
 using Nellebot.Services.Loggers;
 using Nellebot.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Nellebot.NotificationHandlers
+namespace Nellebot.NotificationHandlers;
+
+public class GreetingHandler :
+    INotificationHandler<GuildMemberAddedNotification>,
+    INotificationHandler<GuildMemberRemovedNotification>
 {
-    public class GreetingHandler :
-        INotificationHandler<GuildMemberAddedNotification>,
-        INotificationHandler<GuildMemberRemovedNotification>
+    private readonly DiscordLogger _discordLogger;
+    private readonly BotSettingsService _botSettingsService;
+
+    public GreetingHandler(DiscordLogger discordLogger, BotSettingsService botSettingsService)
     {
-        private readonly DiscordLogger _discordLogger;
-        private readonly BotSettingsService _botSettingsService;
+        _discordLogger = discordLogger;
+        _botSettingsService = botSettingsService;
+    }
 
-        public GreetingHandler(DiscordLogger discordLogger, BotSettingsService botSettingsService)
+    public async Task Handle(GuildMemberAddedNotification notification, CancellationToken cancellationToken)
+    {
+        string memberMention = notification.EventArgs.Member.Mention;
+
+        string? greetingMessage = await _botSettingsService.GetGreetingsMessage(memberMention);
+
+        if (greetingMessage == null)
         {
-            _discordLogger = discordLogger;
-            _botSettingsService = botSettingsService;
+            throw new Exception("Could not load greeting message");
         }
 
-        public async Task Handle(GuildMemberAddedNotification notification, CancellationToken cancellationToken)
-        {
-            var memberMention = notification.EventArgs.Member.Mention;
+        _discordLogger.LogGreetingMessage(greetingMessage);
+    }
 
-            var greetingMessage = await _botSettingsService.GetGreetingsMessage(memberMention);
+    public Task Handle(GuildMemberRemovedNotification notification, CancellationToken cancellationToken)
+    {
+        string memberName = notification.EventArgs.Member.GetNicknameOrDisplayName();
 
-            if (greetingMessage == null) throw new Exception("Could not load greeting message");
+        _discordLogger.LogGreetingMessage($"**{memberName}** has left the server. Goodbye!");
 
-            await _discordLogger.LogGreetingMessage(greetingMessage);
-        }
-
-        public async Task Handle(GuildMemberRemovedNotification notification, CancellationToken cancellationToken)
-        {
-            var memberName = notification.EventArgs.Member.GetNicknameOrDisplayName();
-
-            await _discordLogger.LogGreetingMessage($"**{memberName}** has left the server. Goodbye!");
-        }
+        return Task.CompletedTask;
     }
 }

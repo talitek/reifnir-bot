@@ -50,13 +50,14 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
 
         var timeSinceLastHeartbeat = DateTimeOffset.UtcNow - lastHeartbeat;
 
-        if (timeSinceLastHeartbeat.TotalMinutes > 1) {
+        if (timeSinceLastHeartbeat.TotalMinutes > 1)
+        {
             var message = $"Client ready or resumed. Last heartbeat: {lastHeartbeat.ToIsoDateTimeString()}.";
             message += $" More than {timeSinceLastHeartbeat.TotalMinutes:0.00} minutes since last heartbeat.";
 
             _logger.LogDebug(message);
 
-            await _discordLogger.LogExtendedActivityMessage(message.ToString());
+            _discordLogger.LogExtendedActivityMessage(message.ToString());
         }
 
         if (_options.AutoPopulateMessagesOnReadyEnabled)
@@ -66,7 +67,7 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
             if (createdCount > 0)
             {
                 _logger.LogDebug($"Populated {createdCount} message refs");
-                await _discordLogger.LogExtendedActivityMessage($"Populated {createdCount} message refs");
+                _discordLogger.LogExtendedActivityMessage($"Populated {createdCount} message refs");
             }
         }
 

@@ -154,7 +154,7 @@ namespace Nellebot.EventHandlers
 
             if (shouldLogDiscordError)
             {
-                await _discordErrorLogger.LogCommandError(ctx, exception.ToString());
+                _discordErrorLogger.LogCommandError(ctx, exception.ToString());
             }
 
             _logger.LogWarning($"Message: {message.Content}\r\nCommand failed: {exception})");
