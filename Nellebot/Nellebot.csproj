@@ -15,7 +15,7 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.8" />
     <PackageReference Include="PuppeteerSharp" Version="7.1.0" />
-    <PackageReference Include="Scriban" Version="5.5.1" />
+    <PackageReference Include="Scriban" Version="5.5.2" />
   </ItemGroup>
 
   <ItemGroup>
