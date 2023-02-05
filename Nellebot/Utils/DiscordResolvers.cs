@@ -43,21 +43,23 @@ namespace Nellebot.Utils
             return TryResolveResult<DiscordRole>.FromValue(discordRole);
         }
 
-        public async Task<DiscordChannel?> ResolveChannel(DiscordGuild guild, ulong channelId)
+        public Task<DiscordChannel?> ResolveChannel(DiscordGuild guild, ulong channelId)
         {
             var channelExists = guild.Channels.TryGetValue(channelId, out var discordChannel);
 
-            if (channelExists) return discordChannel;
+            if (channelExists) return Task.FromResult(discordChannel);
 
             try
             {
-                return guild.GetChannel(channelId) ?? throw new ArgumentException($"Missing channel with id {channelId}");
+                var channel = guild.GetChannel(channelId) ?? throw new ArgumentException($"Missing channel with id {channelId}");
+
+                return Task.FromResult<DiscordChannel?>(guild.GetChannel(channelId));
             }
             catch (Exception ex)
             {
                 _discordErrorLogger.LogError(ex, "Missing channel");
 
-                return null;
+                return Task.FromResult<DiscordChannel?>(null);
             }
         }
 

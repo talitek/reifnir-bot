@@ -19,7 +19,7 @@ jobs:
       with:
         tokenPrefix: '__'
         tokenSuffix: '__'
-        files: 'Nellebot/appsettings.Production.json'
+        files: 'Nellebot/appsettings.json'
       env:
         CONNECTION_STRING: ${{secrets.DB_CONNECTION_STRING}}
         BOT_TOKEN: ${{secrets.BOT_TOKEN}}
