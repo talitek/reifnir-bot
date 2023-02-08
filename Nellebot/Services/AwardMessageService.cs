@@ -39,7 +39,7 @@ namespace Nellebot.Services
             _options = options.Value;
         }
 
-        public async Task HandleAwardChange(MessageAwardQueueItem awardItem)
+        public async Task HandleAwardChange(MessageAwardItem awardItem)
         {
             // TODO optimize by resolving full message only if it will be posted
             var partialMessage = awardItem.DiscordMessage;
@@ -106,7 +106,7 @@ namespace Nellebot.Services
             }
         }
 
-        public async Task HandleAwardMessageUpdated(MessageAwardQueueItem awardItem)
+        public async Task HandleAwardMessageUpdated(MessageAwardItem awardItem)
         {
             var partialMessage = awardItem.DiscordMessage;
 
@@ -159,7 +159,7 @@ namespace Nellebot.Services
         }
 
 
-        public async Task HandleAwardMessageDeleted(MessageAwardQueueItem awardItem)
+        public async Task HandleAwardMessageDeleted(MessageAwardItem awardItem)
         {
             var messageId = awardItem.DiscordMessageId;
 
@@ -187,7 +187,7 @@ namespace Nellebot.Services
             await _awardMessageRepo.DeleteAwardMessage(awardMessage.Id);
         }
 
-        public async Task HandleAwardedMessageDeleted(MessageAwardQueueItem awardItem)
+        public async Task HandleAwardedMessageDeleted(MessageAwardItem awardItem)
         {
             var messageId = awardItem.DiscordMessageId;
 
@@ -297,7 +297,7 @@ namespace Nellebot.Services
                             messageContentSb.AppendLine($"`Video attachment: {attachment.FileName}`");
                             break;
                         case string s when s.StartsWith("image"):
-                            if(attachment.FileName.StartsWith(SpoilerImageAttachmentPrefix))
+                            if (attachment.FileName.StartsWith(SpoilerImageAttachmentPrefix))
                             {
                                 messageContentSb.AppendLine();
                                 messageContentSb.AppendLine($"`Spoiler image hidden. Use the jump link to view it.`");
@@ -369,7 +369,7 @@ namespace Nellebot.Services
             }
             catch (Exception ex)
             {
-                await _discordErrorLogger.LogError(ex, nameof(GetAwardReactionCount));
+                _discordErrorLogger.LogError(ex, nameof(GetAwardReactionCount));
             }
 
             return awardReactionCount;

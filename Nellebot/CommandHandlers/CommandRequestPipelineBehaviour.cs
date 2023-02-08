@@ -47,7 +47,7 @@ namespace Nellebot.CommandHandlers
 
             await ctx.RespondAsync(ex.Message);
 
-            await _discordErrorLogger.LogCommandError(ctx, ex.ToString());
+            _discordErrorLogger.LogCommandError(ctx, ex.ToString());
 
             _logger.LogError(ex, nameof(HandeCommandRequestException));
         }

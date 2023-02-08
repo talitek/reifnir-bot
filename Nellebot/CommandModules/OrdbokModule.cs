@@ -1,82 +1,72 @@
-﻿using DSharpPlus.CommandsNext;
+﻿using System.Threading.Tasks;
+using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using Nellebot.Attributes;
 using Nellebot.CommandHandlers.Ordbok;
 using Nellebot.Common.Models.Ordbok;
 using Nellebot.Workers;
-using System.Threading.Tasks;
 
-namespace Nellebot.CommandModules
+namespace Nellebot.CommandModules;
+
+[BaseCommandCheck]
+[ModuleLifespan(ModuleLifespan.Transient)]
+public class OrdbokModule : BaseCommandModule
 {
-    [BaseCommandCheck]
-    [ModuleLifespan(ModuleLifespan.Transient)]
-    public class OrdbokModule : BaseCommandModule
+    private readonly CommandQueueChannel _commandQueue;
+
+    public OrdbokModule(CommandQueueChannel commandQueue)
     {
-        private readonly CommandQueue _commandQueue;
+        _commandQueue = commandQueue;
+    }
 
-        public OrdbokModule(CommandQueue commandQueue)
+    [Command("bm")]
+    [Aliases("nb")]
+    public Task OrdbokSearchBokmal(CommandContext ctx, [RemainingText] string query)
+    {
+        var searchOrdbokRequest = new SearchOrdbokRequest(ctx)
         {
-            _commandQueue = commandQueue;
-        }
+            Dictionary = OrdbokDictionaryMap.Bokmal,
+            Query = query,
+        };
 
-        [Command("bm")]
-        [Aliases("nb")]
-        public Task OrdbokSearchBokmal(CommandContext ctx, [RemainingText] string query)
+        return _commandQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
+    }
+
+    [Command("nn")]
+    public Task OrdbokSearchNynorsk(CommandContext ctx, [RemainingText] string query)
+    {
+        var searchOrdbokRequest = new SearchOrdbokRequest(ctx)
         {
-            var searchOrdbokRequest = new SearchOrdbokRequest(ctx)
-            {
-                Dictionary = OrdbokDictionaryMap.Bokmal,
-                Query = query
-            };
+            Dictionary = OrdbokDictionaryMap.Nynorsk,
+            Query = query,
+        };
 
-            _commandQueue.Enqueue(searchOrdbokRequest);
+        return _commandQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
+    }
 
-            return Task.CompletedTask;
-        }
-
-        [Command("nn")]
-        public Task OrdbokSearchNynorsk(CommandContext ctx, [RemainingText] string query)
+    [Command("bm-t")]
+    public Task OrdbokSearchBokmalDebugTemplate(CommandContext ctx, [RemainingText] string query)
+    {
+        var searchOrdbokRequest = new SearchOrdbokRequest(ctx)
         {
-            var searchOrdbokRequest = new SearchOrdbokRequest(ctx)
-            {
-                Dictionary = OrdbokDictionaryMap.Nynorsk,
-                Query = query
-            };
+            Dictionary = OrdbokDictionaryMap.Bokmal,
+            Query = query,
+            AttachTemplate = true,
+        };
 
-            _commandQueue.Enqueue(searchOrdbokRequest);
+        return _commandQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
+    }
 
-            return Task.CompletedTask;
-        }
-
-        [Command("bm-t")]
-        public Task OrdbokSearchBokmalDebugTemplate(CommandContext ctx, [RemainingText] string query)
+    [Command("nn-t")]
+    public Task OrdbokSearchNynorskDebugTemplate(CommandContext ctx, [RemainingText] string query)
+    {
+        var searchOrdbokRequest = new SearchOrdbokRequest(ctx)
         {
-            var searchOrdbokRequest = new SearchOrdbokRequest(ctx)
-            {
-                Dictionary = OrdbokDictionaryMap.Bokmal,
-                Query = query,
-                AttachTemplate = true
-            };
+            Dictionary = OrdbokDictionaryMap.Nynorsk,
+            Query = query,
+            AttachTemplate = true,
+        };
 
-            _commandQueue.Enqueue(searchOrdbokRequest);
-
-            return Task.CompletedTask;
-        }
-
-        [Command("nn-t")]
-        public Task OrdbokSearchNynorskDebugTemplate(CommandContext ctx, [RemainingText] string query)
-        {
-            var searchOrdbokRequest = new SearchOrdbokRequest(ctx)
-            {
-                Dictionary = OrdbokDictionaryMap.Nynorsk,
-                Query = query,
-                AttachTemplate = true
-            };
-
-            _commandQueue.Enqueue(searchOrdbokRequest);
-
-            return Task.CompletedTask;
-        }
-
+        return _commandQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
     }
 }

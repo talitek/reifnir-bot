@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Channels;
 using DSharpPlus;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -16,103 +18,143 @@ using Nellebot.Services.Loggers;
 using Nellebot.Services.Ordbok;
 using Nellebot.Utils;
 using Nellebot.Workers;
-using System;
 
-namespace Nellebot
+namespace Nellebot;
+
+public class Program
 {
-    public class Program
+    public static void Main(string[] args)
     {
-        public static void Main(string[] args)
+        CreateHostBuilder(args).Build().Run();
+    }
+
+    public static IHostBuilder CreateHostBuilder(string[] args)
+    {
+        return Host.CreateDefaultBuilder(args)
+            .ConfigureServices((hostContext, services) =>
+            {
+                services.Configure<BotOptions>(hostContext.Configuration.GetSection(BotOptions.OptionsKey));
+
+                services.AddHttpClient<OrdbokHttpClient>();
+
+                services.AddMediatR(typeof(Program));
+                services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CommandRequestPipelineBehaviour<,>));
+                services.AddTransient<NotificationPublisher>();
+
+                services.AddSingleton<SharedCache>();
+                services.AddSingleton<ILocalizationService, LocalizationService>();
+                services.AddSingleton<PuppeteerFactory>();
+
+                AddWorkers(services);
+
+                AddChannels(services);
+
+                AddBotEventHandlers(services);
+
+                AddInternalServices(services);
+
+                AddRepositories(services);
+
+                AddDbContext(hostContext, services);
+
+                AddDiscordClient(hostContext, services);
+            })
+            .UseSystemd();
+    }
+
+    private static void AddDiscordClient(HostBuilderContext hostContext, IServiceCollection services)
+    {
+        services.AddSingleton((_) =>
         {
-            CreateHostBuilder(args).Build().Run();
-        }
+            string defaultLogLevel = hostContext.Configuration.GetValue<string>("Logging:LogLevel:Default");
+            string botToken = hostContext.Configuration.GetValue<string>("Nellebot:BotToken");
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureServices((hostContext, services) =>
-                {
-                    services.Configure<BotOptions>(hostContext.Configuration.GetSection(BotOptions.OptionsKey));
+            LogLevel logLevel = Enum.Parse<LogLevel>(defaultLogLevel);
 
-                    services.AddHttpClient<OrdbokHttpClient>();
+            var socketConfig = new DiscordConfiguration
+            {
+                MinimumLogLevel = logLevel,
+                TokenType = TokenType.Bot,
+                Token = botToken,
+                Intents = DiscordIntents.All,
+            };
 
-                    services.AddMediatR(typeof(Program));
-                    services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CommandRequestPipelineBehaviour<,>));
-                    services.AddTransient<NotificationPublisher>();
+            var client = new DiscordClient(socketConfig);
 
-                    services.AddSingleton<SharedCache>();
-                    services.AddSingleton<ILocalizationService, LocalizationService>();
-                    services.AddSingleton<PuppeteerFactory>();
+            return client;
+        });
+    }
 
-                    services.AddHostedService<BotWorker>();
-                    services.AddHostedService<CommandQueueWorker>();
-                    services.AddHostedService<CommandParallelQueueWorker>();
-                    services.AddHostedService<EventQueueWorker>();
-                    services.AddHostedService<MessageAwardQueueWorker>();
+    private static void AddDbContext(HostBuilderContext hostContext, IServiceCollection services)
+    {
+        services.AddDbContext<BotDbContext>(
+            builder =>
+            {
+                string dbConnString = hostContext.Configuration.GetValue<string>("Nellebot:ConnectionString");
+                string logLevel = hostContext.Configuration.GetValue<string>("Logging:LogLevel:Default");
 
-                    services.AddSingleton<CommandQueue>();
-                    services.AddSingleton<CommandParallelQueue>();
-                    services.AddSingleton<EventQueue>();
-                    services.AddSingleton<MessageAwardQueue>();
+                builder.EnableSensitiveDataLogging(logLevel == "Debug");
 
-                    services.AddSingleton<AwardEventHandler>();
-                    services.AddSingleton<CommandEventHandler>();
+                builder.UseNpgsql(dbConnString);
+            },
+            ServiceLifetime.Transient,
+            ServiceLifetime.Singleton);
+    }
 
-                    services.AddTransient<AuthorizationService>();
-                    services.AddTransient<IDiscordErrorLogger, DiscordErrorLogger>();
-                    services.AddTransient<DiscordLogger>();
-                    services.AddTransient<UserRoleService>();
-                    services.AddTransient<RoleService>();
-                    services.AddTransient<AwardMessageService>();
-                    services.AddTransient<DiscordResolver>();
-                    services.AddTransient<ScribanTemplateLoader>();
-                    services.AddTransient<OrdbokModelMapper>();
-                    services.AddTransient<IOrdbokContentParser, OrdbokContentParser>();
-                    services.AddTransient<HtmlToImageService>();
-                    services.AddTransient<WkHtmlToImageClient>();
-                    services.AddTransient<GlosbeClient>();
-                    services.AddTransient<GlosbeModelMapper>();
-                    services.AddTransient<BotSettingsService>();
-                    services.AddTransient<MessageRefsService>();
-                    services.AddTransient<UserLogService>();
+    private static void AddRepositories(IServiceCollection services)
+    {
+        services.AddTransient<IUserRoleRepository, UserRoleRepository>();
+        services.AddTransient<AwardMessageRepository>();
+        services.AddTransient<BotSettingsRepository>();
+        services.AddTransient<MessageRefRepository>();
+        services.AddTransient<UserLogRepository>();
+    }
 
-                    services.AddTransient<IUserRoleRepository, UserRoleRepository>();
-                    services.AddTransient<AwardMessageRepository>();
-                    services.AddTransient<BotSettingsRepository>();
-                    services.AddTransient<MessageRefRepository>();
-                    services.AddTransient<UserLogRepository>();
+    private static void AddInternalServices(IServiceCollection services)
+    {
+        services.AddTransient<AuthorizationService>();
+        services.AddTransient<IDiscordErrorLogger, DiscordErrorLogger>();
+        services.AddTransient<DiscordLogger>();
+        services.AddTransient<UserRoleService>();
+        services.AddTransient<RoleService>();
+        services.AddTransient<AwardMessageService>();
+        services.AddTransient<DiscordResolver>();
+        services.AddTransient<ScribanTemplateLoader>();
+        services.AddTransient<OrdbokModelMapper>();
+        services.AddTransient<IOrdbokContentParser, OrdbokContentParser>();
+        services.AddTransient<HtmlToImageService>();
+        services.AddTransient<WkHtmlToImageClient>();
+        services.AddTransient<GlosbeClient>();
+        services.AddTransient<GlosbeModelMapper>();
+        services.AddTransient<BotSettingsService>();
+        services.AddTransient<MessageRefsService>();
+        services.AddTransient<UserLogService>();
+    }
 
-                    services.AddDbContext<BotDbContext>(builder =>
-                    {
-                        var dbConnString = hostContext.Configuration.GetValue<string>("Nellebot:ConnectionString");
-                        var logLevel = hostContext.Configuration.GetValue<string>("Logging:LogLevel:Default");
+    private static void AddBotEventHandlers(IServiceCollection services)
+    {
+        services.AddSingleton<AwardEventHandler>();
+        services.AddSingleton<CommandEventHandler>();
+    }
 
-                        builder.EnableSensitiveDataLogging(logLevel == "Debug");
+    private static void AddChannels(IServiceCollection services)
+    {
+        const int channelSize = 1024;
 
-                        builder.UseNpgsql(dbConnString);
-                    },
-                    ServiceLifetime.Transient,
-                    ServiceLifetime.Singleton);
+        services.AddSingleton((_) => new CommandQueueChannel(Channel.CreateBounded<CommandRequest>(channelSize)));
+        services.AddSingleton((_) => new CommandParallelQueueChannel(Channel.CreateBounded<CommandRequest>(channelSize)));
+        services.AddSingleton((_) => new EventQueueChannel(Channel.CreateBounded<INotification>(channelSize)));
+        services.AddSingleton((_) => new DiscordLogChannel(Channel.CreateBounded<BaseDiscordLogItem>(channelSize)));
+        services.AddSingleton((_) => new MessageAwardQueueChannel(Channel.CreateBounded<MessageAwardItem>(channelSize)));
+    }
 
-                    services.AddSingleton((_) =>
-                    {
-                        var defaultLogLevel = hostContext.Configuration.GetValue<string>("Logging:LogLevel:Default");
-                        var botToken = hostContext.Configuration.GetValue<string>("Nellebot:BotToken");
-
-                        var logLevel = Enum.Parse<LogLevel>(defaultLogLevel);
-
-                        var socketConfig = new DiscordConfiguration
-                        {
-                            MinimumLogLevel = logLevel,
-                            TokenType = TokenType.Bot,
-                            Token = botToken,
-                            Intents = DiscordIntents.All
-                        };
-
-                        var client = new DiscordClient(socketConfig);
-
-                        return client;
-                    });
-                })
-                .UseSystemd();
+    private static void AddWorkers(IServiceCollection services)
+    {
+        services.AddHostedService<CommandQueueWorker>();
+        services.AddHostedService<CommandParallelQueueWorker>();
+        services.AddHostedService<EventQueueWorker>();
+        services.AddHostedService<DiscordLoggerWorker>();
+        services.AddHostedService<MessageAwardQueueWorker>();
+        services.AddHostedService<BotWorker>();
     }
 }

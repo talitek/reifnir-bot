@@ -104,7 +104,7 @@ namespace Nellebot.Services.Glosbe
                         translationItem.TranslationExample = new TranslationExample()
                         {
                             OriginalLanguageExample = translationExampleOriginalTextValue,
-                            TargetLanguageExample = translationExampleTargetTextValue
+                            TargetLanguageExample = translationExampleTargetTextValue,
                         };
                     }
 

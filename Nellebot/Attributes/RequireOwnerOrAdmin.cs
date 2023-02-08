@@ -1,51 +1,49 @@
-﻿using DSharpPlus.CommandsNext;
+﻿using System;
+using System.Threading.Tasks;
+using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
-using Microsoft.Extensions.Options;
 using Nellebot.DiscordModelMappers;
 using Nellebot.Services;
 using Nellebot.Services.Loggers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Nellebot.Attributes
+namespace Nellebot.Attributes;
+
+public class RequireOwnerOrAdmin : CheckBaseAttribute
 {
-    public class RequireOwnerOrAdmin : CheckBaseAttribute
+    public override Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
     {
-        public override async Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
+        object? authorizationServiceObj = ctx.Services.GetService(typeof(AuthorizationService));
+
+        if (authorizationServiceObj == null)
         {
-            var authorizationServiceObj = ctx.Services.GetService(typeof(AuthorizationService));
+            string error = "Could not fetch AuthorizationService";
 
-            if (authorizationServiceObj == null)
+            object? discordErrorLoggerObj = ctx.Services.GetService(typeof(IDiscordErrorLogger));
+
+            if (discordErrorLoggerObj == null)
             {
-                var error = "Could not fetch AuthorizationService";
-
-                var discordErrorLoggerObj = ctx.Services.GetService(typeof(DiscordErrorLogger));
-
-                if (discordErrorLoggerObj == null)
-                {
-                    throw new Exception("Could not fetch DiscordErrorLogger");
-                }
-
-                var discordErrorLogger = (DiscordErrorLogger)discordErrorLoggerObj;
-
-                await discordErrorLogger.LogError("WTF", error);
-
-                return false;
+                throw new Exception("Could not fetch DiscordErrorLogger");
             }
 
-            var authorizationService = (AuthorizationService)authorizationServiceObj;
+            var discordErrorLogger = (IDiscordErrorLogger)discordErrorLoggerObj;
 
-            if (ctx.Member == null) return false;
+            discordErrorLogger.LogError("WTF", error);
 
-            var appMember = DiscordMemberMapper.Map(ctx.Member);
-            var appApplication = DiscordApplicationMapper.Map(ctx.Client.CurrentApplication);
-
-            var result = authorizationService.IsOwnerOrAdmin(appMember, appApplication);
-
-            return result;
+            return Task.FromResult(false);
         }
+
+        var authorizationService = (AuthorizationService)authorizationServiceObj;
+
+        if (ctx.Member == null)
+        {
+            return Task.FromResult(false);
+        }
+
+        Common.AppDiscordModels.AppDiscordMember appMember = DiscordMemberMapper.Map(ctx.Member);
+        Common.AppDiscordModels.AppDiscordApplication appApplication = DiscordApplicationMapper.Map(ctx.Client.CurrentApplication);
+
+        bool result = authorizationService.IsOwnerOrAdmin(appMember, appApplication);
+
+        return Task.FromResult(result);
     }
 }

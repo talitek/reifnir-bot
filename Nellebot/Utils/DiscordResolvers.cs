@@ -43,21 +43,23 @@ namespace Nellebot.Utils
             return TryResolveResult<DiscordRole>.FromValue(discordRole);
         }
 
-        public async Task<DiscordChannel?> ResolveChannel(DiscordGuild guild, ulong channelId)
+        public Task<DiscordChannel?> ResolveChannel(DiscordGuild guild, ulong channelId)
         {
             var channelExists = guild.Channels.TryGetValue(channelId, out var discordChannel);
 
-            if (channelExists) return discordChannel;
+            if (channelExists) return Task.FromResult(discordChannel);
 
             try
             {
-                return guild.GetChannel(channelId) ?? throw new ArgumentException($"Missing channel with id {channelId}");
+                var channel = guild.GetChannel(channelId) ?? throw new ArgumentException($"Missing channel with id {channelId}");
+
+                return Task.FromResult<DiscordChannel?>(guild.GetChannel(channelId));
             }
             catch (Exception ex)
             {
-                await _discordErrorLogger.LogError(ex, "Missing channel");
+                _discordErrorLogger.LogError(ex, "Missing channel");
 
-                return null;
+                return Task.FromResult<DiscordChannel?>(null);
             }
         }
 
@@ -80,7 +82,7 @@ namespace Nellebot.Utils
             }
             catch (Exception ex)
             {
-                await _discordErrorLogger.LogError(ex, "Missing member");
+                _discordErrorLogger.LogError(ex, "Missing member");
 
                 return null;
             }
@@ -94,7 +96,7 @@ namespace Nellebot.Utils
             }
             catch (Exception ex)
             {
-                await _discordErrorLogger.LogError(ex, "Missing message");
+                _discordErrorLogger.LogError(ex, "Missing message");
 
                 return null;
             }
@@ -122,7 +124,7 @@ namespace Nellebot.Utils
 
             if (entry == null)
             {
-                await _discordErrorLogger.LogError("Missing audit entry", $"Missing audit entry of type {logType}");
+                _discordErrorLogger.LogError("Missing audit entry", $"Missing audit entry of type {logType}");
                 return null;
             }
 

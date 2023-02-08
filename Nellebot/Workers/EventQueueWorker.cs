@@ -1,88 +1,71 @@
-﻿using MediatR;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nellebot.NotificationHandlers;
 using Nellebot.Services;
 using Nellebot.Services.Loggers;
-using System;
-using System.Collections.Concurrent;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Nellebot.Workers
+namespace Nellebot.Workers;
+
+public class EventQueueWorker : BackgroundService
 {
-    public class EventQueue : ConcurrentQueue<INotification> { }
+    private readonly ILogger<EventQueueWorker> _logger;
+    private readonly EventQueueChannel _channel;
+    private readonly NotificationPublisher _publisher;
+    private readonly IDiscordErrorLogger _discordErrorLogger;
 
-    public class EventQueueWorker : BackgroundService
+    public EventQueueWorker(ILogger<EventQueueWorker> logger, EventQueueChannel channel, NotificationPublisher publisher, IDiscordErrorLogger discordErrorLogger)
     {
-        private const int IdleDelay = 1000;
-        private const int BusyDelay = 0;
+        _logger = logger;
+        _channel = channel;
+        _publisher = publisher;
+        _discordErrorLogger = discordErrorLogger;
+    }
 
-        private readonly ILogger<EventQueueWorker> _logger;
-        private readonly EventQueue _eventQueue;
-        private readonly NotificationPublisher _publisher;
-        private readonly IDiscordErrorLogger _discordErrorLogger;
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        INotification? @event = null;
 
-        public EventQueueWorker(
-            ILogger<EventQueueWorker> logger,
-            EventQueue eventQueue,
-            NotificationPublisher publisher,
-            IDiscordErrorLogger discordErrorLogger)
+        try
         {
-            _logger = logger;
-            _eventQueue = eventQueue;
-            _publisher = publisher;
-            _discordErrorLogger = discordErrorLogger;
-        }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            while (!stoppingToken.IsCancellationRequested)
+            await foreach (INotification notification in _channel.Reader.ReadAllAsync(stoppingToken))
             {
-                var nextDelay = IdleDelay;
+                @event = notification;
 
-                INotification? @event = null;
-
-                try
+                if (@event != null)
                 {
-                    if (_eventQueue.Count == 0 || !_eventQueue.TryDequeue(out @event))
-                    {
-                        await Task.Delay(nextDelay, stoppingToken);
-
-                        continue;
-                    }
-
-                    _logger.LogTrace($"Dequeued event. {_eventQueue.Count} left in queue");
+                    _logger.LogDebug("Dequeued event. {RemainingMessageCount} left in queue", _channel.Reader.Count);
 
                     await _publisher.Publish(@event, stoppingToken);
-
-                    nextDelay = BusyDelay;
                 }
-                catch (AggregateException ex)
-                {
-                    foreach (var innerEx in ex.InnerExceptions)
-                    {
-                        if (@event != null && @event is EventNotification notification)
-                        {
-                            if (notification.Ctx != null)
-                                await _discordErrorLogger.LogEventError(notification.Ctx, innerEx.ToString());
-                            else
-                                await _discordErrorLogger.LogError(innerEx, nameof(EventQueueWorker));
-                        }
-
-                        _logger.LogError(innerEx, nameof(EventQueueWorker));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if (ex is not TaskCanceledException)
-                    {
-                        _logger.LogError(ex, nameof(EventQueueWorker));
-                    }
-                }
-
-                await Task.Delay(nextDelay, stoppingToken);
             }
+        }
+        catch (TaskCanceledException)
+        {
+            _logger.LogDebug("{Worker} execution is being cancelled", nameof(EventQueueWorker));
+        }
+        catch (AggregateException ex)
+        {
+            foreach (Exception innerEx in ex.InnerExceptions)
+            {
+                if (@event is not null and EventNotification notification)
+                {
+                    // TODO remove await when error logger methods become synchronous
+                    if (notification.Ctx != null)
+                        _discordErrorLogger.LogEventError(notification.Ctx, innerEx.ToString());
+                    else
+                        _discordErrorLogger.LogError(innerEx, nameof(EventQueueWorker));
+                }
+
+                _logger.LogError(innerEx, nameof(EventQueueWorker));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, nameof(EventQueueWorker));
         }
     }
 }

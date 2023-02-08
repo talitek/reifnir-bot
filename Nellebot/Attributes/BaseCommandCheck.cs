@@ -1,66 +1,61 @@
-﻿using DSharpPlus.CommandsNext;
+﻿using System;
+using System.Threading.Tasks;
+using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Options;
 using Nellebot.Services.Loggers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Nellebot.Attributes
+namespace Nellebot.Attributes;
+
+/// <summary>
+/// Reject commands coming from DM or from other guild (if it exists).
+/// </summary>
+public class BaseCommandCheck : CheckBaseAttribute
 {
-    /// <summary>
-    /// Reject commands coming from DM or from other guild (if it exists)
-    /// </summary>
-    public class BaseCommandCheck : CheckBaseAttribute
+    public override Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
     {
-        public override async Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
+        object? botOptionsObj = ctx.Services.GetService(typeof(IOptions<BotOptions>));
+
+        if (botOptionsObj == null)
         {
-            var botOptionsObj = ctx.Services.GetService(typeof(IOptions<BotOptions>));
+            string error = "Could not fetch AuthorizationService";
 
-            if (botOptionsObj == null)
+            object? discordErrorLoggerObj = ctx.Services.GetService(typeof(IDiscordErrorLogger));
+
+            if (discordErrorLoggerObj == null)
             {
-                var error = "Could not fetch AuthorizationService";
-
-                var discordErrorLoggerObj = ctx.Services.GetService(typeof(DiscordErrorLogger));
-
-                if (discordErrorLoggerObj == null)
-                {
-                    throw new Exception("Could not fetch DiscordErrorLogger");
-                }
-
-                var discordErrorLogger = (DiscordErrorLogger)discordErrorLoggerObj;
-
-                await discordErrorLogger.LogError("WTF", error);
-
-                return false;
+                throw new Exception("Could not fetch DiscordErrorLogger");
             }
 
-            var botOptions = ((IOptions<BotOptions>)botOptionsObj).Value;
+            var discordErrorLogger = (IDiscordErrorLogger)discordErrorLoggerObj;
 
-            var guildId = botOptions.GuildId;
+            discordErrorLogger.LogError("WTF", error);
 
-            var channel = ctx.Channel;
-
-            if (IsPrivateMessageChannel(channel))
-                return false;
-
-            if (!IsGuildChannel(channel, guildId))
-                return false;
-
-            return true;
+            return Task.FromResult(false);
         }
 
-        private bool IsGuildChannel(DiscordChannel channel, ulong botGuildId)
+        BotOptions botOptions = ((IOptions<BotOptions>)botOptionsObj).Value;
+
+        ulong guildId = botOptions.GuildId;
+
+        DiscordChannel channel = ctx.Channel;
+
+        if (IsPrivateMessageChannel(channel))
         {
-            return channel.GuildId == botGuildId;
+            return Task.FromResult(false);
         }
 
-        private bool IsPrivateMessageChannel(DiscordChannel channel)
-        {
-            return channel.IsPrivate;
-        }
+        return !IsGuildChannel(channel, guildId) ? Task.FromResult(false) : Task.FromResult(true);
+    }
+
+    private bool IsGuildChannel(DiscordChannel channel, ulong botGuildId)
+    {
+        return channel.GuildId == botGuildId;
+    }
+
+    private bool IsPrivateMessageChannel(DiscordChannel channel)
+    {
+        return channel.IsPrivate;
     }
 }

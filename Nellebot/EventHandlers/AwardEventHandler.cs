@@ -1,4 +1,7 @@
-﻿using DSharpPlus;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Logging;
@@ -7,234 +10,251 @@ using Nellebot.Helpers;
 using Nellebot.Services.Loggers;
 using Nellebot.Utils;
 using Nellebot.Workers;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace Nellebot.EventHandlers
+namespace Nellebot.EventHandlers;
+
+public class AwardEventHandler
 {
-    public class AwardEventHandler
+    private readonly DiscordClient _client;
+    private readonly ILogger<AwardEventHandler> _logger;
+    private readonly MessageAwardQueueChannel _awardQueue;
+    private readonly IDiscordErrorLogger _discordErrorLogger;
+    private readonly BotOptions _options;
+
+    public AwardEventHandler(
+        DiscordClient client,
+        ILogger<AwardEventHandler> logger,
+        MessageAwardQueueChannel awardQueue,
+        IOptions<BotOptions> options,
+        IDiscordErrorLogger discordErrorLogger)
     {
-        private readonly DiscordClient _client;
-        private readonly ILogger<AwardEventHandler> _logger;
-        private readonly MessageAwardQueue _awardQueue;
-        private readonly IDiscordErrorLogger _discordErrorLogger;
-        private readonly BotOptions _options;
+        _client = client;
+        _logger = logger;
+        _awardQueue = awardQueue;
+        _discordErrorLogger = discordErrorLogger;
+        _options = options.Value;
+    }
 
-        public AwardEventHandler(
-            DiscordClient client,
-            ILogger<AwardEventHandler> logger,
-            MessageAwardQueue awardQueue,
-            IOptions<BotOptions> options,
-            IDiscordErrorLogger discordErrorLogger)
+    public void RegisterHandlers()
+    {
+        _client.MessageReactionAdded += OnMessageReactionAdded;
+        _client.MessageReactionRemoved += OnMessageReactionRemoved;
+
+        _client.MessageUpdated += OnMessageUpdated;
+        _client.MessageDeleted += OnMessageDeleted;
+    }
+
+    private Task OnMessageReactionAdded(DiscordClient client, MessageReactionAddEventArgs eventArgs)
+    {
+        DiscordChannel channel = eventArgs.Channel;
+        DiscordMessage message = eventArgs.Message;
+        DiscordUser user = eventArgs.User;
+        DiscordEmoji emoji = eventArgs.Emoji;
+
+        try
         {
-            _client = client;
-            _logger = logger;
-            _awardQueue = awardQueue;
-            _discordErrorLogger = discordErrorLogger;
-            _options = options.Value;
+            if (!ShouldHandleReaction(channel, user))
+            {
+                return Task.CompletedTask;
+            }
+
+            bool isAwardEmoji = emoji.Name == EmojiMap.Cookie;
+
+            if (!IsAwardAllowedChannel(channel))
+            {
+                return Task.CompletedTask;
+            }
+
+            return !isAwardEmoji
+                ? Task.CompletedTask
+                : _awardQueue.Writer.WriteAsync(new MessageAwardItem(message, MessageAwardQueueAction.ReactionChanged)).AsTask();
         }
-
-        public void RegisterHandlers()
+        catch (Exception ex)
         {
-            _client.MessageReactionAdded += OnMessageReactionAdded;
-            _client.MessageReactionRemoved += OnMessageReactionRemoved;
+            _logger.LogError(ex, nameof(OnMessageReactionAdded));
 
-            _client.MessageUpdated += OnMessageUpdated;
-            _client.MessageDeleted += OnMessageDeleted;
+            var eventContextError = new EventContext()
+            {
+                EventName = nameof(OnMessageReactionAdded),
+                User = eventArgs.User,
+                Channel = eventArgs.Channel,
+                Guild = eventArgs.Guild,
+            };
+
+            _discordErrorLogger.LogEventError(eventContextError, ex.ToString());
+
+            return Task.CompletedTask;
         }
+    }
 
-        private async Task OnMessageReactionAdded(DiscordClient client, MessageReactionAddEventArgs eventArgs)
+    private Task OnMessageReactionRemoved(DiscordClient sender, MessageReactionRemoveEventArgs eventArgs)
+    {
+        DiscordChannel channel = eventArgs.Channel;
+        DiscordMessage message = eventArgs.Message;
+        DiscordEmoji emoji = eventArgs.Emoji;
+
+        try
         {
-            var channel = eventArgs.Channel;
-            var message = eventArgs.Message;
-            var user = eventArgs.User;
-            var emoji = eventArgs.Emoji;
-
-            try
+            if (channel.IsPrivate)
             {
-                if (!ShouldHandleReaction(channel, user))
-                    return;
-
-                var isAwardEmoji = emoji.Name == EmojiMap.Cookie;
-
-                if (!IsAwardAllowedChannel(channel))
-                    return;
-
-                if (isAwardEmoji)
-                {
-                    _awardQueue.Enqueue(new MessageAwardQueueItem(message, MessageAwardQueueAction.ReactionChanged));
-                }
+                return Task.CompletedTask;
             }
-            catch (Exception ex)
+
+            bool isAwardEmoji = emoji.Name == EmojiMap.Cookie;
+
+            if (!IsAwardAllowedChannel(channel))
             {
-                _logger.LogError(ex, nameof(OnMessageReactionAdded));
-
-                var eventContextError = new EventContext()
-                {
-                    EventName = nameof(OnMessageReactionAdded),
-                    User = eventArgs.User,
-                    Channel = eventArgs.Channel,
-                    Guild = eventArgs.Guild
-                };
-
-                await _discordErrorLogger.LogEventError(eventContextError, ex.ToString());
+                return Task.CompletedTask;
             }
+
+            return !isAwardEmoji
+                ? Task.CompletedTask
+                : _awardQueue.Writer.WriteAsync(new MessageAwardItem(message, MessageAwardQueueAction.ReactionChanged)).AsTask();
         }
-
-        private async Task OnMessageReactionRemoved(DiscordClient sender, MessageReactionRemoveEventArgs eventArgs)
+        catch (Exception ex)
         {
-            var channel = eventArgs.Channel;
-            var message = eventArgs.Message;
-            var emoji = eventArgs.Emoji;
+            _logger.LogError(ex, nameof(OnMessageReactionRemoved));
 
-            try
+            var eventContextError = new EventContext()
             {
-                if (channel.IsPrivate)
-                    return;
+                EventName = nameof(OnMessageReactionRemoved),
+                User = eventArgs.User,
+                Channel = eventArgs.Channel,
+                Guild = eventArgs.Guild,
+            };
 
-                var isAwardEmoji = emoji.Name == EmojiMap.Cookie;
+            _discordErrorLogger.LogEventError(eventContextError, ex.ToString());
 
-                if (!IsAwardAllowedChannel(channel))
-                    return;
-
-                if (isAwardEmoji)
-                {
-                    _awardQueue.Enqueue(new MessageAwardQueueItem(message, MessageAwardQueueAction.ReactionChanged));
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, nameof(OnMessageReactionRemoved));
-
-                var eventContextError = new EventContext()
-                {
-                    EventName = nameof(OnMessageReactionRemoved),
-                    User = eventArgs.User,
-                    Channel = eventArgs.Channel,
-                    Guild = eventArgs.Guild
-                };
-
-                await _discordErrorLogger.LogEventError(eventContextError, ex.ToString());
-            }
+            return Task.CompletedTask;
         }
+    }
 
-        private async Task OnMessageUpdated(DiscordClient sender, MessageUpdateEventArgs eventArgs)
+    private Task OnMessageUpdated(DiscordClient sender, MessageUpdateEventArgs eventArgs)
+    {
+        try
         {
-            try
+            DiscordChannel channel = eventArgs.Channel;
+            DiscordMessage message = eventArgs.Message;
+            DiscordUser user = eventArgs.Author;
+
+            if (message == null)
             {
-                var channel = eventArgs.Channel;
-                var message = eventArgs.Message;
-                var user = eventArgs.Author;
-
-                if (message == null)
-                    throw new Exception($"{nameof(eventArgs.Message)} is null");
-
-                if (!ShouldHandleReaction(channel, user))
-                    return;
-
-                if (!IsAwardAllowedChannel(channel))
-                    return;
-
-                _awardQueue.Enqueue(new MessageAwardQueueItem(message, MessageAwardQueueAction.MessageUpdated));
+                throw new Exception($"{nameof(eventArgs.Message)} is null");
             }
-            catch (Exception ex)
+
+            if (!ShouldHandleReaction(channel, user))
             {
-                _logger.LogError(ex, nameof(OnMessageUpdated));
-
-                var eventContextError = new EventContext()
-                {
-                    EventName = nameof(OnMessageUpdated),
-                    User = eventArgs.Author,
-                    Channel = eventArgs.Channel,
-                    Guild = eventArgs.Guild,
-                    Message = eventArgs.Message
-                };
-
-                await _discordErrorLogger.LogEventError(eventContextError, ex.ToString());
+                return Task.CompletedTask;
             }
+
+            return !IsAwardAllowedChannel(channel)
+                ? Task.CompletedTask
+                : _awardQueue.Writer.WriteAsync(new MessageAwardItem(message, MessageAwardQueueAction.MessageUpdated)).AsTask();
         }
-
-        private async Task OnMessageDeleted(DiscordClient sender, MessageDeleteEventArgs eventArgs)
+        catch (Exception ex)
         {
-            try
+            _logger.LogError(ex, nameof(OnMessageUpdated));
+
+            var eventContextError = new EventContext()
             {
-                var channel = eventArgs.Channel;
-                var messageId = eventArgs.Message.Id;
+                EventName = nameof(OnMessageUpdated),
+                User = eventArgs.Author,
+                Channel = eventArgs.Channel,
+                Guild = eventArgs.Guild,
+                Message = eventArgs.Message,
+            };
 
-                if (channel.IsPrivate)
-                    return;
+            _discordErrorLogger.LogEventError(eventContextError, ex.ToString());
 
-                if (IsAwardAllowedChannel(channel))
-                {
-                    _awardQueue.Enqueue(new MessageAwardQueueItem(messageId, channel, MessageAwardQueueAction.MessageDeleted));
-                }
-                else if (IsAwardChannel(channel))
-                {
-                    _awardQueue.Enqueue(new MessageAwardQueueItem(messageId, channel, MessageAwardQueueAction.AwardDeleted));
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, nameof(OnMessageDeleted));
-
-                var eventContextError = new EventContext()
-                {
-                    EventName = nameof(OnMessageDeleted),
-                    User = null,
-                    Channel = eventArgs.Channel,
-                    Guild = eventArgs.Guild
-                };
-
-                await _discordErrorLogger.LogEventError(eventContextError, ex.ToString());
-            }
+            return Task.CompletedTask;
         }
+    }
 
-        private bool IsAwardAllowedChannel(DiscordChannel channel)
+    private Task OnMessageDeleted(DiscordClient sender, MessageDeleteEventArgs eventArgs)
+    {
+        try
         {
-            if (channel.IsThread) channel = channel.Parent;
-
-            var allowedGroupIds = _options.AwardVoteGroupIds;
-
-            if (allowedGroupIds == null || allowedGroupIds.Length == 0)
-            {
-                _logger.LogDebug($"{nameof(_options.AwardVoteGroupIds)} is empty");
-                return false;
-            }
-
-            var isAllowedChannel = allowedGroupIds.ToList().Contains(channel.ParentId!.Value);
-
-            if (!isAllowedChannel)
-                return false;
-
-            return true;
-        }
-
-        private bool IsAwardChannel(DiscordChannel channel)
-        {
-            var awardChannelId = _options.AwardChannelId;
-
-            return channel.Id == awardChannelId;
-        }
-
-        ///// <summary>
-        ///// Don't care about about private messages
-        ///// Don't care about bot reactions
-        ///// </summary>
-        ///// <returns></returns>
-        private bool ShouldHandleReaction(DiscordChannel channel, DiscordUser author)
-        {
-            // This seems to happen because of the newly introduced Threads feature
-            if (author == null)
-                return false;
-
-            if (author.IsBot || (author.IsSystem ?? false))
-                return false;
+            DiscordChannel channel = eventArgs.Channel;
+            ulong messageId = eventArgs.Message.Id;
 
             if (channel.IsPrivate)
-                return false;
+            {
+                return Task.CompletedTask;
+            }
 
-            return true;
+            if (IsAwardAllowedChannel(channel))
+            {
+                return _awardQueue.Writer.WriteAsync(new MessageAwardItem(messageId, channel, MessageAwardQueueAction.MessageDeleted)).AsTask();
+            }
+            else if (IsAwardChannel(channel))
+            {
+                return _awardQueue.Writer.WriteAsync(new MessageAwardItem(messageId, channel, MessageAwardQueueAction.AwardDeleted)).AsTask();
+            }
+
+            return Task.CompletedTask;
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, nameof(OnMessageDeleted));
+
+            var eventContextError = new EventContext()
+            {
+                EventName = nameof(OnMessageDeleted),
+                User = null,
+                Channel = eventArgs.Channel,
+                Guild = eventArgs.Guild,
+            };
+
+            _discordErrorLogger.LogEventError(eventContextError, ex.ToString());
+
+            return Task.CompletedTask;
+        }
+    }
+
+    private bool IsAwardAllowedChannel(DiscordChannel channel)
+    {
+        if (channel.IsThread)
+        {
+            channel = channel.Parent;
+        }
+
+        ulong[] allowedGroupIds = _options.AwardVoteGroupIds;
+
+        if (allowedGroupIds == null || allowedGroupIds.Length == 0)
+        {
+            _logger.LogDebug($"{nameof(_options.AwardVoteGroupIds)} is empty");
+            return false;
+        }
+
+        bool isAllowedChannel = allowedGroupIds.ToList().Contains(channel.ParentId!.Value);
+
+        return isAllowedChannel;
+    }
+
+    private bool IsAwardChannel(DiscordChannel channel)
+    {
+        ulong awardChannelId = _options.AwardChannelId;
+
+        return channel.Id == awardChannelId;
+    }
+
+    /// <summary>
+    /// Don't care about about private messages
+    /// Don't care about bot reactions.
+    /// </summary>
+    private bool ShouldHandleReaction(DiscordChannel channel, DiscordUser author)
+    {
+        // This seems to happen because of the newly introduced Threads feature
+        if (author == null)
+        {
+            return false;
+        }
+
+        if (author.IsBot || (author.IsSystem ?? false))
+        {
+            return false;
+        }
+
+        return !channel.IsPrivate;
     }
 }

@@ -1,148 +1,93 @@
-﻿using DSharpPlus;
+﻿using System;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Options;
-using System;
-using System.Threading.Tasks;
 using Nellebot.Utils;
-using Microsoft.Extensions.Logging;
+using Nellebot.Workers;
 
-namespace Nellebot.Services.Loggers
+namespace Nellebot.Services.Loggers;
+
+public class DiscordErrorLogger : IDiscordErrorLogger
 {
-    public class DiscordErrorLogger : IDiscordErrorLogger
+    private readonly DiscordLogChannel _channel;
+    private readonly BotOptions _options;
+
+    public DiscordErrorLogger(IOptions<BotOptions> options, DiscordLogChannel channel)
     {
-        private readonly DiscordClient _client;
-        private readonly ILogger<DiscordErrorLogger> _logger;
-        private readonly BotOptions _options;
+        _channel = channel;
+        _options = options.Value;
+    }
 
-        public DiscordErrorLogger(DiscordClient client, IOptions<BotOptions> options, ILogger<DiscordErrorLogger> logger)
+    public void LogCommandError(CommandContext ctx, string errorMessage)
+    {
+        string user = $"{ctx.User.Username}#{ctx.User.Discriminator}";
+        string channelName = ctx.Channel.Name;
+        string guildName = ctx.Guild.Name;
+        string command = EscapeTicks(ctx.Message.Content);
+
+        string contextMessage = $"`{command}` by `{user}` in `{channelName}`(`{guildName}`)";
+        string escapedErrorMesssage = $"`{EscapeTicks(errorMessage)}`";
+
+        string fullErrorMessage = $"{contextMessage}{Environment.NewLine}{escapedErrorMesssage}";
+
+        LogError("Failed command", fullErrorMessage);
+    }
+
+    public void LogEventError(EventContext ctx, string errorMessage)
+    {
+        string user = ctx.User != null ? $"{ctx.User.Username}#{ctx.User.Discriminator}" : "Unknown user";
+        string channelName = ctx.Channel?.Name ?? "Unknown channel";
+        string eventName = ctx.EventName;
+        string message = ctx.Message != null ? EscapeTicks(ctx.Message.Content) : string.Empty;
+
+        string contextMessage = $"`{eventName}` by `{user}` in `{channelName}`";
+
+        if (!string.IsNullOrWhiteSpace(message))
         {
-            _client = client;
-            _logger = logger;
-            _options = options.Value;
+            contextMessage += $"{Environment.NewLine}Message: `{message}`";
         }
 
-        public Task LogCommandError(CommandContext ctx, string errorMessage)
-        {
-            var user = $"{ctx.User.Username}#{ctx.User.Discriminator}";
-            var channelName = ctx.Channel.Name;
-            var guildName = ctx.Guild.Name;
-            var command = EscapeTicks(ctx.Message.Content);
+        string escapedErrorMesssage = $"`{EscapeTicks(errorMessage)}`";
 
-            var contextMessage = $"`{command}` by `{user}` in `{channelName}`(`{guildName}`)";
-            var escapedErrorMesssage = $"`{EscapeTicks(errorMessage)}`";
+        string fullErrorMessage = $"{contextMessage}{Environment.NewLine}{escapedErrorMesssage}";
 
-            var fullErrorMessage = $"{contextMessage}{Environment.NewLine}{escapedErrorMesssage}";
+        LogError("Failed event", fullErrorMessage);
+    }
 
-            return LogError("Failed command", fullErrorMessage);
-        }
+    public void LogError(Exception ex, string message)
+    {
+        LogError(message, ex.ToString());
+    }
 
-        public Task LogEventError(EventContext ctx, string errorMessage)
-        {
-            var user = ctx.User != null ? $"{ctx.User.Username}#{ctx.User.Discriminator}" : "Unknown user";
-            var channelName = ctx.Channel?.Name ?? "Unknown channel";
-            var eventName = ctx.EventName;
-            var message = ctx.Message != null ? EscapeTicks(ctx.Message.Content) : string.Empty;
+    public void LogError(string errorMessage)
+    {
+        LogError("Error", errorMessage);
+    }
 
-            var contextMessage = $"`{eventName}` by `{user}` in `{channelName}`";
+    public void LogError(string error, string errorMessage)
+    {
+        SendErrorLogChannelEmbed(error, errorMessage, DiscordConstants.ErrorEmbedColor);
+    }
 
-            if (!string.IsNullOrWhiteSpace(message))
-                contextMessage += $"{Environment.NewLine}Message: `{message}`";
+    public void LogWarning(string warning, string warningMessage)
+    {
+        SendErrorLogChannelEmbed(warning, warningMessage, DiscordConstants.WarningEmbedColor);
+    }
 
-            var escapedErrorMesssage = $"`{EscapeTicks(errorMessage)}`";
+    private void SendErrorLogChannelEmbed(string title, string message, int color)
+    {
+        ulong guildId = _options.GuildId;
+        ulong errorLogChannelId = _options.ErrorLogChannelId;
 
-            var fullErrorMessage = $"{contextMessage}{Environment.NewLine}{escapedErrorMesssage}";
+        DiscordEmbed messageEmbed = EmbedBuilderHelper.BuildSimpleEmbed(title, message, color);
 
-            return LogError("Failed event", fullErrorMessage);
-        }
+        var discordLogItem = new DiscordLogItem<DiscordEmbed>(messageEmbed, guildId, errorLogChannelId);
 
-        public Task LogError(Exception ex, string message)
-        {
-            return LogError(message, ex.ToString());
-        }
+        _ = _channel.Writer.TryWrite(discordLogItem);
+    }
 
-        public Task LogError(string errorMessage)
-        {
-            return LogError("Error", errorMessage);
-        }
-
-        public Task LogError(string error, string errorMessage)
-        {
-            return SendErrorLogChannelEmbed(error, errorMessage, DiscordConstants.ErrorEmbedColor);
-        }
-
-        public Task LogWarning(string warning, string warningMessage)
-        {
-            return SendErrorLogChannelEmbed(warning, warningMessage, DiscordConstants.WarningEmbedColor);
-        }
-
-        private async Task SendErrorLogChannelEmbed(string title, string message, int color)
-        {
-            DiscordChannel? errorLogChannel = null;
-
-            try
-            {
-                var guildId = _options.GuildId;
-                var errorLogChannelId = _options.ErrorLogChannelId;
-
-                errorLogChannel = await ResolveErrorLogChannel(guildId, errorLogChannelId);
-
-                var messageEmbed = EmbedBuilderHelper.BuildSimpleEmbed(title, message, color);
-
-                await errorLogChannel.SendMessageAsync(messageEmbed);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, nameof(SendErrorLogChannelEmbed));
-
-                await LogLoggingFailure(errorLogChannel, ex);
-            }
-        }
-
-        private Task LogLoggingFailure(DiscordChannel? errorLogChannel, Exception exception)
-        {
-            try
-            {
-                ArgumentNullException.ThrowIfNull(errorLogChannel);
-
-                return errorLogChannel.SendMessageAsync($"Failed to log original error message. Reason: {exception.Message}");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Welp");
-
-                return Task.CompletedTask;
-            }
-        }
-
-        private static string EscapeTicks(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return value;
-
-            return value.Replace('`', '\'');
-        }
-
-        // There is a DiscordResolver method for resolving channels...
-        // but that class depends on DiscordLogger so it's just simpler
-        // to have a duplicate method than dealing with circular dependency
-        private async Task<DiscordChannel> ResolveErrorLogChannel(ulong guildId, ulong channelId)
-        {
-            _client.Guilds.TryGetValue(guildId, out var discordGuild);
-
-            if (discordGuild == null)
-            {
-                discordGuild = await _client.GetGuildAsync(guildId);
-            }
-
-            discordGuild.Channels.TryGetValue(channelId, out var discordChannel);
-
-            if (discordChannel == null)
-            {
-                discordChannel = discordGuild.GetChannel(channelId);
-            }
-
-            return discordChannel;
-        }
+    private static string EscapeTicks(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? value : value.Replace('`', '\'');
     }
 }
