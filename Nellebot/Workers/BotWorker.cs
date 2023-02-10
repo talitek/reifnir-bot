@@ -61,8 +61,6 @@ public class BotWorker : IHostedService
         _client.Heartbeated += OnClientHeartbeat;
         _client.Resumed += OnClientResumed;
 
-        _client.ComponentInteractionCreated += Client_ComponentInteractionCreated;
-
         _commandEventHandler.RegisterHandlers(commands);
         _awardEventHandler.RegisterHandlers();
 
@@ -70,27 +68,6 @@ public class BotWorker : IHostedService
         RegisterGuildEventHandlers();
 
         await _client.ConnectAsync();
-    }
-
-    private Task Client_ComponentInteractionCreated(DiscordClient sender, ComponentInteractionCreateEventArgs e)
-    {
-        var responseBuilder = new DiscordInteractionResponseBuilder();
-
-        switch (e.Id)
-        {
-            case "aButton":
-                responseBuilder = responseBuilder.WithContent("Nice!");
-                break;
-
-            case "roles":
-                responseBuilder = responseBuilder.WithContent($"Yu choze {string.Join(", ", e.Values)}");
-                break;
-            default:
-                responseBuilder = responseBuilder.WithContent("hmm");
-                break;
-        }
-
-        return e.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, responseBuilder);
     }
 
     private CommandsNextExtension RegisterClassicCommands()
