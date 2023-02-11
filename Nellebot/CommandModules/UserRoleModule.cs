@@ -68,7 +68,7 @@ public class UserRoleModule : BaseCommandModule
     }
 
     [Command("create-role")]
-    public async Task CreateRole(CommandContext ctx, DiscordRole role, string? aliasList = null)
+    public async Task CreateRole(CommandContext ctx, DiscordRole role, [RemainingText] string? aliasList = null)
     {
         var appDiscordRole = DiscordRoleMapper.Map(role);
 
@@ -78,7 +78,7 @@ public class UserRoleModule : BaseCommandModule
     }
 
     [Command("create-role")]
-    public async Task CreateRole(CommandContext ctx, ulong roleId, string? aliasList = null)
+    public async Task CreateRole(CommandContext ctx, ulong roleId, [RemainingText] string? aliasList = null)
     {
         ctx.Guild.Roles.TryGetValue(roleId, out var discordRole);
 
@@ -92,7 +92,7 @@ public class UserRoleModule : BaseCommandModule
     }
 
     [Command("create-role")]
-    public async Task CreateRole(CommandContext ctx, string discordRoleName, string? aliasList = null)
+    public async Task CreateRole(CommandContext ctx, string discordRoleName, [RemainingText] string? aliasList = null)
     {
         var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName);
 
@@ -130,7 +130,7 @@ public class UserRoleModule : BaseCommandModule
     }
 
     [Command("delete-role")]
-    public async Task DeleteRole(CommandContext ctx, string discordRoleName)
+    public async Task DeleteRole(CommandContext ctx, [RemainingText] string discordRoleName)
     {
         var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName);
 
@@ -144,7 +144,7 @@ public class UserRoleModule : BaseCommandModule
     }
 
     [Command("add-alias")]
-    public async Task AddRoleAlias(CommandContext ctx, DiscordRole role, string alias)
+    public async Task AddRoleAlias(CommandContext ctx, DiscordRole role, [RemainingText] string alias)
     {
         var appDiscordRole = DiscordRoleMapper.Map(role);
 
@@ -154,7 +154,7 @@ public class UserRoleModule : BaseCommandModule
     }
 
     [Command("add-alias")]
-    public async Task AddRoleAlias(CommandContext ctx, ulong roleId, string alias)
+    public async Task AddRoleAlias(CommandContext ctx, ulong roleId, [RemainingText] string alias)
     {
         ctx.Guild.Roles.TryGetValue(roleId, out var discordRole);
 
@@ -168,7 +168,7 @@ public class UserRoleModule : BaseCommandModule
     }
 
     [Command("add-alias")]
-    public async Task AddRoleAlias(CommandContext ctx, string discordRoleName, string alias)
+    public async Task AddRoleAlias(CommandContext ctx, string discordRoleName, [RemainingText] string alias)
     {
         var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName);
 
@@ -182,7 +182,7 @@ public class UserRoleModule : BaseCommandModule
     }
 
     [Command("remove-alias")]
-    public async Task RemoveRoleAlias(CommandContext ctx, DiscordRole role, string alias)
+    public async Task RemoveRoleAlias(CommandContext ctx, DiscordRole role, [RemainingText] string alias)
     {
         var appDiscordRole = DiscordRoleMapper.Map(role);
 
@@ -192,7 +192,7 @@ public class UserRoleModule : BaseCommandModule
     }
 
     [Command("remove-alias")]
-    public async Task RemoveRoleAlias(CommandContext ctx, ulong roleId, string alias)
+    public async Task RemoveRoleAlias(CommandContext ctx, ulong roleId, [RemainingText] string alias)
     {
         ctx.Guild.Roles.TryGetValue(roleId, out var discordRole);
 
@@ -206,7 +206,7 @@ public class UserRoleModule : BaseCommandModule
     }
 
     [Command("remove-alias")]
-    public async Task RemoveRoleAlias(CommandContext ctx, string discordRoleName, string alias)
+    public async Task RemoveRoleAlias(CommandContext ctx, string discordRoleName, [RemainingText] string alias)
     {
         var result = _discordResolver.TryResolveRoleByName(ctx.Guild, discordRoleName);
 
@@ -296,7 +296,7 @@ public class UserRoleModule : BaseCommandModule
     }
 
     [Command("set-group-name")]
-    public async Task SetRoleGroupName(CommandContext ctx, uint groupId, string groupName)
+    public async Task SetRoleGroupName(CommandContext ctx, uint groupId, [RemainingText] string groupName)
     {
         await _userRoleService.SetRoleGroupName(groupId, groupName);
 

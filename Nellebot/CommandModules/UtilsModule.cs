@@ -24,17 +24,6 @@ public class UtilsModule : BaseCommandModule
         _discordResolver = discordResolver;
     }
 
-    [Command]
-    public Task TestLogger(CommandContext ctx)
-    {
-        _discordLogger.LogGreetingMessage("Test greeting");
-        _discordLogger.LogActivityMessage("Test greeting");
-        _discordLogger.LogExtendedActivityMessage("Test greeting");
-        _discordErrorLogger.LogError("Test error");
-
-        return Task.CompletedTask;
-    }
-
     [Command("role-id")]
     public async Task GetRoleId(CommandContext ctx, string roleName)
     {
