@@ -6,9 +6,12 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using DSharpPlus.Interactivity.Extensions;
+using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Nellebot.CommandModules;
 using Nellebot.EventHandlers;
 using Nellebot.NotificationHandlers;
 
@@ -46,18 +49,11 @@ public class BotWorker : IHostedService
     {
         _logger.LogInformation("Starting bot");
 
-        string commandPrefix = _options.CommandPrefix;
+        var commands = RegisterClassicCommands();
 
-        CommandsNextExtension commands = _client.UseCommandsNext(new CommandsNextConfiguration()
-        {
-            StringPrefixes = new[] { commandPrefix },
-            Services = _serviceProvider,
-            EnableDefaultHelp = false,
-        });
+        RegisterSlashCommands();
 
-        await _client.ConnectAsync();
-
-        commands.RegisterCommands(Assembly.GetExecutingAssembly());
+        _client.UseInteractivity();
 
         _client.SocketOpened += OnClientConnected;
         _client.SocketClosed += OnClientDisconnected;
@@ -70,6 +66,30 @@ public class BotWorker : IHostedService
 
         RegisterMessageHandlers();
         RegisterGuildEventHandlers();
+
+        await _client.ConnectAsync();
+    }
+
+    private CommandsNextExtension RegisterClassicCommands()
+    {
+        var commandPrefix = _options.CommandPrefix;
+
+        var commands = _client.UseCommandsNext(new CommandsNextConfiguration()
+        {
+            StringPrefixes = new[] { commandPrefix },
+            Services = _serviceProvider,
+            EnableDefaultHelp = false,
+        });
+
+        commands.RegisterCommands(Assembly.GetExecutingAssembly());
+        return commands;
+    }
+
+    private void RegisterSlashCommands()
+    {
+        var slashCommands = _client.UseSlashCommands(new SlashCommandsConfiguration { Services = _serviceProvider });
+
+        slashCommands.RegisterCommands<RoleSlashModule>(_options.GuildId);
     }
 
     private void RegisterMessageHandlers()
@@ -117,7 +137,7 @@ public class BotWorker : IHostedService
 
         try
         {
-            string commandPrefix = _options.CommandPrefix;
+            var commandPrefix = _options.CommandPrefix;
 
             var activity = new DiscordActivity($"\"{commandPrefix}help\" for help", ActivityType.Playing);
 

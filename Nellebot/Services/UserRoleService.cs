@@ -1,12 +1,10 @@
-﻿using Nellebot.Common.AppDiscordModels;
-using Nellebot.Common.Models;
-using Nellebot.Data.Repositories;
-using Nellebot.Services.Loggers;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Nellebot.Common.AppDiscordModels;
+using Nellebot.Common.Models.UserRoles;
+using Nellebot.Data.Repositories;
 
 namespace Nellebot.Services;
 
@@ -127,6 +125,24 @@ public class UserRoleService
         await _userRoleRepo.UpdateRoleGroup(userRole.Id, null);
     }
 
+    public Task SetRoleGroupName(uint groupId, string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Role group name cannot be empty");
+
+        return _userRoleRepo.UpdateRoleGroupName(groupId, name);
+    }
+
+    public async Task DeleteRoleGroup(uint groupId)
+    {
+        var rolesInGroup = await _userRoleRepo.GetRolesByGroup(groupId);
+
+        if (rolesInGroup.Any())
+            throw new ArgumentException("Cannot delete role group with roles in it");
+
+        await _userRoleRepo.DeleteRoleGroup(groupId);
+    }
+
     public record SyncRolesResult(uint UpdatedCount, uint DeletedCount);
 
     public async Task<SyncRolesResult> SyncRoles(IEnumerable<AppDiscordRole> guildRoles)
@@ -142,7 +158,7 @@ public class UserRoleService
 
             if (discordRole == null)
             {
-                await _userRoleRepo.DeleteRole(userRole.Id);               
+                await _userRoleRepo.DeleteRole(userRole.Id);
                 deletedRoleCount++;
                 continue;
             }

@@ -423,15 +423,18 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         DiscordRole? removedRole = args.RolesBefore.ExceptBy(args.RolesAfter.Select(r => r.Id), x => x.Id).FirstOrDefault();
 
         string memberMention = args.Member.Mention;
+        string memberNickname = args.Member.GetNicknameOrDisplayName();
 
         if (addedRole != null)
         {
+            _discordLogger.LogActivityMessage($"Added role **{addedRole.Name}** to **{memberNickname}**");
             _discordLogger.LogExtendedActivityMessage($"Role change for {memberMention}: Added {addedRole.Name}.");
             return true;
         }
 
         if (removedRole != null)
         {
+            _discordLogger.LogActivityMessage($"Removed role **{removedRole.Name}** from **{memberNickname}**");
             _discordLogger.LogExtendedActivityMessage($"Role change for {memberMention}: Removed {removedRole.Name}.");
             return true;
         }

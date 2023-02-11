@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Nellebot.Common.Models
+namespace Nellebot.Common.Models.UserRoles
 {
     public class UserRoleAlias
     {

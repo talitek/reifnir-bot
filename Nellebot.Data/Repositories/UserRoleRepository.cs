@@ -1,10 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Nellebot.Common.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Nellebot.Common.Models.UserRoles;
 
 namespace Nellebot.Data.Repositories
 {
@@ -22,10 +21,10 @@ namespace Nellebot.Data.Repositories
             var userRole = new UserRole()
             {
                 RoleId = roleId,
-                Name = name
+                Name = name,
             };
 
-            await _dbContext.AddAsync(userRole);
+            _dbContext.Add(userRole);
 
             await _dbContext.SaveChangesAsync();
 
@@ -35,6 +34,9 @@ namespace Nellebot.Data.Repositories
         public async Task<UserRole> UpdateRole(Guid id, string name)
         {
             var role = await _dbContext.UserRoles.SingleOrDefaultAsync(r => r.Id == id);
+
+            if (role == null)
+                throw new Exception("Role not found");
 
             role.Name = name;
 
@@ -47,35 +49,35 @@ namespace Nellebot.Data.Repositories
         {
             var role = await _dbContext.UserRoles.SingleOrDefaultAsync(r => r.Id == id);
 
+            if (role == null)
+                return;
+
             _dbContext.Remove(role);
 
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<UserRole> GetRoleByDiscordRoleId(ulong roleId)
+        public Task<UserRole?> GetRoleByDiscordRoleId(ulong roleId)
         {
-            var role = await _dbContext.UserRoles
+            return _dbContext.UserRoles
                 .Include(x => x.UserRoleAliases)
                 .SingleOrDefaultAsync(r => r.RoleId == roleId);
-
-            return role;
         }
 
         public async Task<IEnumerable<UserRole>> GetRoleList()
         {
             var roles = await _dbContext.UserRoles
                 .Include(x => x.UserRoleAliases)
+                .Include(x => x.Group)
                 .OrderBy(x => x.Name)
                 .ToListAsync();
 
             return roles;
         }
 
-        public async Task<UserRoleAlias> GetRoleAlias(string alias)
+        public Task<UserRoleAlias?> GetRoleAlias(string alias)
         {
-            var roleAlias = await _dbContext.UserRoleAliases.SingleOrDefaultAsync(ra => ra.Alias == alias);
-
-            return roleAlias;
+            return _dbContext.UserRoleAliases.SingleOrDefaultAsync(ra => ra.Alias == alias);
         }
 
         public async Task<UserRoleAlias> CreateRoleAlias(Guid userRoleId, string alias)
@@ -83,7 +85,7 @@ namespace Nellebot.Data.Repositories
             var roleAlias = new UserRoleAlias()
             {
                 UserRoleId = userRoleId,
-                Alias = alias
+                Alias = alias,
             };
 
             await _dbContext.AddAsync(roleAlias);
@@ -97,44 +99,93 @@ namespace Nellebot.Data.Repositories
         {
             var roleAlias = await _dbContext.UserRoleAliases.SingleOrDefaultAsync(ra => ra.Alias == alias);
 
+            if (roleAlias == null)
+                return;
+
             _dbContext.Remove(roleAlias);
 
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<UserRole> UpdateRoleGroup(Guid id, uint? groupNumber)
+        public async Task<UserRole> UpdateRoleGroup(Guid id, uint? groupId)
         {
-            var role = await _dbContext.UserRoles.SingleOrDefaultAsync(r => r.Id == id);
+            var role = await _dbContext.UserRoles.FindAsync(id);
 
-            role.GroupNumber = groupNumber;
+            if (role == null)
+                throw new Exception("Role not found");
+
+            if (!groupId.HasValue)
+            {
+                role.Group = null;
+                await _dbContext.SaveChangesAsync();
+                return role;
+            }
+
+            var roleGroup = await _dbContext.UserRoleGroups.FindAsync(groupId);
+
+            // If role group doesn't exist, create it
+            if (roleGroup == null)
+            {
+                roleGroup = new UserRoleGroup()
+                {
+                    Id = groupId.Value,
+                    Name = $"Untitled {groupId}",
+                };
+
+                await _dbContext.AddAsync(roleGroup);
+            }
+
+            role.Group = roleGroup;
 
             await _dbContext.SaveChangesAsync();
 
             return role;
         }
 
-        public async Task<UserRole> GetRoleByNameOrAlias(string roleName)
+        public async Task<UserRole?> GetRoleByNameOrAlias(string roleName)
         {
             var role = await _dbContext.UserRoles.FirstOrDefaultAsync(x => x.Name.ToLower() == roleName);
 
-            if(role == null)
-            {
-                role = await _dbContext.UserRoles
-                .Include(x => x.UserRoleAliases)
-                .SingleOrDefaultAsync(r => r.UserRoleAliases.Select(a => a.Alias).Contains(roleName));
-            }            
+            role ??= await _dbContext.UserRoles
+                    .Include(x => x.UserRoleAliases)
+                    .SingleOrDefaultAsync(r => r.UserRoleAliases.Select(a => a.Alias).Contains(roleName));
 
             return role;
         }
 
-        public async Task<List<UserRole>> GetRolesByGroup(uint groupNumber)
+        public Task<List<UserRole>> GetRolesByGroup(uint groupNumber)
         {
-            var roles = await _dbContext.UserRoles
+            return _dbContext.UserRoles
                 .Include(x => x.UserRoleAliases)
-                .Where(x => x.GroupNumber.HasValue && x.GroupNumber == groupNumber)
+                .Where(x => x.Group != null && x.Group.Id == groupNumber)
                 .ToListAsync();
-
-            return roles;
         }
+
+        public async Task<UserRoleGroup> UpdateRoleGroupName(uint groupId, string name)
+        {
+            var roleGroup = await _dbContext.UserRoleGroups.FindAsync(groupId);
+
+            if (roleGroup == null)
+                throw new Exception("Role doesn't exist");
+
+            roleGroup.Name = name;
+
+            await _dbContext.SaveChangesAsync();
+
+            return roleGroup;
+        }
+
+        public async Task DeleteRoleGroup(uint groupId)
+        {
+            var roleGroup = await _dbContext.UserRoleGroups.FindAsync(groupId);
+
+            if (roleGroup == null)
+                return;
+
+            _dbContext.Remove(roleGroup);
+
+            await _dbContext.SaveChangesAsync();
+        }
+
     }
 }

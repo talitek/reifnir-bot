@@ -19,13 +19,13 @@ public class BaseCommandCheck : CheckBaseAttribute
 
         if (botOptionsObj == null)
         {
-            string error = "Could not fetch AuthorizationService";
+            string error = $"Could not fetch {typeof(IOptions<BotOptions>).Name}";
 
             object? discordErrorLoggerObj = ctx.Services.GetService(typeof(IDiscordErrorLogger));
 
             if (discordErrorLoggerObj == null)
             {
-                throw new Exception("Could not fetch DiscordErrorLogger");
+                throw new Exception($"Could not fetch {typeof(IDiscordErrorLogger).Name}");
             }
 
             var discordErrorLogger = (IDiscordErrorLogger)discordErrorLoggerObj;
