@@ -1,4 +1,4 @@
-﻿using Nellebot.Common.Models;
+﻿using Nellebot.Common.Models.UserRoles;
 using Nellebot.Data.Repositories;
 using System;
 using System.Collections.Generic;

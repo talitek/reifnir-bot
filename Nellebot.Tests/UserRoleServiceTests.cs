@@ -2,7 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Nellebot.Common.AppDiscordModels;
-using Nellebot.Common.Models;
+using Nellebot.Common.Models.UserRoles;
 using Nellebot.Data.Repositories;
 using Nellebot.Services;
 using Nellebot.Services.Loggers;

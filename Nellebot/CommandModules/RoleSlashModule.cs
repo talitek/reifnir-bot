@@ -83,15 +83,14 @@ public class RoleSlashModule : ApplicationCommandModule
         var userRoles = await _roleService.GetRoleList();
 
         var roleGroups = userRoles
-            .GroupBy(r => r.GroupNumber)
-            .OrderBy(r => r.Key.HasValue ? r.Key : int.MaxValue);
+            .GroupBy(r => r.Group)
+            .OrderBy(r => r.Key?.Id ?? int.MaxValue);
 
         var currentInteraction = ctx.Interaction;
 
         foreach (var roleGroup in roleGroups.ToList())
         {
-            // var isLastGroup = roleGroup == roleGroups.Last();
-            var isSingleSelect = roleGroup.Key.HasValue;
+            var isSingleSelect = roleGroup.Key != null;
 
             var roleDropdownOptions = new List<DiscordSelectComponentOption>();
 
@@ -145,15 +144,15 @@ public class RoleSlashModule : ApplicationCommandModule
         var userRoles = await _roleService.GetRoleList();
 
         var roleGroups = userRoles
-            .GroupBy(r => r.GroupNumber)
-            .OrderBy(r => r.Key.HasValue ? r.Key : int.MaxValue);
+            .GroupBy(r => r.Group)
+            .OrderBy(r => r.Key?.Id ?? int.MaxValue);
 
         var buttonRow = new List<DiscordComponent>();
 
         foreach (var roleGroup in roleGroups.ToList())
         {
             string buttonId = roleGroup.Key?.ToString() ?? "none";
-            string buttonLabel = roleGroup.Key.HasValue ? $"Roles in group {roleGroup.Key + 1}" : "Ungrouped roles";
+            string buttonLabel = roleGroup.Key != null ? $"{roleGroup.Key.Name} roles" : "Ungrouped roles";
 
             buttonRow.Add(new DiscordButtonComponent(ButtonStyle.Primary, buttonId, buttonLabel));
         }
@@ -180,8 +179,8 @@ public class RoleSlashModule : ApplicationCommandModule
         var isSingleSelect = chosenButtonId != "none";
 
         var roleGroupToChange = isSingleSelect
-            ? roleGroups.Single(g => g.Key.HasValue && g.Key.Value == uint.Parse(chosenButtonId))
-            : roleGroups.Single(g => !g.Key.HasValue);
+            ? roleGroups.Single(g => g.Key?.Id == uint.Parse(chosenButtonId))
+            : roleGroups.Single(g => g.Key == null);
 
         var roleDropdownOptions = new List<DiscordSelectComponentOption>();
 

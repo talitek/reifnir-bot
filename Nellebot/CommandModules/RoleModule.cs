@@ -1,18 +1,17 @@
-﻿using DSharpPlus.CommandsNext;
+﻿using System;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
-using Nellebot.Common.Models;
+using Nellebot.Common.Models.UserRoles;
 using Nellebot.Helpers;
 using Nellebot.Services;
 using Nellebot.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Nellebot.CommandModules
 {
@@ -27,8 +26,7 @@ namespace Nellebot.CommandModules
         public RoleModule(
             RoleService roleService,
             IOptions<BotOptions> options,
-            ILogger<RoleModule> logger
-            )
+            ILogger<RoleModule> logger)
         {
             _roleService = roleService;
             _logger = logger;
@@ -45,11 +43,16 @@ namespace Nellebot.CommandModules
             sb.AppendLine("**List of roles**");
 
             var roleGroups = userRoles
-                .GroupBy(r => r.GroupNumber)
-                .OrderBy(r => r.Key.HasValue ? r.Key : int.MaxValue);
+                .GroupBy(r => r.Group)
+                .OrderBy(r => r.Key?.Id ?? int.MaxValue);
 
             foreach (var roleGroup in roleGroups)
             {
+                if (roleGroup.Key != null)
+                    sb.AppendLine($"{roleGroup.Key.Name} group");
+                else
+                    sb.AppendLine($"Ungrouped");
+
                 foreach (var userRole in roleGroup.ToList())
                 {
                     sb.Append($"* {userRole.Name}");
@@ -112,7 +115,7 @@ namespace Nellebot.CommandModules
             }
 
             if (member == null)
-                throw new ArgumentNullException(nameof(member));
+                throw new Exception($"{nameof(ctx.Member)} is null");
 
             // Assign new role
             var discordRole = ctx.Guild.Roles[userRole.RoleId];
@@ -129,10 +132,10 @@ namespace Nellebot.CommandModules
 
         private async Task RemoveAllOtherRolesInGroup(UserRole userRole, DiscordMember member, DiscordGuild guild)
         {
-            if (!userRole.GroupNumber.HasValue)
+            if (userRole.Group == null)
                 return;
 
-            var otherRolesInGroup = (await _roleService.GetUserRolesByGroup(userRole.GroupNumber.Value))
+            var otherRolesInGroup = (await _roleService.GetUserRolesByGroup(userRole.Group.Id))
                                                 .Where(r => r.Id != userRole.Id);
 
             var discordRolesInGroup = member.Roles
@@ -158,7 +161,7 @@ namespace Nellebot.CommandModules
             var guild = ctx.Guild;
 
             if (member == null)
-                throw new ArgumentNullException(nameof(member));
+                throw new Exception($"{nameof(ctx.Member)} is null");
 
             await member.RevokeRoleAsync(existingDiscordRole);
 
