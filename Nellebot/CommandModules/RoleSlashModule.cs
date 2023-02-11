@@ -8,17 +8,20 @@ using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.Options;
 using Nellebot.Services;
+using Nellebot.Services.Loggers;
 
 namespace Nellebot.CommandModules;
 public class RoleSlashModule : ApplicationCommandModule
 {
     private const int _maxSelectComponentOptions = 25;
     private readonly RoleService _roleService;
+    private readonly IDiscordErrorLogger _discordErrorLogger;
     private readonly BotOptions _options;
 
-    public RoleSlashModule(RoleService roleService, IOptions<BotOptions> options)
+    public RoleSlashModule(RoleService roleService, IOptions<BotOptions> options, IDiscordErrorLogger discordErrorLogger)
     {
         _roleService = roleService;
+        _discordErrorLogger = discordErrorLogger;
         _options = options.Value;
     }
 
@@ -63,11 +66,20 @@ public class RoleSlashModule : ApplicationCommandModule
     [SlashCommand("roles", "Choose your server roles")]
     public Task Roles(InteractionContext ctx)
     {
-        var member = ctx.Member ?? throw new Exception("Not a guild member");
+        try
+        {
+            var member = ctx.Member ?? throw new Exception("Not a guild member");
 
-        var hasMemberRole = member.Roles.Any(r => r.Id == _options.MemberRoleId);
+            var hasMemberRole = member.Roles.Any(r => r.Id == _options.MemberRoleId);
 
-        return hasMemberRole ? MemberRoleFlow(ctx) : NewUserRoleFlow(ctx);
+            return hasMemberRole ? MemberRoleFlow(ctx) : NewUserRoleFlow(ctx);
+        }
+        catch (Exception ex)
+        {
+            // TODO add better error handling for Slash commands
+            _discordErrorLogger.LogError(ex, ex.Message);
+            return Task.CompletedTask;
+        }
     }
 
     /// <summary>
