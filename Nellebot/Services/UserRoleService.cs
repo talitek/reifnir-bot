@@ -133,6 +133,11 @@ public class UserRoleService
         return _userRoleRepo.UpdateRoleGroupName(groupId, name);
     }
 
+    public Task SetRoleMutex(uint groupId, bool mutuallyExclusive)
+    {
+        return _userRoleRepo.UpdateRoleGroupMutext(groupId, mutuallyExclusive);
+    }
+
     public async Task DeleteRoleGroup(uint groupId)
     {
         var rolesInGroup = await _userRoleRepo.GetRolesByGroup(groupId);

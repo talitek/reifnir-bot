@@ -107,7 +107,7 @@ public class RoleSlashModule : ApplicationCommandModule
 
         foreach (var roleGroup in roleGroups.ToList())
         {
-            var isSingleSelect = roleGroup.Key != null;
+            var isSingleSelect = roleGroup.Key != null && roleGroup.Key.MutuallyExclusive;
 
             var roleDropdownOptions = new List<DiscordSelectComponentOption>();
 
@@ -221,11 +221,13 @@ public class RoleSlashModule : ApplicationCommandModule
 
         var chosenButtonId = theMessageInteractivityResult.Result.Id;
 
-        var isSingleSelect = chosenButtonId != "none";
+        var choiceIsRoleGroup = chosenButtonId != "none";
 
-        var roleGroupToChange = isSingleSelect
+        var roleGroupToChange = choiceIsRoleGroup
             ? roleGroups.Single(g => g.Key?.Id == uint.Parse(chosenButtonId))
             : roleGroups.Single(g => g.Key == null);
+
+        var isSingleSelect = roleGroupToChange.Key != null && roleGroupToChange.Key.MutuallyExclusive;
 
         var roleDropdownOptions = new List<DiscordSelectComponentOption>();
 

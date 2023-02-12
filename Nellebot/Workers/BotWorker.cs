@@ -82,6 +82,7 @@ public class BotWorker : IHostedService
         });
 
         commands.RegisterCommands(Assembly.GetExecutingAssembly());
+
         return commands;
     }
 
@@ -89,6 +90,7 @@ public class BotWorker : IHostedService
     {
         var slashCommands = _client.UseSlashCommands(new SlashCommandsConfiguration { Services = _serviceProvider });
 
+        slashCommands.RegisterCommands<GlobalSlashModule>();
         slashCommands.RegisterCommands<RoleSlashModule>(_options.GuildId);
     }
 

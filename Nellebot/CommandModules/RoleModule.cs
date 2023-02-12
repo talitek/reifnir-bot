@@ -49,7 +49,7 @@ public class RoleModule : BaseCommandModule
         foreach (var roleGroup in roleGroups)
         {
             if (roleGroup.Key != null)
-                sb.AppendLine($"{roleGroup.Key.Name} group");
+                sb.AppendLine($"{roleGroup.Key.Name} group{(roleGroup.Key.MutuallyExclusive ? " (mutually exclusive)" : string.Empty)}");
             else
                 sb.AppendLine($"Ungrouped");
 

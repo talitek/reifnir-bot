@@ -48,15 +48,21 @@ public class UserRoleModule : BaseCommandModule
         foreach (var roleGroup in roleGroups)
         {
             if (roleGroup.Key != null)
-                sb.AppendLine($"{roleGroup.Key.Name} group (group id: {roleGroup.Key.Id})");
+                sb.AppendLine($"{roleGroup.Key.Name} group (group id: {roleGroup.Key.Id} {(roleGroup.Key.MutuallyExclusive ? ", mutually exclusive" : string.Empty)})");
             else
                 sb.AppendLine($"Ungrouped");
 
             foreach (var userRole in roleGroup.ToList())
             {
-                var formattedAliasList = string.Join(", ", userRole.UserRoleAliases.Select(x => x.Alias));
+                sb.Append($"* {userRole.Name}");
 
-                sb.AppendLine($"* {userRole.Name}: {formattedAliasList}");
+                if (userRole.UserRoleAliases.Any())
+                {
+                    var formattedAliasList = string.Join(", ", userRole.UserRoleAliases.Select(x => x.Alias));
+                    sb.Append($" (or {formattedAliasList})");
+                }
+
+                sb.AppendLine();
             }
 
             sb.AppendLine();
@@ -301,6 +307,14 @@ public class UserRoleModule : BaseCommandModule
         await _userRoleService.SetRoleGroupName(groupId, groupName);
 
         await ctx.RespondAsync($"Set group name {groupName} for group {groupId}");
+    }
+
+    [Command("set-group-mutex")]
+    public async Task SetRoleGroupMutex(CommandContext ctx, uint groupId, bool mutuallyExclusive)
+    {
+        await _userRoleService.SetRoleMutex(groupId, mutuallyExclusive);
+
+        await ctx.RespondAsync($"Set group mutex flag {mutuallyExclusive} for group {groupId}");
     }
 
     [Command("delete-group")]

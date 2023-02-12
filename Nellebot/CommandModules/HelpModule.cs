@@ -77,6 +77,7 @@ public class HelpModule : BaseCommandModule
         sb.AppendLine($"`{command} set-group [role] [group-number]`");
         sb.AppendLine($"`{command} unset-group [role]`");
         sb.AppendLine($"`{command} set-group-name [group-number] [group-name]`");
+        sb.AppendLine($"`{command} set-group-mutex [group-number] [true/false]`");
         sb.AppendLine($"`{command} delete-group [group-number]`");
         sb.AppendLine($"`{command} sync-roles`");
 
