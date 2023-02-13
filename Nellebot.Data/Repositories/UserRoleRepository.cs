@@ -62,6 +62,7 @@ public class UserRoleRepository : IUserRoleRepository
     {
         return _dbContext.UserRoles
             .Include(x => x.UserRoleAliases)
+            .Include(x => x.Group)
             .SingleOrDefaultAsync(r => r.RoleId == roleId);
     }
 
@@ -149,6 +150,7 @@ public class UserRoleRepository : IUserRoleRepository
 
         role ??= await _dbContext.UserRoles
                 .Include(x => x.UserRoleAliases)
+                .Include(x => x.Group)
                 .SingleOrDefaultAsync(r => r.UserRoleAliases.Select(a => a.Alias).Contains(roleName));
 
         return role;
