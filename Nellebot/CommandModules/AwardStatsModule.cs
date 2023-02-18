@@ -1,17 +1,14 @@
-﻿using DSharpPlus.CommandsNext;
+﻿using System;
+using System.Text;
+using System.Threading.Tasks;
+using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
 using Nellebot.Data.Repositories;
 using Nellebot.Helpers;
 using Nellebot.Services;
 using Nellebot.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Nellebot.CommandModules
 {
@@ -20,16 +17,15 @@ namespace Nellebot.CommandModules
     [ModuleLifespan(ModuleLifespan.Transient)]
     public class AwardStatsModule : BaseCommandModule
     {
+        private const int _maxMessageLength = 50;
         private readonly DiscordResolver _discordResolver;
         private readonly AwardMessageRepository _awardMessageRepo;
         private readonly SharedCache _cache;
-        private const int _maxMessageLength = 50;
 
         public AwardStatsModule(
             DiscordResolver discordResolver,
             AwardMessageRepository awardMessageRepo,
-            SharedCache cache
-            )
+            SharedCache cache)
         {
             _discordResolver = discordResolver;
             _awardMessageRepo = awardMessageRepo;
@@ -76,7 +72,7 @@ namespace Nellebot.CommandModules
             var sb = new StringBuilder();
 
             var embedBuilder = new DiscordEmbedBuilder()
-                .WithAuthor(mention, null, member.AvatarUrl)
+                .WithAuthor(mention, null, member.GuildAvatarUrl ?? member.AvatarUrl)
                 .WithTitle("Cookie stats")
                 .WithColor(DiscordConstants.DefaultEmbedColor);
 
