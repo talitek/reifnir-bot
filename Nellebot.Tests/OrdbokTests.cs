@@ -1,19 +1,12 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
-using vm = Nellebot.Common.Models.Ordbok.ViewModels;
-using api = Nellebot.Common.Models.Ordbok.Api;
-using Nellebot.Services;
-using Nellebot.Services.Ordbok;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Scriban;
-using Nellebot.Services.HtmlToImage;
-using Microsoft.Extensions.Logging;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
+using Nellebot.Services;
+using Nellebot.Services.Ordbok;
+using api = Nellebot.Common.Models.Ordbok.Api;
 
 namespace Nellebot.Tests
 {
@@ -45,7 +38,6 @@ namespace Nellebot.Tests
                 var modelMapper = new OrdbokModelMapper(ordbokContentParser);
 
                 var article = modelMapper.MapArticle(result!);
-
             }
             catch (Exception ex)
             {

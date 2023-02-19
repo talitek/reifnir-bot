@@ -8,7 +8,7 @@ namespace Nellebot.Services;
 
 public class PuppeteerFactory
 {
-    public async Task<Browser> BuildBrowser()
+    public async Task<IBrowser> BuildBrowser()
     {
         string downloadPath = Path.Combine(Path.GetTempPath(), $"puppeteer-nellebot");
 

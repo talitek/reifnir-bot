@@ -122,7 +122,7 @@ namespace Nellebot.Services.Glosbe
             return translationResult;
         }
 
-        private static async Task<string> GetElementTextValueAsync(ElementHandle handle)
+        private static async Task<string> GetElementTextValueAsync(IElementHandle handle)
         {
             if (handle == null)
                 return string.Empty;
@@ -133,7 +133,7 @@ namespace Nellebot.Services.Glosbe
             return innerTextValue?.Trim() ?? string.Empty;
         }
 
-        private static async Task<string[]> GetElementTextValuesAsync(ElementHandle[] handles)
+        private static async Task<string[]> GetElementTextValuesAsync(IElementHandle[] handles)
         {
             return await Task.WhenAll(handles.Select(GetElementTextValueAsync));
         }
