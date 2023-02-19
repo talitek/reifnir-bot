@@ -23,8 +23,7 @@ jobs:
       env:
         CONNECTION_STRING: ${{secrets.DB_CONNECTION_STRING}}
         BOT_TOKEN: ${{secrets.BOT_TOKEN}}
-        ORDBOK_API_KEY: ${{secrets.ORDBOK_API_KEY}}
-    
+        ORDBOK_API_KEY: ${{secrets.ORDBOK_API_KEY}}    
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v3
       with:
@@ -34,26 +33,41 @@ jobs:
       run: dotnet test
     
     - name: Publish
-      run: dotnet publish -c Release -r linux-x64 -o deploy --no-self-contained ./Nellebot/
+      run: dotnet publish -c Release -r linux-x64 -o publish-output --no-self-contained ./Nellebot/
 
     - name: Generate database migration script
       if: github.event.inputs.updateDatabase == 'auto' || github.event.inputs.updateDatabase == 'manual'
       run: |
         dotnet tool install --global dotnet-ef
         dotnet tool restore
-        dotnet ef migrations script --idempotent -p Nellebot.Data.Migrations -o deploy/database_migration.sql
+        dotnet ef migrations script --idempotent -p Nellebot.Data.Migrations -o publish-output/database_migration.sql
       env:
         DOTNET_ENVIRONMENT: Production
-    
-    - name: Copy files to remote dir
+
+    - name: Copy publish output to staging folder
       uses: appleboy/scp-action@master
       with:  
         host: ${{secrets.VPS_HOST}}
         port: ${{secrets.VPS_PORT}}
-        username: ${{secrets.VPS_USER}}
-        password: ${{secrets.VPS_PASSWORD}}        
-        source: "/home/runner/work/reifnir-bot/reifnir-bot/deploy/"
-        target: "/home/nellebot-user/nellebot-deploy"
+        username: ${{secrets.NELLEBOT_USER}}
+        key: ${{secrets.NELLEBOT_KEY}}
+        passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
+        source: "publish-output/"
+        target: "$HOME/nellebot-staging"
+        strip_components: 1
+        rm: true
+        
+    - name: Copy deploy scripts to deploy folder
+      uses: appleboy/scp-action@master
+      with:  
+        host: ${{secrets.VPS_HOST}}
+        port: ${{secrets.VPS_PORT}}
+        username: ${{secrets.NELLEBOT_USER}}
+        key: ${{secrets.NELLEBOT_KEY}}
+        passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
+        source: "deploy/"
+        target: "$HOME/nellebot-deploy"
+        strip_components: 1
         rm: true
     
     - name: Deploy - Stop service
@@ -62,26 +76,29 @@ jobs:
         host: ${{secrets.VPS_HOST}}
         port: ${{secrets.VPS_PORT}}
         username: ${{secrets.NELLEBOT_USER}}
-        password: ${{secrets.NELLEBOT_PASSWORD}}      
-        script: systemctl --user stop nellebot
+        key: ${{secrets.NELLEBOT_KEY}}
+        passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
+        script: systemctl --user stop --quiet nellebot || true
     
+    - name: Deploy - Prepare deploy scripts
+      uses: appleboy/ssh-action@master
+      with:  
+        host: ${{secrets.VPS_HOST}}
+        port: ${{secrets.VPS_PORT}}
+        username: ${{secrets.NELLEBOT_USER}}
+        key: ${{secrets.NELLEBOT_KEY}}
+        passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
+        script: chmod +x $HOME/nellebot-deploy/*.sh
+        
     - name: Deploy - Run deploy script
       uses: appleboy/ssh-action@master
       with:  
         host: ${{secrets.VPS_HOST}}
         port: ${{secrets.VPS_PORT}}
-        username: ${{secrets.VPS_USER}}
-        password: ${{secrets.VPS_PASSWORD}}      
-        script: sudo /home/nellebot-user/nellebot-deploy.sh
- 
-    - name: Deploy - Change Nellebot permission
-      uses: appleboy/ssh-action@master
-      with:  
-        host: ${{secrets.VPS_HOST}}
-        port: ${{secrets.VPS_PORT}}
-        username: ${{secrets.VPS_USER}}
-        password: ${{secrets.VPS_PASSWORD}}      
-        script: sudo chmod 777 /home/nellebot-user/nellebot/Nellebot
+        username: ${{secrets.NELLEBOT_USER}}
+        key: ${{secrets.NELLEBOT_KEY}}
+        passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
+        script: $HOME/nellebot-deploy/nellebot-deploy.sh
 
     - name: Deploy - Backup database
       if: github.event.inputs.updateDatabase == 'auto' || github.event.inputs.updateDatabase == 'manual'
@@ -89,9 +106,10 @@ jobs:
       with:  
         host: ${{secrets.VPS_HOST}}
         port: ${{secrets.VPS_PORT}}
-        username: ${{secrets.VPS_USER}}
-        password: ${{secrets.VPS_PASSWORD}}      
-        script: sudo /home/nellebot-user/nellebot-backup-db.sh
+        username: ${{secrets.NELLEBOT_USER}}
+        key: ${{secrets.NELLEBOT_KEY}}
+        passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
+        script: $HOME/nellebot-deploy/nellebot-backup-db.sh
  
     - name: Deploy - Run database migration script
       if: github.event.inputs.updateDatabase == 'auto'
@@ -99,9 +117,10 @@ jobs:
       with:  
         host: ${{secrets.VPS_HOST}}
         port: ${{secrets.VPS_PORT}}
-        username: ${{secrets.VPS_USER}}
-        password: ${{secrets.VPS_PASSWORD}}      
-        script: sudo psql -U postgres -d nellebot -q -f /home/nellebot-user/nellebot/database_migration.sql
+        username: ${{secrets.NELLEBOT_USER}}
+        key: ${{secrets.NELLEBOT_KEY}}
+        passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
+        script: psql -U postgres -d nellebot -q -f $HOME/nellebot/database_migration.sql
  
     - name: Deploy - Start service
       if: github.event.inputs.updateDatabase == 'no' || github.event.inputs.updateDatabase == 'auto'
@@ -110,5 +129,6 @@ jobs:
         host: ${{secrets.VPS_HOST}}
         port: ${{secrets.VPS_PORT}}
         username: ${{secrets.NELLEBOT_USER}}
-        password: ${{secrets.NELLEBOT_PASSWORD}}      
-        script: systemctl --user start nellebot
+        key: ${{secrets.NELLEBOT_KEY}}
+        passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
+        script: systemctl --user enable nellebot && systemctl --user start nellebot
