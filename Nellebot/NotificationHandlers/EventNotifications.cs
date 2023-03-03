@@ -1,11 +1,9 @@
 ﻿using DSharpPlus.EventArgs;
 using MediatR;
-using Nellebot.Utils;
 
 namespace Nellebot.NotificationHandlers;
 
-// TODO make non nullable
-public abstract record EventNotification(EventContext? Ctx = null) : INotification;
+public abstract record EventNotification() : INotification;
 
 public record GuildMemberUpdatedNotification(GuildMemberUpdateEventArgs EventArgs) : EventNotification;
 public record GuildMemberAddedNotification(GuildMemberAddEventArgs EventArgs) : EventNotification;

@@ -1,19 +1,18 @@
-﻿using Microsoft.Extensions.Options;
-using Nellebot.Common.Models.Ordbok.Api;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Nellebot.Common.Models.Ordbok.Api;
 
 namespace Nellebot.Services.Ordbok
 {
     public class OrdbokHttpClient
     {
-        private readonly HttpClient _client;
+        private const int MaxArticles = 5;
 
-        private const int _maxArticles = 5;
+        private readonly HttpClient _client;
 
         public OrdbokHttpClient(HttpClient client)
         {
@@ -55,7 +54,7 @@ namespace Nellebot.Services.Ordbok
 
         public async Task<List<Article?>> GetArticles(string dictionary, List<int> articleIds)
         {
-            var tasks = articleIds.Take(_maxArticles).Select(id => GetArticle(dictionary, id));
+            var tasks = articleIds.Take(MaxArticles).Select(id => GetArticle(dictionary, id));
 
             var result = await Task.WhenAll(tasks);
 

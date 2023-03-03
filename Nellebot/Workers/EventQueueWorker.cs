@@ -27,41 +27,42 @@ public class EventQueueWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        INotification? @event = null;
-
         try
         {
             await foreach (INotification notification in _channel.Reader.ReadAllAsync(stoppingToken))
             {
-                @event = notification;
+                INotification @event = notification;
 
-                if (@event != null)
+                if (@event == null)
                 {
-                    _logger.LogDebug("Dequeued event. {RemainingMessageCount} left in queue", _channel.Reader.Count);
+                    continue;
+                }
 
+                _logger.LogDebug("Dequeued event. {RemainingMessageCount} left in queue", _channel.Reader.Count);
+
+                try
+                {
                     await _publisher.Publish(@event, stoppingToken);
+                }
+                catch (AggregateException ex)
+                {
+                    foreach (Exception innerEx in ex.InnerExceptions)
+                    {
+                        if (@event is not null and EventNotification eventNotification)
+                        {
+                            // TODO extract relevant information from notification object
+                            // and pass to LogEventError
+                            _discordErrorLogger.LogError(innerEx, nameof(EventQueueWorker));
+                        }
+
+                        _logger.LogError(innerEx, nameof(EventQueueWorker));
+                    }
                 }
             }
         }
         catch (TaskCanceledException)
         {
             _logger.LogDebug("{Worker} execution is being cancelled", nameof(EventQueueWorker));
-        }
-        catch (AggregateException ex)
-        {
-            foreach (Exception innerEx in ex.InnerExceptions)
-            {
-                if (@event is not null and EventNotification notification)
-                {
-                    // TODO remove await when error logger methods become synchronous
-                    if (notification.Ctx != null)
-                        _discordErrorLogger.LogEventError(notification.Ctx, innerEx.ToString());
-                    else
-                        _discordErrorLogger.LogError(innerEx, nameof(EventQueueWorker));
-                }
-
-                _logger.LogError(innerEx, nameof(EventQueueWorker));
-            }
         }
         catch (Exception ex)
         {
