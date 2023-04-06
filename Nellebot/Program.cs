@@ -36,8 +36,11 @@ public class Program
 
                 services.AddHttpClient<OrdbokHttpClient>();
 
-                services.AddMediatR(cfg => { cfg.RegisterServicesFromAssemblyContaining<Program>(); });
-                services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CommandRequestPipelineBehaviour<,>));
+                services.AddMediatR(cfg =>
+                {
+                    cfg.RegisterServicesFromAssemblyContaining<Program>();
+                    cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(CommandRequestPipelineBehaviour<,>));
+                });
                 services.AddTransient<NotificationPublisher>();
 
                 services.AddSingleton<SharedCache>();
