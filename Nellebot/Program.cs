@@ -13,7 +13,6 @@ using Nellebot.Data.Repositories;
 using Nellebot.EventHandlers;
 using Nellebot.Infrastructure;
 using Nellebot.Services;
-using Nellebot.Services.Glosbe;
 using Nellebot.Services.Loggers;
 using Nellebot.Services.Ordbok;
 using Nellebot.Utils;
@@ -123,8 +122,6 @@ public class Program
         services.AddTransient<OrdbokModelMapper>();
         services.AddTransient<IOrdbokContentParser, OrdbokContentParser>();
         services.AddTransient<HtmlToImageService>();
-        services.AddTransient<GlosbeClient>();
-        services.AddTransient<GlosbeModelMapper>();
         services.AddTransient<BotSettingsService>();
         services.AddTransient<MessageRefsService>();
         services.AddTransient<UserLogService>();

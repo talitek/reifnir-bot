@@ -27,7 +27,8 @@ public class HelpModule : BaseCommandModule
 
         var commandPrefix = _options.CommandPrefix;
 
-        sb.AppendLine($"On NELLE, you can assign roles to yourself using the `{commandPrefix}role` command followed by the `name` of the role.");
+        sb.AppendLine($"On NELLE, you can assign roles to yourself using the `/roles` command `{commandPrefix}role` command followed by the `name` of the role.");
+        sb.AppendLine($"Alternatively you can use the `{commandPrefix}role` command followed by the `name` of the role.");
         sb.AppendLine($"For example: `{commandPrefix}role beginner`");
         sb.AppendLine($"To unassign a role from yourself, type the same command again.");
         sb.AppendLine($"To view all the available roles, type `{commandPrefix}roles`.");
@@ -39,10 +40,6 @@ public class HelpModule : BaseCommandModule
         sb.AppendLine("Dictionary commands:");
         sb.AppendLine($"`{commandPrefix}bm [word] .. Search the bokmål dictionary`");
         sb.AppendLine($"`{commandPrefix}nn [word] .. Search the nynorsk dictionary`");
-        sb.AppendLine($"`{commandPrefix}nb-en [word] .. Translate Bokmål -> English`");
-        sb.AppendLine($"`{commandPrefix}en-nb [word] .. Translate English -> Bokmål`");
-        sb.AppendLine($"`{commandPrefix}nn-en [word] .. Translate Nynorsk -> English`");
-        sb.AppendLine($"`{commandPrefix}en-nn [word] .. Translate English -> Nynorsk`");
 
         sb.AppendLine();
         sb.AppendLine("Other useful commands:");
@@ -57,7 +54,7 @@ public class HelpModule : BaseCommandModule
         sb.AppendLine();
         sb.AppendLine("Reifnir source code: [github.com/NELLE-reifnir-bot/reifnir-bot](https://github.com/NELLE-reifnir-bot/reifnir-bot)");
 
-        var eb = EmbedBuilderHelper.BuildSimpleEmbed("Roles on NELLE", sb.ToString());
+        var eb = EmbedBuilderHelper.BuildSimpleEmbed("Help", sb.ToString());
 
         return ctx.RespondAsync(eb);
     }
