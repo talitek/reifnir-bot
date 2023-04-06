@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Nellebot.Infrastructure;
 using Nellebot.NotificationHandlers;
-using Nellebot.Services;
 using Nellebot.Services.Loggers;
 
 namespace Nellebot.Workers;

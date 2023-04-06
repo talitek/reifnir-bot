@@ -1,102 +1,99 @@
-﻿using DSharpPlus.CommandsNext;
-using MediatR;
-using Microsoft.Extensions.Options;
-using Nellebot.Services;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using DSharpPlus.CommandsNext;
+using MediatR;
+using Microsoft.Extensions.Options;
 
-namespace Nellebot.CommandHandlers
+namespace Nellebot.CommandHandlers;
+
+public class AddMissingMemberRolesRequest : CommandRequest
 {
-    public class AddMissingMemberRolesRequest : CommandRequest
+    public AddMissingMemberRolesRequest(CommandContext ctx)
+        : base(ctx) { }
+}
+
+public class AddMissingMembeRolesHandler : IRequestHandler<AddMissingMemberRolesRequest>
+{
+    private readonly BotOptions _options;
+
+    public AddMissingMembeRolesHandler(IOptions<BotOptions> options)
     {
-        public AddMissingMemberRolesRequest(CommandContext ctx) : base(ctx) { }
+        _options = options.Value;
     }
 
-    public class AddMissingMembeRolesHandler : AsyncRequestHandler<AddMissingMemberRolesRequest>
+    public async Task Handle(AddMissingMemberRolesRequest request, CancellationToken cancellationToken)
     {
-        private readonly BotOptions _options;
+        var ctx = request.Ctx;
 
-        public AddMissingMembeRolesHandler(IOptions<BotOptions> options)
+        var memberRoleId = _options.MemberRoleId;
+        var requiredRoleIds = _options.RequiredRoleIds;
+
+        var memberRole = ctx.Guild.Roles[_options.MemberRoleId];
+
+        if (memberRole == null)
+            throw new ArgumentException($"Could not find role with id {memberRoleId}");
+
+        var memberRoleCandidates = ctx.Guild.Members
+                                    .Where(m => !m.Value.Roles.Any(r => r.Id == memberRoleId))
+                                    .Where(m => m.Value.Roles.Any(r => requiredRoleIds.Contains(r.Id)))
+                                    .Select(r => r.Value)
+                                    .ToList();
+
+        if (memberRoleCandidates.Count == 0)
         {
-            _options = options.Value;
+            await ctx.RespondAsync($"Did not find any candidates for member role");
+            return;
         }
 
-        protected override async Task Handle(AddMissingMemberRolesRequest request, CancellationToken cancellationToken)
+        await ctx.RespondAsync($"Found {memberRoleCandidates.Count} candidates for member role");
+
+        var totalCount = 0;
+        var successCount = 0;
+        var failureCount = 0;
+        var progressPercentLastUpdate = 0.0;
+        const int baseSleepInMs = 1000;
+
+        foreach (var member in memberRoleCandidates)
         {
-            var ctx = request.Ctx;
+            var roleAddAttempt = 0;
+            var roleAdded = false;
 
-            var memberRoleId = _options.MemberRoleId;
-            var requiredRoleIds = _options.RequiredRoleIds;
-
-            var memberRole = ctx.Guild.Roles[_options.MemberRoleId];
-
-            if (memberRole == null)
-                throw new ArgumentException($"Could not find role with id {memberRoleId}");
-
-            var memberRoleCandidates = ctx.Guild.Members
-                                        .Where(m => !m.Value.Roles.Any(r => r.Id == memberRoleId))
-                                        .Where(m => m.Value.Roles.Any(r => requiredRoleIds.Contains(r.Id)))
-                                        .Select(r => r.Value)
-                                        .ToList();
-
-            if(memberRoleCandidates.Count == 0)
+            while (roleAddAttempt < 3)
             {
-                await ctx.RespondAsync($"Did not find any candidates for member role");
-                return;
+                roleAddAttempt++;
+
+                try
+                {
+                    await member.GrantRoleAsync(memberRole);
+
+                    roleAdded = true;
+
+                    break;
+                }
+                catch (Exception)
+                {
+                    await Task.Delay(baseSleepInMs * roleAddAttempt, cancellationToken);
+                }
             }
 
-            await ctx.RespondAsync($"Found {memberRoleCandidates.Count} candidates for member role");
+            if (roleAdded) successCount++;
+            else failureCount++;
 
-            var totalCount = 0;
-            var successCount = 0;
-            var failureCount = 0;
-            var progressPercentLastUpdate = 0.0;
-            const int baseSleepInMs = 1000;
+            totalCount++;
 
-            foreach (var member in memberRoleCandidates)
+            var currentProgress = ((double)totalCount / memberRoleCandidates.Count) * 100;
+
+            if ((currentProgress - progressPercentLastUpdate >= 10) || (currentProgress == 100))
             {
-                var roleAddAttempt = 0;
-                var roleAdded = false;
-
-                while (roleAddAttempt < 3)
-                {
-                    roleAddAttempt++;
-
-                    try
-                    {
-                        await member.GrantRoleAsync(memberRole);
-
-                        roleAdded = true;
-
-                        break;
-                    }
-                    catch (Exception)
-                    {
-                        await Task.Delay(baseSleepInMs * roleAddAttempt);
-                    }
-                }
-
-                if (roleAdded) successCount++;
-                else failureCount++;
-
-                totalCount++;
-
-                var currentProgress = ((double)totalCount / memberRoleCandidates.Count) * 100;
-
-                if ((currentProgress - progressPercentLastUpdate >= 10) || (currentProgress == 100))
-                {
-                    progressPercentLastUpdate = currentProgress;
-                    await ctx.Channel.SendMessageAsync($"Progress: {currentProgress:.##}%");
-                }
-
-                await Task.Delay(baseSleepInMs);
+                progressPercentLastUpdate = currentProgress;
+                await ctx.Channel.SendMessageAsync($"Progress: {currentProgress:.##}%");
             }
 
-            await ctx.Channel.SendMessageAsync($"Done adding member roles for {successCount}/{totalCount} users.");
+            await Task.Delay(baseSleepInMs, cancellationToken);
         }
+
+        await ctx.Channel.SendMessageAsync($"Done adding member roles for {successCount}/{totalCount} users.");
     }
 }

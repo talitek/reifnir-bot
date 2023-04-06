@@ -1,18 +1,19 @@
-﻿using DSharpPlus.CommandsNext;
-using MediatR;
-using Nellebot.Services;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using DSharpPlus.CommandsNext;
+using MediatR;
+using Nellebot.Services;
 
 namespace Nellebot.CommandHandlers;
 
 public class PopulateMessagesRequest : CommandRequest
 {
-    public PopulateMessagesRequest(CommandContext ctx) : base(ctx) { }
+    public PopulateMessagesRequest(CommandContext ctx)
+        : base(ctx) { }
 }
 
-public class PopulateMessagesHandler : AsyncRequestHandler<PopulateMessagesRequest>
+public class PopulateMessagesHandler : IRequestHandler<PopulateMessagesRequest>
 {
     private readonly MessageRefsService _messageRefsService;
 
@@ -21,14 +22,14 @@ public class PopulateMessagesHandler : AsyncRequestHandler<PopulateMessagesReque
         _messageRefsService = messageRefsService;
     }
 
-    protected override async Task Handle(PopulateMessagesRequest request, CancellationToken cancellationToken)
+    public async Task Handle(PopulateMessagesRequest request, CancellationToken cancellationToken)
     {
         var guild = request.Ctx.Guild;
-        var channel = request.Ctx.Channel;        
+        var channel = request.Ctx.Channel;
 
         var createdMessages = await _messageRefsService.PopulateMessageRefsInit(guild);
 
-        if(createdMessages.Count == 0)
+        if (createdMessages.Count == 0)
         {
             await channel.SendMessageAsync("No messages to populate");
             return;

@@ -1,21 +1,22 @@
-﻿using DSharpPlus.CommandsNext;
+﻿using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using DSharpPlus.CommandsNext;
 using MediatR;
 using Nellebot.Common.Models.UserLogs;
 using Nellebot.Data.Repositories;
 using Nellebot.Utils;
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Nellebot.CommandHandlers;
 
 public class PopulateUserLogRequest : CommandRequest
 {
-    public PopulateUserLogRequest(CommandContext ctx) : base(ctx) { }
+    public PopulateUserLogRequest(CommandContext ctx)
+        : base(ctx) { }
 }
 
-public class PopulateUserLogHandler : AsyncRequestHandler<PopulateUserLogRequest>
+public class PopulateUserLogHandler : IRequestHandler<PopulateUserLogRequest>
 {
     private readonly UserLogRepository _userLogRepo;
 
@@ -24,7 +25,7 @@ public class PopulateUserLogHandler : AsyncRequestHandler<PopulateUserLogRequest
         _userLogRepo = userLogRepo;
     }
 
-    protected override async Task Handle(PopulateUserLogRequest request, CancellationToken cancellationToken)
+    public async Task Handle(PopulateUserLogRequest request, CancellationToken cancellationToken)
     {
         var ctx = request.Ctx;
         var guild = ctx.Guild;
@@ -46,9 +47,9 @@ public class PopulateUserLogHandler : AsyncRequestHandler<PopulateUserLogRequest
             {
                 var userLogs = await _userLogRepo.GetLatestFieldsForUser(user.Id);
 
-                if (!userLogs.Any(x => x.LogType == UserLogType.JoinedServer))                
+                if (!userLogs.Any(x => x.LogType == UserLogType.JoinedServer))
                     await _userLogRepo.CreateUserLog(user.Id, user.JoinedAt.UtcDateTime, UserLogType.JoinedServer);
-   
+
                 if (!userLogs.Any(x => x.LogType == UserLogType.UsernameChange))
                     await _userLogRepo.CreateUserLog(user.Id, user.GetFullUsername(), UserLogType.UsernameChange);
 
@@ -79,6 +80,6 @@ public class PopulateUserLogHandler : AsyncRequestHandler<PopulateUserLogRequest
             }
         }
 
-        await ctx.Channel.SendMessageAsync($"Done populating user logs for {totalCount-failedCount}/{users.Count} users");
+        await ctx.Channel.SendMessageAsync($"Done populating user logs for {totalCount - failedCount}/{users.Count} users");
     }
 }

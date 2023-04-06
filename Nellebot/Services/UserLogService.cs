@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using Nellebot.Common.Models.UserLogs;
 using Nellebot.Data.Repositories;
+using Nellebot.Infrastructure;
 using System;
 using System.Threading.Tasks;
 

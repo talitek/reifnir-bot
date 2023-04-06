@@ -7,7 +7,7 @@ using DSharpPlus.Entities;
 using Nellebot.Attributes;
 using Nellebot.Data.Repositories;
 using Nellebot.Helpers;
-using Nellebot.Services;
+using Nellebot.Infrastructure;
 using Nellebot.Utils;
 
 namespace Nellebot.CommandModules

@@ -11,6 +11,7 @@ using Nellebot.CommandHandlers;
 using Nellebot.Data;
 using Nellebot.Data.Repositories;
 using Nellebot.EventHandlers;
+using Nellebot.Infrastructure;
 using Nellebot.Services;
 using Nellebot.Services.Glosbe;
 using Nellebot.Services.Loggers;
@@ -36,7 +37,7 @@ public class Program
 
                 services.AddHttpClient<OrdbokHttpClient>();
 
-                services.AddMediatR(typeof(Program));
+                services.AddMediatR(cfg => { cfg.RegisterServicesFromAssemblyContaining<Program>(); });
                 services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CommandRequestPipelineBehaviour<,>));
                 services.AddTransient<NotificationPublisher>();
 

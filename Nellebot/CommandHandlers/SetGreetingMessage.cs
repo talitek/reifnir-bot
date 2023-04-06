@@ -1,52 +1,48 @@
-﻿using DSharpPlus.CommandsNext;
-using MediatR;
-using Nellebot.Services;
-using Nellebot.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using DSharpPlus.CommandsNext;
+using MediatR;
+using Nellebot.Services;
 
-namespace Nellebot.CommandHandlers
+namespace Nellebot.CommandHandlers;
+
+public class SetGreetingMessageRequest : CommandRequest
 {
-    public class SetGreetingMessageRequest : CommandRequest
-    {
-        public string GreetingMessage { get; set; }
+    public string GreetingMessage { get; set; }
 
-        public SetGreetingMessageRequest(CommandContext ctx, string greetingMessage) : base(ctx)
-        {
-            GreetingMessage = greetingMessage;
-        }
+    public SetGreetingMessageRequest(CommandContext ctx, string greetingMessage)
+        : base(ctx)
+    {
+        GreetingMessage = greetingMessage;
+    }
+}
+
+public class SetGreetingMessageHandler : IRequestHandler<SetGreetingMessageRequest>
+{
+    private readonly BotSettingsService _botSettingsService;
+
+    public SetGreetingMessageHandler(BotSettingsService botSettingsService)
+    {
+        _botSettingsService = botSettingsService;
     }
 
-    public class SetGreetingMessageHandler : AsyncRequestHandler<SetGreetingMessageRequest>
+    public async Task Handle(SetGreetingMessageRequest request, CancellationToken cancellationToken)
     {
-        private readonly BotSettingsService _botSettingsService;
+        var ctx = request.Ctx;
+        var message = request.GreetingMessage;
 
-        public SetGreetingMessageHandler(BotSettingsService botSettingsService)
-        {
-            _botSettingsService = botSettingsService;
-        }
+        await _botSettingsService.SetGreetingMessage(message);
 
-        protected override async Task Handle(SetGreetingMessageRequest request, CancellationToken cancellationToken)
-        {
-            var ctx = request.Ctx;
-            var message = request.GreetingMessage;
+        var previewMemberMention = ctx.Member?.Mention ?? string.Empty;
 
-            await _botSettingsService.SetGreetingMessage(message);
+        var messagePreview = await _botSettingsService.GetGreetingsMessage(previewMemberMention);
 
-            var previewMemberMention = ctx.Member?.Mention ?? string.Empty;
+        var sb = new StringBuilder("Greeting mesage updated successfully. Here's a preview:");
+        sb.AppendLine();
+        sb.AppendLine();
+        sb.AppendLine(messagePreview);
 
-            var messagePreview = await _botSettingsService.GetGreetingsMessage(previewMemberMention);
-
-            var sb = new StringBuilder("Greeting mesage updated successfully. Here's a preview:");
-            sb.AppendLine();
-            sb.AppendLine();
-            sb.AppendLine(messagePreview);
-
-            await ctx.RespondAsync(sb.ToString());
-        }
+        await ctx.RespondAsync(sb.ToString());
     }
 }

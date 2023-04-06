@@ -1,6 +1,7 @@
-﻿using Nellebot.Data.Repositories;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using Nellebot.Data.Repositories;
+using Nellebot.Infrastructure;
 
 namespace Nellebot.Services;
 
@@ -28,9 +29,10 @@ public class BotSettingsService
 
     public async Task<string?> GetGreetingsMessage(string userMention)
     {
-        var messageTemplate = await _cache.LoadFromCacheAsync(SharedCacheKeys.GreetingMessage, 
-                                () => _botSettingsRepo.GetBotSetting(SharedCacheKeys.GreetingMessage),
-                                TimeSpan.FromMinutes(5));
+        var messageTemplate = await _cache.LoadFromCacheAsync(
+            SharedCacheKeys.GreetingMessage,
+            () => _botSettingsRepo.GetBotSetting(SharedCacheKeys.GreetingMessage),
+            TimeSpan.FromMinutes(5));
 
         if (messageTemplate == null) return null;
 
@@ -50,11 +52,10 @@ public class BotSettingsService
 
         if (lastHeartBeatStringValue == null) return null;
 
-        var parsed = long.TryParse(lastHeartBeatStringValue,  out var lastHeartBeatTicks);
+        var parsed = long.TryParse(lastHeartBeatStringValue, out var lastHeartBeatTicks);
 
         if (!parsed) return null;
 
         return DateTimeOffset.FromUnixTimeMilliseconds(lastHeartBeatTicks);
     }
 }
-
