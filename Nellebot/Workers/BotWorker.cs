@@ -92,6 +92,7 @@ public class BotWorker : IHostedService
 
         slashCommands.RegisterCommands<GlobalSlashModule>();
         slashCommands.RegisterCommands<RoleSlashModule>(_options.GuildId);
+        slashCommands.RegisterCommands<ModmailModule>(_options.GuildId);
     }
 
     private void RegisterMessageHandlers()

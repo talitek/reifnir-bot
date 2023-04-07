@@ -11,9 +11,10 @@ using Nellebot.Services;
 using Nellebot.Services.Loggers;
 
 namespace Nellebot.CommandModules;
+
 public class RoleSlashModule : ApplicationCommandModule
 {
-    private const int _maxSelectComponentOptions = 25;
+    private const int MaxSelectComponentOptions = 25;
     private readonly RoleService _roleService;
     private readonly IDiscordErrorLogger _discordErrorLogger;
     private readonly BotOptions _options;
@@ -55,12 +56,12 @@ public class RoleSlashModule : ApplicationCommandModule
 
         // At this point, regardless of answering with Create or Defer + Edit
         // We're done with the Slash command interaction
-        var interaction = await originalResponse.WaitForButtonAsync();
+        var interactionResult = await originalResponse.WaitForButtonAsync();
 
         var responseBuilder = new DiscordInteractionResponseBuilder()
             .WithContent("Thanks for clicking me");
 
-        await interaction.Result.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage, responseBuilder);
+        await interactionResult.Result.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage, responseBuilder);
     }
 
     [SlashCommand("roles", "Choose your server roles")]
@@ -118,7 +119,7 @@ public class RoleSlashModule : ApplicationCommandModule
                 roleDropdownOptions.Add(new DiscordSelectComponentOption(userRole.Name, userRole.RoleId.ToString(), userRole.Name, isDefault: userHasRole));
             }
 
-            var maxOptions = isSingleSelect ? 1 : Math.Min(roleDropdownOptions.Count, _maxSelectComponentOptions);
+            var maxOptions = isSingleSelect ? 1 : Math.Min(roleDropdownOptions.Count, MaxSelectComponentOptions);
             var minOptions = isSingleSelect ? 1 : 0;
 
             var roleDropdownId = "dropdown_role";
@@ -238,7 +239,7 @@ public class RoleSlashModule : ApplicationCommandModule
             roleDropdownOptions.Add(new DiscordSelectComponentOption(userRole.Name, userRole.RoleId.ToString(), userRole.Name, isDefault: userHasRole));
         }
 
-        var maxOptions = isSingleSelect ? 1 : Math.Min(roleDropdownOptions.Count, _maxSelectComponentOptions);
+        var maxOptions = isSingleSelect ? 1 : Math.Min(roleDropdownOptions.Count, MaxSelectComponentOptions);
         var minOptions = isSingleSelect ? 1 : 0;
 
         var roleDropdownId = "dropdown_role";
