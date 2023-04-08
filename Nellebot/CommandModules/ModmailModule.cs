@@ -20,6 +20,12 @@ public class ModmailModule : ApplicationCommandModule
     [SlashCommand("modmail", "Send a message via the modmail")]
     public async Task OpenModmailTicket(InteractionContext ctx)
     {
+        var isDmChannel = ctx.Channel.IsPrivate;
+
+#if DEBUG
+        isDmChannel |= ctx.Channel.Id == _options.FakeDmChannelId;
+#endif
+
         var introMessageContent = """
             Hello and welcome to Modmail! 
             Do you want to be a Chad and use your real (discord) name or be a Virgin and use a pseudonym?
@@ -28,21 +34,56 @@ public class ModmailModule : ApplicationCommandModule
         var realNameButton = new DiscordButtonComponent(ButtonStyle.Primary, "realNameButton", "Chad");
         var pseudonymButton = new DiscordButtonComponent(ButtonStyle.Primary, "pseudonymButton", "Virgin");
 
-        var introMessageBuilder = new DiscordInteractionResponseBuilder()
-           .WithContent(introMessageContent)
-           .AddComponents(realNameButton, pseudonymButton);
+        IDiscordMessageBuilder introMessageBuilder;
+        DiscordMessage introMessage;
 
-        await ctx.CreateResponseAsync(introMessageBuilder);
+        if (isDmChannel)
+        {
+            introMessageBuilder = new DiscordInteractionResponseBuilder()
+               .WithContent(introMessageContent)
+               .AddComponents(realNameButton, pseudonymButton);
 
-        var originalResponse = await ctx.GetOriginalResponseAsync();
+            await ctx.CreateResponseAsync(introMessageBuilder as DiscordInteractionResponseBuilder);
 
-        var interactionResult = await originalResponse.WaitForButtonAsync();
+            introMessage = await ctx.GetOriginalResponseAsync();
+        }
+        else
+        {
+            var nonDmChannelResponseMessageContent = "I'll just slip into your DMs";
+            await ctx.CreateResponseAsync(nonDmChannelResponseMessageContent);
+
+            introMessageBuilder = new DiscordMessageBuilder()
+                .WithContent(introMessageContent)
+                .AddComponents(realNameButton, pseudonymButton);
+
+#if DEBUG
+            introMessage = await ctx.Guild.Channels[_options.FakeDmChannelId!.Value].SendMessageAsync(introMessageBuilder as DiscordMessageBuilder);
+#else
+            introMessage = await ctx.Member.SendMessageAsync(introMessageBuilder as DiscordMessageBuilder);
+#endif
+
+        }
+
+        var interactionResult = await introMessage.WaitForButtonAsync();
 
         // Respond by removing the buttons from the original message
-        introMessageBuilder.ClearComponents();
-        await interactionResult.Result.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage, introMessageBuilder);
+        // introMessageBuilder.ClearComponents();
 
-        var responseBuilder = new DiscordFollowupMessageBuilder();
+        var choiceInteractionResponseBuilder = new DiscordInteractionResponseBuilder(introMessageBuilder);
+        choiceInteractionResponseBuilder.ClearComponents();
+
+        await interactionResult.Result.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage, choiceInteractionResponseBuilder);
+
+        //if(introMessageBuilder is DiscordInteractionResponseBuilder introMessageInteractionResponseBuilder)
+        //{
+        //    await interactionResult.Result.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage, introMessageInteractionResponseBuilder);
+        //} else
+        //{
+
+        //}
+
+
+        var responseBuilder = new DiscordMessageBuilder();
 
         if (interactionResult.Result.Id == "realNameButton")
         {
@@ -57,6 +98,12 @@ public class ModmailModule : ApplicationCommandModule
             responseBuilder = responseBuilder.WithContent($"Wow, **{nickname}**. You're a real virgin!");
         }
 
-        await ctx.FollowUpAsync(responseBuilder);
+        var dmChannel = introMessage.Channel;
+
+#if DEBUG
+        dmChannel = ctx.Guild.Channels[_options.FakeDmChannelId!.Value];
+#endif
+
+        await dmChannel.SendMessageAsync(responseBuilder);
     }
 }
