@@ -10,13 +10,13 @@ using Nellebot.Utils;
 
 namespace Nellebot.CommandHandlers;
 
-public class PopulateUserLogRequest : CommandRequest
+public record PopulateUserLogCommand : CommandCommand
 {
-    public PopulateUserLogRequest(CommandContext ctx)
+    public PopulateUserLogCommand(CommandContext ctx)
         : base(ctx) { }
 }
 
-public class PopulateUserLogHandler : IRequestHandler<PopulateUserLogRequest>
+public class PopulateUserLogHandler : IRequestHandler<PopulateUserLogCommand>
 {
     private readonly UserLogRepository _userLogRepo;
 
@@ -25,7 +25,7 @@ public class PopulateUserLogHandler : IRequestHandler<PopulateUserLogRequest>
         _userLogRepo = userLogRepo;
     }
 
-    public async Task Handle(PopulateUserLogRequest request, CancellationToken cancellationToken)
+    public async Task Handle(PopulateUserLogCommand request, CancellationToken cancellationToken)
     {
         var ctx = request.Ctx;
         var guild = ctx.Guild;

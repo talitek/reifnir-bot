@@ -30,17 +30,17 @@ public abstract class AbstractQueueChannel<T> : IQueueChannel<T>
     public ChannelReader<T> Reader => _channel.Reader;
 }
 
-public class CommandQueueChannel : AbstractQueueChannel<CommandRequest>
+public class RequestQueueChannel : AbstractQueueChannel<IRequest>
 {
-    public CommandQueueChannel(Channel<CommandRequest> channel)
+    public RequestQueueChannel(Channel<IRequest> channel)
         : base(channel)
     {
     }
 }
 
-public class CommandParallelQueueChannel : AbstractQueueChannel<CommandRequest>
+public class CommandQueueChannel : AbstractQueueChannel<ICommand>
 {
-    public CommandParallelQueueChannel(Channel<CommandRequest> channel)
+    public CommandQueueChannel(Channel<ICommand> channel)
         : base(channel)
     {
     }

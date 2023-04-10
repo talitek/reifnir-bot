@@ -2,6 +2,7 @@
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Options;
+using Nellebot.CommandHandlers;
 using Nellebot.Utils;
 using Nellebot.Workers;
 
@@ -74,6 +75,11 @@ public class DiscordErrorLogger : IDiscordErrorLogger
         SendErrorLogChannelEmbed(warning, warningMessage, DiscordConstants.WarningEmbedColor);
     }
 
+    private static string EscapeTicks(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? value : value.Replace('`', '\'');
+    }
+
     private void SendErrorLogChannelEmbed(string title, string message, int color)
     {
         ulong guildId = _options.GuildId;
@@ -84,10 +90,5 @@ public class DiscordErrorLogger : IDiscordErrorLogger
         var discordLogItem = new DiscordLogItem<DiscordEmbed>(messageEmbed, guildId, errorLogChannelId);
 
         _ = _channel.Writer.TryWrite(discordLogItem);
-    }
-
-    private static string EscapeTicks(string value)
-    {
-        return string.IsNullOrWhiteSpace(value) ? value : value.Replace('`', '\'');
     }
 }

@@ -8,13 +8,13 @@ using Nellebot.CommandHandlers;
 
 namespace Nellebot.Workers;
 
-public class CommandParallelQueueWorker : BackgroundService
+public class RequestQueueWorker : BackgroundService
 {
-    private readonly ILogger<CommandParallelQueueWorker> _logger;
-    private readonly CommandParallelQueueChannel _channel;
+    private readonly ILogger<RequestQueueWorker> _logger;
+    private readonly RequestQueueChannel _channel;
     private readonly IMediator _mediator;
 
-    public CommandParallelQueueWorker(ILogger<CommandParallelQueueWorker> logger, CommandParallelQueueChannel channel, IMediator mediator)
+    public RequestQueueWorker(ILogger<RequestQueueWorker> logger, RequestQueueChannel channel, IMediator mediator)
     {
         _logger = logger;
         _channel = channel;
@@ -25,19 +25,19 @@ public class CommandParallelQueueWorker : BackgroundService
     {
         try
         {
-            await foreach (CommandRequest command in _channel.Reader.ReadAllAsync(stoppingToken))
+            await foreach (IRequest command in _channel.Reader.ReadAllAsync(stoppingToken))
             {
                 if (command != null)
                 {
-                    _logger.LogDebug("Dequeued (parallel) command. {RemainingMessageCount} left in queue", _channel.Reader.Count);
+                    _logger.LogDebug("Dequeued request. {RemainingMessageCount} left in queue", _channel.Reader.Count);
 
-                    _ = Task.Run(() => _mediator.Send(command, stoppingToken));
+                    _ = Task.Run(() => _mediator.Send(command, stoppingToken), stoppingToken);
                 }
             }
         }
         catch (TaskCanceledException)
         {
-            _logger.LogDebug("{Worker} execution is being cancelled", nameof(CommandParallelQueueWorker));
+            _logger.LogDebug("{Worker} execution is being cancelled", nameof(RequestQueueWorker));
         }
         catch (Exception ex)
         {

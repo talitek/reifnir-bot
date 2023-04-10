@@ -7,13 +7,13 @@ using Nellebot.Services;
 
 namespace Nellebot.CommandHandlers;
 
-public class PopulateMessagesRequest : CommandRequest
+public record PopulateMessagesCommand : CommandCommand
 {
-    public PopulateMessagesRequest(CommandContext ctx)
+    public PopulateMessagesCommand(CommandContext ctx)
         : base(ctx) { }
 }
 
-public class PopulateMessagesHandler : IRequestHandler<PopulateMessagesRequest>
+public class PopulateMessagesHandler : IRequestHandler<PopulateMessagesCommand>
 {
     private readonly MessageRefsService _messageRefsService;
 
@@ -22,7 +22,7 @@ public class PopulateMessagesHandler : IRequestHandler<PopulateMessagesRequest>
         _messageRefsService = messageRefsService;
     }
 
-    public async Task Handle(PopulateMessagesRequest request, CancellationToken cancellationToken)
+    public async Task Handle(PopulateMessagesCommand request, CancellationToken cancellationToken)
     {
         var guild = request.Ctx.Guild;
         var channel = request.Ctx.Channel;

@@ -140,8 +140,8 @@ public class Program
     {
         const int channelSize = 1024;
 
-        services.AddSingleton((_) => new CommandQueueChannel(Channel.CreateBounded<CommandRequest>(channelSize)));
-        services.AddSingleton((_) => new CommandParallelQueueChannel(Channel.CreateBounded<CommandRequest>(channelSize)));
+        services.AddSingleton((_) => new RequestQueueChannel(Channel.CreateBounded<IRequest>(channelSize)));
+        services.AddSingleton((_) => new CommandQueueChannel(Channel.CreateBounded<ICommand>(channelSize)));
         services.AddSingleton((_) => new EventQueueChannel(Channel.CreateBounded<INotification>(channelSize)));
         services.AddSingleton((_) => new DiscordLogChannel(Channel.CreateBounded<BaseDiscordLogItem>(channelSize)));
         services.AddSingleton((_) => new MessageAwardQueueChannel(Channel.CreateBounded<MessageAwardItem>(channelSize)));
@@ -150,7 +150,7 @@ public class Program
     private static void AddWorkers(IServiceCollection services)
     {
         services.AddHostedService<CommandQueueWorker>();
-        services.AddHostedService<CommandParallelQueueWorker>();
+        services.AddHostedService<RequestQueueWorker>();
         services.AddHostedService<EventQueueWorker>();
         services.AddHostedService<DiscordLoggerWorker>();
         services.AddHostedService<MessageAwardQueueWorker>();

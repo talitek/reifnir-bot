@@ -1,20 +1,63 @@
 ﻿using DSharpPlus.CommandsNext;
+using DSharpPlus.SlashCommands;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Nellebot.CommandHandlers
+namespace Nellebot.CommandHandlers;
+
+public interface ICommand : IRequest
 {
-    public class CommandRequest : IRequest
-    {
-        public CommandContext Ctx { get; private set; }
+}
 
-        public CommandRequest(CommandContext ctx)
-        {
-            Ctx = ctx;
-        }
+public interface IQuery : IRequest
+{
+}
+
+public record BaseCommand : ICommand
+{
+    public BaseCommand(BaseContext ctx)
+    {
+        Ctx = ctx;
     }
+
+    public BaseContext Ctx { get; init; }
+}
+
+////public record MessageCommand : ICommand
+////{
+////    public MessageCommand(MessageContext ctx)
+////    {
+////        Ctx = ctx;
+////    }
+
+////    public MessageContext Ctx { get; init; }
+////}
+
+public record CommandCommand : ICommand
+{
+    public CommandCommand(CommandContext ctx)
+    {
+        Ctx = ctx;
+    }
+
+    public CommandContext Ctx { get; init; }
+}
+
+public record InteractionCommand : ICommand
+{
+    public InteractionCommand(InteractionContext ctx)
+    {
+        Ctx = ctx;
+    }
+
+    public InteractionContext Ctx { get; init; }
+}
+
+public record CommandQuery : IQuery
+{
+    public CommandQuery(CommandContext ctx)
+    {
+        Ctx = ctx;
+    }
+
+    public CommandContext Ctx { get; init; }
 }

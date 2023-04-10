@@ -24,14 +24,14 @@ public class AdminModule : BaseCommandModule
 {
     private readonly ILogger<AdminModule> _logger;
     private readonly CommandQueueChannel _commandQueue;
-    private readonly CommandParallelQueueChannel _commandParallelQueue;
+    private readonly RequestQueueChannel _commandParallelQueue;
     private readonly BotOptions _options;
 
     public AdminModule(
         ILogger<AdminModule> logger,
         IOptions<BotOptions> options,
         CommandQueueChannel commandQueue,
-        CommandParallelQueueChannel commandParallelQueue)
+        RequestQueueChannel commandParallelQueue)
     {
         _logger = logger;
         _commandQueue = commandQueue;
@@ -90,25 +90,25 @@ public class AdminModule : BaseCommandModule
     [Command("add-missing-members")]
     public Task AddMissingMemberRoles(CommandContext ctx)
     {
-        return _commandQueue.Writer.WriteAsync(new AddMissingMemberRolesRequest(ctx)).AsTask();
+        return _commandQueue.Writer.WriteAsync(new AddMissingMemberRolesCommand(ctx)).AsTask();
     }
 
     [Command("set-greeting-message")]
     public Task SetGreetingMessage(CommandContext ctx, [RemainingText] string message)
     {
-        return _commandQueue.Writer.WriteAsync(new SetGreetingMessageRequest(ctx, message)).AsTask();
+        return _commandQueue.Writer.WriteAsync(new SetGreetingMessageCommand(ctx, message)).AsTask();
     }
 
     [Command("populate-messages")]
     public Task PopulateMessages(CommandContext ctx)
     {
-        return _commandParallelQueue.Writer.WriteAsync(new PopulateMessagesRequest(ctx)).AsTask();
+        return _commandParallelQueue.Writer.WriteAsync(new PopulateMessagesCommand(ctx)).AsTask();
     }
 
     [Command("populate-user-log")]
     public Task PopulateUserLog(CommandContext ctx)
     {
-        return _commandParallelQueue.Writer.WriteAsync(new PopulateUserLogRequest(ctx)).AsTask();
+        return _commandParallelQueue.Writer.WriteAsync(new PopulateUserLogCommand(ctx)).AsTask();
     }
 
     [Command("delete-spam-after")]
