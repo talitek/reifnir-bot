@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
-using Nellebot.CommandHandlers;
+using Nellebot.CommandHandlers.Modmail;
 using Nellebot.Workers;
 
 namespace Nellebot.CommandModules;

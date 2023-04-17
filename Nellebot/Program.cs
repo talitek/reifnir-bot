@@ -46,6 +46,7 @@ public class Program
                 services.AddSingleton<SharedCache>();
                 services.AddSingleton<ILocalizationService, LocalizationService>();
                 services.AddSingleton<PuppeteerFactory>();
+                services.AddSingleton<ModmailTicketPool>();
 
                 AddWorkers(services);
 
@@ -68,8 +69,8 @@ public class Program
     {
         services.AddSingleton((_) =>
         {
-            string defaultLogLevel = hostContext.Configuration.GetValue<string>("Logging:LogLevel:Default");
-            string botToken = hostContext.Configuration.GetValue<string>("Nellebot:BotToken");
+            var defaultLogLevel = hostContext.Configuration.GetValue<string>("Logging:LogLevel:Default") ?? "Warning";
+            var botToken = hostContext.Configuration.GetValue<string>("Nellebot:BotToken");
 
             LogLevel logLevel = Enum.Parse<LogLevel>(defaultLogLevel);
 
@@ -92,8 +93,8 @@ public class Program
         services.AddDbContext<BotDbContext>(
             builder =>
             {
-                string dbConnString = hostContext.Configuration.GetValue<string>("Nellebot:ConnectionString");
-                string logLevel = hostContext.Configuration.GetValue<string>("Logging:LogLevel:Default");
+                var dbConnString = hostContext.Configuration.GetValue<string>("Nellebot:ConnectionString");
+                var logLevel = hostContext.Configuration.GetValue<string>("Logging:LogLevel:Default");
 
                 builder.EnableSensitiveDataLogging(logLevel == "Debug");
 
