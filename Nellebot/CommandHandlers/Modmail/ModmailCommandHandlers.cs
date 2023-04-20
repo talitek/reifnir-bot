@@ -13,8 +13,8 @@ using Nellebot.Utils;
 namespace Nellebot.CommandHandlers.Modmail;
 
 public class ModmailCommandHandlers : IRequestHandler<RequestModmailTicketCommand>,
-                                            IRequestHandler<RelayRequesterMessageCommand>,
-                                            IRequestHandler<RelayModeratorMessageCommand>
+                                        IRequestHandler<RelayRequesterMessageCommand>,
+                                        IRequestHandler<RelayModeratorMessageCommand>
 {
     private readonly BotOptions _options;
     private readonly DiscordResolver _resolver;
@@ -30,6 +30,20 @@ public class ModmailCommandHandlers : IRequestHandler<RequestModmailTicketComman
     public async Task Handle(RequestModmailTicketCommand request, CancellationToken cancellationToken)
     {
         var ctx = request.Ctx;
+
+        var existingTicket = _ticketPool.GetTicketForUser(ctx.User.Id);
+
+        if (existingTicket != null)
+        {
+            var messageContent = "You already have an open ticket! Just type your message here and I will pass it on.";
+
+#if DEBUG
+            var existingTicketMessage = await _resolver.ResolveGuild().Channels[_options.FakeDmChannelId!.Value].SendMessageAsync(messageContent);
+#else
+            var existingTicketMessage = await ctx.Member.SendMessageAsync(messageContent);
+#endif
+            return;
+        }
 
         var introMessageContent = """
             Hello and welcome to Modmail! 
@@ -82,14 +96,26 @@ public class ModmailCommandHandlers : IRequestHandler<RequestModmailTicketComman
 
         await dmChannel.SendMessageAsync(responseBuilder);
 
+        await CreateTicketForumPost(ctx, requesterDisplayName, requesterIsAnonymous);
+    }
+
+    private async Task CreateTicketForumPost(BaseContext ctx, string requesterDisplayName, bool requesterIsAnonymous)
+    {
         var modmailChannelId = _options.ModmailChannelId;
 
-        var modmailChannel = _resolver.ResolveGuild().Channels[modmailChannelId];
+        var modmailChannel = (DiscordForumChannel)_resolver.ResolveGuild().Channels[modmailChannelId];
 
-        var modmailMessageBuilder = new DiscordMessageBuilder()
-            .WithContent($"Ticket from {requesterDisplayName}**");
+        var modmailPostTitle = requesterIsAnonymous
+            ? $"Ticket from anonymous user {requesterDisplayName}"
+            : $"Ticket from server member {requesterDisplayName}";
 
-        var modmailMessage = await modmailChannel.SendMessageAsync(modmailMessageBuilder);
+        var modmailPostMessage = new DiscordMessageBuilder().WithContent($"**{requesterDisplayName}** whining about something");
+
+        var fpBuilder = new ForumPostBuilder()
+            .WithName(modmailPostTitle)
+            .WithMessage(modmailPostMessage);
+
+        var forumPostChannel = await modmailChannel.CreateForumPostAsync(fpBuilder);
 
         var modmailTicket = new ModmailTicket
         {
@@ -97,7 +123,8 @@ public class ModmailCommandHandlers : IRequestHandler<RequestModmailTicketComman
             IsAnonymous = requesterIsAnonymous,
             RequesterId = ctx.User.Id,
             RequesterDisplayName = requesterDisplayName,
-            ThreadId = modmailMessage.Id,
+            ForumPostChannelId = forumPostChannel.Channel.Id,
+            ForumPostMessageId = forumPostChannel.Message.Id,
         };
 
         _ = _ticketPool.Add(modmailTicket);

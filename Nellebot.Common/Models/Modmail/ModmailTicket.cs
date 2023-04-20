@@ -12,7 +12,9 @@ public record ModmailTicket
 
     public bool IsAnonymous { get; set; }
 
-    public ulong? ThreadId { get; set; }
+    public ulong? ForumPostChannelId { get; set; }
+
+    public ulong? ForumPostMessageId { get; set; }
 }
 
 public enum MessageAuthorType

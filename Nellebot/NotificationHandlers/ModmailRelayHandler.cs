@@ -1,13 +1,11 @@
-﻿using DSharpPlus.Entities;
+﻿using System.Threading;
+using System.Threading.Tasks;
 using MediatR;
 using Microsoft.Extensions.Options;
 using Nellebot.CommandHandlers;
 using Nellebot.CommandHandlers.Modmail;
-using Nellebot.Helpers;
 using Nellebot.Services;
 using Nellebot.Workers;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Nellebot.NotificationHandlers;
 
