@@ -106,12 +106,6 @@ public class AdminModule : BaseCommandModule
         return _commandParallelQueue.Writer.WriteAsync(new PopulateMessagesCommand(ctx)).AsTask();
     }
 
-    [Command("populate-user-log")]
-    public Task PopulateUserLog(CommandContext ctx)
-    {
-        return _commandParallelQueue.Writer.WriteAsync(new PopulateUserLogCommand(ctx)).AsTask();
-    }
-
     [Command("delete-spam-after")]
     public async Task DeleteSpam(CommandContext ctx, ulong channelId, ulong messageId)
     {
