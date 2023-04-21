@@ -16,20 +16,3 @@ public record ModmailTicket
 
     public ulong? ForumPostMessageId { get; set; }
 }
-
-public enum MessageAuthorType
-{
-    Requester = 1,
-    Moderator = 2,
-}
-
-public record ModmailTicketMessage
-{
-    public ulong AuthorId { get; init; }
-
-    public MessageAuthorType AuthorType { get; init; }
-
-    public ulong OriginalMessageId { get; init; }
-
-    public DateTime DateTime { get; init; }
-}

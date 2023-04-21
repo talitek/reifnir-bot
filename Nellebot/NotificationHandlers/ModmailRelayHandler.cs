@@ -1,23 +1,22 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using DSharpPlus;
 using MediatR;
-using Microsoft.Extensions.Options;
 using Nellebot.CommandHandlers;
 using Nellebot.CommandHandlers.Modmail;
 using Nellebot.Services;
 using Nellebot.Workers;
+using BaseContext = Nellebot.CommandHandlers.BaseContext;
 
 namespace Nellebot.NotificationHandlers;
 
 public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotification>
 {
-    private readonly BotOptions _options;
     private readonly CommandQueueChannel _commandQueue;
     private readonly ModmailTicketPool _ticketPool;
 
-    public ModmailRelayHandler(IOptions<BotOptions> options, CommandQueueChannel commandQueue, ModmailTicketPool ticketPool)
+    public ModmailRelayHandler(CommandQueueChannel commandQueue, ModmailTicketPool ticketPool)
     {
-        _options = options.Value;
         _commandQueue = commandQueue;
         _ticketPool = ticketPool;
     }
@@ -28,28 +27,62 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
 
         var channel = args.Channel;
         var user = args.Author;
+        var message = args.Message;
 
         if (user.IsBot) return Task.CompletedTask;
 
-#if DEBUG
-        if (channel.Id != _options.FakeDmChannelId) return Task.CompletedTask;
-#else
-        if (!channel.IsPrivate) return;
-#endif
-
-        var ticketInPool = _ticketPool.GetTicketForUser(user.Id);
-
-        if (ticketInPool == null)
+        if (channel.IsPrivate)
         {
-            var baseContext = new BaseContext
+            var userTicketInPool = _ticketPool.GetTicketByUserId(user.Id);
+
+            // TODO Check if a ticket is already in the process of being requested
+            if (userTicketInPool == null)
+            {
+                var baseContext = new BaseContext
+                {
+                    Channel = channel,
+                    User = user,
+                };
+
+                var requestTicketCommand = new RequestModmailTicketCommand(baseContext, message.Content);
+
+                return _commandQueue.Writer.WriteAsync(requestTicketCommand, cancellationToken).AsTask();
+            }
+
+            var requesterMessageContext = new MessageContext
             {
                 Channel = channel,
                 User = user,
+                Message = message,
             };
 
-            return _commandQueue.Writer.WriteAsync(new RequestModmailTicketCommand(baseContext), cancellationToken).AsTask();
+            var relayRequesterMessageCommand = new RelayRequesterMessageCommand(requesterMessageContext, userTicketInPool);
+
+            return _commandQueue.Writer.WriteAsync(relayRequesterMessageCommand, cancellationToken).AsTask();
         }
 
-        return channel.SendMessageAsync("Watchu want?");
+        if (channel.Type != ChannelType.PublicThread)
+        {
+            // return
+        }
+
+        var channelTicketInPool = _ticketPool.GetTicketByChannelId(channel.Id);
+
+        if (channelTicketInPool == null)
+        {
+            // It's a non-private message in a random-ass thread
+            return Task.CompletedTask;
+        }
+
+        var moderatorMessageContext = new MessageContext
+        {
+            Channel = channel,
+            User = user,
+            Message = message,
+        };
+
+        var relayModeratorMessageCommand = new RelayModeratorMessageCommand(moderatorMessageContext, channelTicketInPool);
+
+        return _commandQueue.Writer.WriteAsync(relayModeratorMessageCommand, cancellationToken).AsTask();
     }
 }

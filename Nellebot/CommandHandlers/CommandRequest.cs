@@ -22,15 +22,15 @@ public record BaseCommand : ICommand
     public BaseContext Ctx { get; init; }
 }
 
-////public record MessageCommand : ICommand
-////{
-////    public MessageCommand(MessageContext ctx)
-////    {
-////        Ctx = ctx;
-////    }
+public record MessageCommand : ICommand
+{
+    public MessageCommand(MessageContext ctx)
+    {
+        Ctx = ctx;
+    }
 
-////    public MessageContext Ctx { get; init; }
-////}
+    public MessageContext Ctx { get; init; }
+}
 
 public record CommandCommand : ICommand
 {

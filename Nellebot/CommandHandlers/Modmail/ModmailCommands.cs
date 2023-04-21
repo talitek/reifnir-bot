@@ -16,5 +16,5 @@ public record RequestModmailTicketCommand : BaseCommand
     public string? RequestMessage { get; init; }
 }
 
-public record RelayModeratorMessageCommand(BaseContext Ctx, ModmailTicket Ticket, string Message) : BaseCommand(Ctx);
-public record RelayRequesterMessageCommand(BaseContext Ctx, ModmailTicket Ticket, string Message) : BaseCommand(Ctx);
+public record RelayModeratorMessageCommand(MessageContext Ctx, ModmailTicket Ticket) : MessageCommand(Ctx);
+public record RelayRequesterMessageCommand(MessageContext Ctx, ModmailTicket Ticket) : MessageCommand(Ctx);

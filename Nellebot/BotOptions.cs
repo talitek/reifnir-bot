@@ -52,7 +52,5 @@
         public bool AutoCreateUserLogsEnabled { get; set; }
 
         public ulong ModmailChannelId { get; set; }
-
-        public ulong? FakeDmChannelId { get; set; }
     }
 }

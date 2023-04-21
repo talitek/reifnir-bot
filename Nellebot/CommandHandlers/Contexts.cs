@@ -12,15 +12,12 @@ public class BaseContext
 
     public DiscordGuild? Guild { get; init; }
 
-    public DiscordMember? Member { get; init; }
-
     public static BaseContext FromInteractionContext(InteractionContext ctx)
     {
         var newCtx = new BaseContext()
         {
             Channel = ctx.Channel,
             Guild = ctx.Guild,
-            Member = ctx.Member,
             User = ctx.User,
         };
 
