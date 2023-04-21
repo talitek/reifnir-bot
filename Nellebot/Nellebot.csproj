@@ -35,8 +35,5 @@
     <None Update="Resources\ScribanTemplates\OrdbokArticle.sbntxt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\ScribanTemplates\GlosbeArticle.sbntxt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 </Project>
