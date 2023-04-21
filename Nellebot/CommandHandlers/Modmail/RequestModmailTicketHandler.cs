@@ -7,6 +7,7 @@ using DSharpPlus.Interactivity.Extensions;
 using MediatR;
 using Microsoft.Extensions.Options;
 using Nellebot.Common.Models.Modmail;
+using Nellebot.Helpers;
 using Nellebot.Services;
 using Nellebot.Utils;
 
@@ -29,6 +30,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
     {
         var ctx = request.Ctx;
         var channel = ctx.Channel;
+        var requestMessage = request.RequestMessage;
 
         var member = await _resolver.ResolveGuildMember(ctx.User.Id);
 
@@ -61,25 +63,77 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
 
         var requesterIsAnonymous = await CollectIdentityChoice(member, cancellationToken);
 
-        var responseBuilder = new DiscordMessageBuilder();
         string requesterDisplayName;
 
         if (!requesterIsAnonymous)
         {
             requesterDisplayName = member.GetNicknameOrDisplayName();
-
-            responseBuilder = responseBuilder.WithContent($"Wow, **{requesterDisplayName}**. You're a real chad!");
         }
         else
         {
             requesterDisplayName = PseudonymGenerator.GetRandomPseudonym();
-
-            responseBuilder = responseBuilder.WithContent($"Wow, **{requesterDisplayName}**. You're a real virgin!");
         }
 
-        await member.SendMessageAsync(responseBuilder);
+        await member.SendMessageAsync($"Understood. Your message will be sent as **{requesterDisplayName}**.");
 
-        await CreateTicketForumPost(ctx, requesterDisplayName, requesterIsAnonymous);
+        var stub = CreateStubModmailTicket(ctx, requesterDisplayName, requesterIsAnonymous);
+
+        DiscordMessage messageToRelay;
+
+        if (requestMessage != null && await CollectRequestMessageConfirmation(requestMessage, member))
+        {
+            messageToRelay = requestMessage;
+        }
+        else
+        {
+            messageToRelay = await CollectRequestMessage(member);
+        }
+
+        await PostStubModmailTicket(stub, messageToRelay.Content);
+
+        await messageToRelay.CreateSuccessReactionAsync();
+    }
+
+    /// <summary>
+    /// Collect a request message if the user didn't provide one in the command.
+    /// </summary>
+    /// <returns>The collected <see cref="DiscordMessage"/>.</returns>
+    private static async Task<DiscordMessage> CollectRequestMessage(DiscordMember member)
+    {
+        var messageContent = "Please type your message here and I will pass it on.";
+
+        var promptForMessageMessage = await member.SendMessageAsync(messageContent);
+
+        var promptInteractivityResult = await promptForMessageMessage.Channel.GetNextMessageAsync(member);
+
+        return promptInteractivityResult.Result;
+    }
+
+    /// <summary>
+    /// Collect confirmation from user if they provided a request message in the command.
+    /// </summary>
+    /// <returns>The collected <see cref="DiscordMessage"/>.</returns>
+    private static async Task<bool> CollectRequestMessageConfirmation(DiscordMessage message, DiscordMember member)
+    {
+        var messageContent = $"""
+            The following message will be sent to the moderators.
+            > {message.Content}
+            Please react with {EmojiMap.WhiteCheckmark} to confirm or {EmojiMap.RedX} to cancel.
+            """;
+
+        var promptForConfirmMessage = await member.SendMessageAsync(messageContent);
+
+        await promptForConfirmMessage.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.WhiteCheckmark));
+        await promptForConfirmMessage.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.RedX));
+
+        var promptInteractivityResult = await promptForConfirmMessage.WaitForReactionAsync(member);
+
+        var choice = promptInteractivityResult.Result.Emoji.Name;
+
+        await promptForConfirmMessage.DeleteOwnReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.WhiteCheckmark));
+        await promptForConfirmMessage.DeleteOwnReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.RedX));
+
+        return choice == EmojiMap.WhiteCheckmark;
     }
 
     /// <summary>
@@ -88,13 +142,18 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
     /// <returns>Returns true if the user chooses to be anonymous.</returns>
     private static async Task<bool> CollectIdentityChoice(DiscordMember member, CancellationToken cancellationToken)
     {
-        var introMessageContent = """
+        var realName = member.GetNicknameOrDisplayName();
+
+        var introMessageContent = $"""
             Hello and welcome to Modmail! 
-            Do you want to be a Chad and use your real (discord) name or be a Virgin and use a pseudonym?
+            Would you like to send the message as **{realName}** or do you want to use a random pseudonym?
             """;
 
-        var realNameButton = new DiscordButtonComponent(ButtonStyle.Primary, "realNameButton", "Chad");
-        var pseudonymButton = new DiscordButtonComponent(ButtonStyle.Primary, "pseudonymButton", "Virgin");
+        const string realNameButtonId = "realNameButton";
+        const string pseudonymButtonId = "pseudonymButton";
+
+        var realNameButton = new DiscordButtonComponent(ButtonStyle.Primary, realNameButtonId, realName);
+        var pseudonymButton = new DiscordButtonComponent(ButtonStyle.Primary, pseudonymButtonId, "Random pseudonym");
 
         var introMessageBuilder = new DiscordMessageBuilder()
             .WithContent(introMessageContent)
@@ -109,39 +168,55 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
 
         await interactionResult.Result.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage, choiceInteractionResponseBuilder);
 
-        bool requesterIsAnonymous = interactionResult.Result.Id == "pseudonymButton";
+        bool requesterIsAnonymous = interactionResult.Result.Id == pseudonymButtonId;
 
         return requesterIsAnonymous;
     }
 
-    private async Task CreateTicketForumPost(BaseContext ctx, string requesterDisplayName, bool requesterIsAnonymous)
+    private ModmailTicket CreateStubModmailTicket(BaseContext ctx, string requesterDisplayName, bool requesterIsAnonymous)
     {
-        var modmailChannelId = _options.ModmailChannelId;
-
-        var modmailChannel = (DiscordForumChannel)_resolver.ResolveGuild().Channels[modmailChannelId];
-
-        var modmailPostTitle = requesterIsAnonymous
-            ? $"Ticket from anonymous user {requesterDisplayName}"
-            : $"Ticket from server member {requesterDisplayName}";
-
-        var modmailPostMessage = new DiscordMessageBuilder().WithContent($"**{requesterDisplayName}** whining about something");
-
-        var fpBuilder = new ForumPostBuilder()
-            .WithName(modmailPostTitle)
-            .WithMessage(modmailPostMessage);
-
-        var forumPostChannel = await modmailChannel.CreateForumPostAsync(fpBuilder);
-
         var modmailTicket = new ModmailTicket
         {
             Id = Guid.NewGuid(),
             IsAnonymous = requesterIsAnonymous,
             RequesterId = ctx.User.Id,
             RequesterDisplayName = requesterDisplayName,
-            ForumPostChannelId = forumPostChannel.Channel.Id,
-            ForumPostMessageId = forumPostChannel.Message.Id,
         };
 
         _ = _ticketPool.TryAdd(modmailTicket);
+
+        return modmailTicket;
+    }
+
+    private async Task PostStubModmailTicket(ModmailTicket ticket, string requestMesage)
+    {
+        var modmailChannelId = _options.ModmailChannelId;
+
+        var modmailChannel = (DiscordForumChannel)_resolver.ResolveGuild().Channels[modmailChannelId];
+
+        var modmailPostTitle = ticket.IsAnonymous
+            ? $"Ticket from anonymous user {ticket.RequesterDisplayName}"
+            : $"Ticket from server member {ticket.RequesterDisplayName}";
+
+        var relayMessageContent = $"""
+            {ticket.RequesterDisplayName} says
+            > {requestMesage}
+            """;
+
+        var modmailPostMessage = new DiscordMessageBuilder()
+            .WithContent(relayMessageContent);
+
+        var fpBuilder = new ForumPostBuilder()
+            .WithName(modmailPostTitle)
+            .WithMessage(modmailPostMessage);
+
+        var forumPost = await modmailChannel.CreateForumPostAsync(fpBuilder);
+
+        var postedTicket = ticket with
+        {
+            TicketPost = new ModmailTicketPost(forumPost.Channel.Id, forumPost.Message.Id),
+        };
+
+        _ticketPool.AddOrUpdate(postedTicket);
     }
 }

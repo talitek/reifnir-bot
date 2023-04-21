@@ -1,7 +1,8 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using DSharpPlus;
+using DSharpPlus.Entities;
 using MediatR;
+using Microsoft.Extensions.Options;
 using Nellebot.CommandHandlers;
 using Nellebot.CommandHandlers.Modmail;
 using Nellebot.Services;
@@ -14,11 +15,13 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
 {
     private readonly CommandQueueChannel _commandQueue;
     private readonly ModmailTicketPool _ticketPool;
+    private readonly BotOptions _botOptions;
 
-    public ModmailRelayHandler(CommandQueueChannel commandQueue, ModmailTicketPool ticketPool)
+    public ModmailRelayHandler(CommandQueueChannel commandQueue, ModmailTicketPool ticketPool, IOptions<BotOptions> botOptions)
     {
         _commandQueue = commandQueue;
         _ticketPool = ticketPool;
+        _botOptions = botOptions.Value;
     }
 
     public Task Handle(MessageCreatedNotification notification, CancellationToken cancellationToken)
@@ -33,44 +36,58 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
 
         if (channel.IsPrivate)
         {
-            var userTicketInPool = _ticketPool.GetTicketByUserId(user.Id);
+            return HandlePrivateMessage(channel, user, message, cancellationToken);
+        }
 
-            // TODO Check if a ticket is already in the process of being requested
-            if (userTicketInPool == null)
-            {
-                var baseContext = new BaseContext
-                {
-                    Channel = channel,
-                    User = user,
-                };
+        if (channel.ParentId == _botOptions.ModmailChannelId)
+        {
+            return HandleThreadMessage(channel, user, message, cancellationToken);
+        }
 
-                var requestTicketCommand = new RequestModmailTicketCommand(baseContext, message.Content);
+        // It's a non-private message in a random-ass channel
+        return Task.CompletedTask;
+    }
 
-                return _commandQueue.Writer.WriteAsync(requestTicketCommand, cancellationToken).AsTask();
-            }
+    private Task HandlePrivateMessage(DiscordChannel channel, DiscordUser user, DiscordMessage message, CancellationToken cancellationToken)
+    {
+        var userTicketInPool = _ticketPool.GetTicketByUserId(user.Id);
 
-            var requesterMessageContext = new MessageContext
+        if (userTicketInPool == null)
+        {
+            var baseContext = new BaseContext
             {
                 Channel = channel,
                 User = user,
-                Message = message,
             };
 
-            var relayRequesterMessageCommand = new RelayRequesterMessageCommand(requesterMessageContext, userTicketInPool);
+            var requestTicketCommand = new RequestModmailTicketCommand(baseContext, message);
 
-            return _commandQueue.Writer.WriteAsync(relayRequesterMessageCommand, cancellationToken).AsTask();
+            return _commandQueue.Writer.WriteAsync(requestTicketCommand, cancellationToken).AsTask();
         }
 
-        if (channel.Type != ChannelType.PublicThread)
+        // User is still in the process of requesting a ticket
+        if (userTicketInPool.IsStub) return Task.CompletedTask;
+
+        var requesterMessageContext = new MessageContext
         {
-            // return
-        }
+            Channel = channel,
+            User = user,
+            Message = message,
+        };
 
+        var relayRequesterMessageCommand = new RelayRequesterMessageCommand(requesterMessageContext, userTicketInPool);
+
+        return _commandQueue.Writer.WriteAsync(relayRequesterMessageCommand, cancellationToken).AsTask();
+    }
+
+    private Task HandleThreadMessage(DiscordChannel channel, DiscordUser user, DiscordMessage message, CancellationToken cancellationToken)
+    {
         var channelTicketInPool = _ticketPool.GetTicketByChannelId(channel.Id);
 
         if (channelTicketInPool == null)
         {
-            // It's a non-private message in a random-ass thread
+            // Something went wrong or is an old post
+            // TODO Log error/warning
             return Task.CompletedTask;
         }
 

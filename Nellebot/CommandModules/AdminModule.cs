@@ -12,6 +12,7 @@ using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
 using Nellebot.CommandHandlers;
 using Nellebot.Common.Extensions;
+using Nellebot.Services;
 using Nellebot.Workers;
 
 namespace Nellebot.CommandModules;
@@ -22,20 +23,20 @@ namespace Nellebot.CommandModules;
 [ModuleLifespan(ModuleLifespan.Transient)]
 public class AdminModule : BaseCommandModule
 {
-    private readonly ILogger<AdminModule> _logger;
     private readonly CommandQueueChannel _commandQueue;
     private readonly RequestQueueChannel _commandParallelQueue;
+    private readonly ModmailTicketPool _ticketPool;
     private readonly BotOptions _options;
 
     public AdminModule(
-        ILogger<AdminModule> logger,
         IOptions<BotOptions> options,
         CommandQueueChannel commandQueue,
-        RequestQueueChannel commandParallelQueue)
+        RequestQueueChannel commandParallelQueue,
+        ModmailTicketPool ticketPool)
     {
-        _logger = logger;
         _commandQueue = commandQueue;
         _commandParallelQueue = commandParallelQueue;
+        _ticketPool = ticketPool;
         _options = options.Value;
     }
 
@@ -121,5 +122,13 @@ public class AdminModule : BaseCommandModule
         await channel.DeleteMessagesAsync(messagesToDelete);
 
         await ctx.RespondAsync($"Deleted {messagesToDelete.Count} messages");
+    }
+
+    [Command("purge-modmail")]
+    public Task PurgeModmail(CommandContext ctx)
+    {
+        _ticketPool.Clear();
+
+        return ctx.Channel.SendMessageAsync("Modmail purged");
     }
 }

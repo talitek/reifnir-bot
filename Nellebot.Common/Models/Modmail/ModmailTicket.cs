@@ -12,7 +12,9 @@ public record ModmailTicket
 
     public bool IsAnonymous { get; set; }
 
-    public ulong? ForumPostChannelId { get; set; }
+    public ModmailTicketPost? TicketPost { get; set; }
 
-    public ulong? ForumPostMessageId { get; set; }
+    public bool IsStub => TicketPost == null;
 }
+
+public record ModmailTicketPost(ulong ChannelThreadId, ulong MessageId);

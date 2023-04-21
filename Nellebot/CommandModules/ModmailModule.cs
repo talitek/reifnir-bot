@@ -22,10 +22,7 @@ public class ModmailModule : ApplicationCommandModule
 
         var responseBuilder = new DiscordInteractionResponseBuilder()
             .WithContent(messageContent)
-#if !DEBUG
-            .AsEphemeral()
-#endif
-            ;
+            .AsEphemeral();
 
         await ctx.CreateResponseAsync(responseBuilder);
 

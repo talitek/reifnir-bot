@@ -33,20 +33,20 @@ public class RelayMessageHandlers : IRequestHandler<RelayRequesterMessageCommand
         var ticket = request.Ticket;
         var messageToRelay = request.Ctx.Message;
 
-        var forumPostChannelId = ticket.ForumPostChannelId
+        var ticketPost = ticket.TicketPost
             ?? throw new Exception("The ticket does not have a post channelId");
 
-        var threadChannel = _resolver.ResolveThread(forumPostChannelId)
+        var threadChannel = _resolver.ResolveThread(ticketPost.ChannelThreadId)
             ?? throw new Exception("Could not resolve thread channel");
 
         var relayMessageContent = $"""
-            Message from {ticket.RequesterDisplayName}:
-            {messageToRelay.Content}
+            {ticket.RequesterDisplayName} says
+            > {messageToRelay.Content}
             """;
 
         await threadChannel.SendMessageAsync(relayMessageContent);
 
-        await messageToRelay.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.WhiteCheckmark));
+        await messageToRelay.CreateSuccessReactionAsync();
     }
 
     /// <summary>
@@ -64,17 +64,17 @@ public class RelayMessageHandlers : IRequestHandler<RelayRequesterMessageCommand
 
         if (!member.Roles.Any(r => r.Id == _options.AdminRoleId))
         {
-            await messageToRelay.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.RedX));
+            await messageToRelay.CreateFailureReactionAsync();
             return;
         }
 
         var relayMessageContent = $"""
             Message from moderator:
-            {messageToRelay.Content}
+            > {messageToRelay.Content}
             """;
 
         var relayedMessage = await member.SendMessageAsync(relayMessageContent);
 
-        await messageToRelay.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.WhiteCheckmark));
+        await messageToRelay.CreateSuccessReactionAsync();
     }
 }

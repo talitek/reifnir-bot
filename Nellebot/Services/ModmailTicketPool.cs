@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using Nellebot.Common.Models.Modmail;
 
@@ -6,17 +7,16 @@ namespace Nellebot.Services;
 
 public class ModmailTicketPool
 {
-    private readonly ConcurrentBag<ModmailTicket> _ticketPool;
+    private readonly ConcurrentDictionary<Guid, ModmailTicket> _ticketPool;
 
     public ModmailTicketPool()
     {
-        _ticketPool = new ConcurrentBag<ModmailTicket>();
+        _ticketPool = new ConcurrentDictionary<Guid, ModmailTicket>();
 
 #if DEBUG
-        //_ticketPool.Add(new ModmailTicket()
+        //TryAdd(new ModmailTicket()
         //{
-        //    ForumPostChannelId = 1099083673149657148,
-        //    ForumPostMessageId = 1099083673149657148,
+        //    TicketPost = new ModmailTicketPost(1099083673149657148, 1099083673149657148),
         //    RequesterId = 78474916734701568,
         //    //RequesterDisplayName = "Test",
         //    //IsAnonymous = false,
@@ -28,22 +28,26 @@ public class ModmailTicketPool
 
     public ModmailTicket? GetTicketByUserId(ulong requesterId)
     {
-        return _ticketPool.SingleOrDefault(x => x.RequesterId == requesterId);
+        return _ticketPool.SingleOrDefault(x => x.Value.RequesterId == requesterId).Value;
     }
 
     public ModmailTicket? GetTicketByChannelId(ulong channelId)
     {
-        return _ticketPool.SingleOrDefault(x => x.ForumPostChannelId == channelId);
+        return _ticketPool.SingleOrDefault(x => x.Value.TicketPost?.ChannelThreadId == channelId).Value;
     }
 
     public bool TryAdd(ModmailTicket ticket)
     {
-        var alreadyExists = _ticketPool.Any(x => x.RequesterId == ticket.RequesterId || x.ForumPostChannelId == ticket.ForumPostChannelId);
+        return _ticketPool.TryAdd(ticket.Id, ticket);
+    }
 
-        if (alreadyExists) return false;
+    public ModmailTicket AddOrUpdate(ModmailTicket ticket)
+    {
+        return _ticketPool.AddOrUpdate(ticket.Id, ticket, (key, oldValue) => ticket);
+    }
 
-        _ticketPool.Add(ticket);
-
-        return true;
+    public void Clear()
+    {
+        _ticketPool.Clear();
     }
 }
