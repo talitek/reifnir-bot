@@ -4,17 +4,27 @@ namespace Nellebot.Common.Models.Modmail;
 
 public record ModmailTicket
 {
-    public Guid Id { get; set; }
+    required public Guid Id { get; init; }
 
-    public ulong RequesterId { get; init; }
+    required public ulong RequesterId { get; init; }
 
-    public string RequesterDisplayName { get; set; } = null!;
+    required public string RequesterDisplayName { get; init; }
 
-    public bool IsAnonymous { get; set; }
+    required public bool IsAnonymous { get; init; }
 
-    public ModmailTicketPost? TicketPost { get; set; }
+    public DateTime LastActivity { get; private set; } = DateTime.UtcNow;
+
+    public ModmailTicketPost? TicketPost { get; init; }
 
     public bool IsStub => TicketPost == null;
+
+    public ModmailTicket RefreshLastActivity()
+    {
+        return this with
+        {
+            LastActivity = DateTime.UtcNow,
+        };
+    }
 }
 
 public record ModmailTicketPost(ulong ChannelThreadId, ulong MessageId);
