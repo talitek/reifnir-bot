@@ -6,6 +6,7 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Nellebot.CommandHandlers;
 using Nellebot.Helpers;
 using Nellebot.Services.Loggers;
 using Nellebot.Utils;

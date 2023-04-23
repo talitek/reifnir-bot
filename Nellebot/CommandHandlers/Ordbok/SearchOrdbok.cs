@@ -13,34 +13,34 @@ using Nellebot.Services;
 using Nellebot.Services.Ordbok;
 using Nellebot.Utils;
 using Scriban;
-using api = Nellebot.Common.Models.Ordbok.Api;
-using vm = Nellebot.Common.Models.Ordbok.ViewModels;
+using Api = Nellebot.Common.Models.Ordbok.Api;
+using Vm = Nellebot.Common.Models.Ordbok.ViewModels;
 
 namespace Nellebot.CommandHandlers.Ordbok;
 
-public class SearchOrdbokRequest : CommandRequest
+public record SearchOrdbokQuery : BotCommandQuery
 {
+    public SearchOrdbokQuery(CommandContext ctx)
+        : base(ctx)
+    {
+    }
+
     public string Query { get; set; } = string.Empty;
 
     public string Dictionary { get; set; } = string.Empty;
 
     public bool AttachTemplate { get; set; } = false;
-
-    public SearchOrdbokRequest(CommandContext ctx)
-        : base(ctx)
-    {
-    }
 }
 
-public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokRequest>
+public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
 {
+    private const int MaxDefinitionsInTextForm = 5;
+
     private readonly OrdbokHttpClient _ordbokClient;
     private readonly OrdbokModelMapper _ordbokModelMapper;
     private readonly ScribanTemplateLoader _templateLoader;
     private readonly HtmlToImageService _htmlToImageService;
     private readonly ILogger<SearchOrdbokHandler> _logger;
-
-    private const int _maxDefinitionsInTextForm = 5;
 
     public SearchOrdbokHandler(
         OrdbokHttpClient ordbokClient,
@@ -56,7 +56,7 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokRequest>
         _logger = logger;
     }
 
-    public async Task Handle(SearchOrdbokRequest request, CancellationToken cancellationToken)
+    public async Task Handle(SearchOrdbokQuery request, CancellationToken cancellationToken)
     {
         var ctx = request.Ctx;
         var query = request.Query;
@@ -118,7 +118,7 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokRequest>
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, nameof(SearchOrdbokRequest));
+            _logger.LogError(ex, nameof(SearchOrdbokQuery));
         }
 
         mb = mb.WithEmbed(eb.Build());
@@ -132,19 +132,19 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokRequest>
             await htmlFileStream.DisposeAsync();
     }
 
-    private async Task<string> RenderTextTemplate(List<vm.Article> articles)
+    private async Task<string> RenderTextTemplate(List<Vm.Article> articles)
     {
         var textTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Text);
         var textTemplate = Template.Parse(textTemplateSource);
 
-        var maxDefinitions = _maxDefinitionsInTextForm;
+        var maxDefinitions = MaxDefinitionsInTextForm;
 
         var textTemplateResult = textTemplate.Render(new { articles, maxDefinitions });
 
         return textTemplateResult;
     }
 
-    private async Task<string> RenderHtmlTemplate(string dictionary, List<vm.Article> articles)
+    private async Task<string> RenderHtmlTemplate(string dictionary, List<Vm.Article> articles)
     {
         var htmlTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Html);
         var htmlTemplate = Template.Parse(htmlTemplateSource);
@@ -154,7 +154,7 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokRequest>
         return htmlTemplateResult;
     }
 
-    private List<vm.Article> MapAndSelectArticles(List<api.Article?> ordbokArticles)
+    private List<Vm.Article> MapAndSelectArticles(List<Api.Article?> ordbokArticles)
     {
         var articles = ordbokArticles
             .Where(a => a != null)

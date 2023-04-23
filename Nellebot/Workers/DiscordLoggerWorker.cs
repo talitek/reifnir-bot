@@ -64,7 +64,7 @@ public class DiscordLoggerWorker : BackgroundService
         }
         catch (TaskCanceledException)
         {
-            _logger.LogDebug("{Worker} execution is being cancelled", nameof(CommandParallelQueueWorker));
+            _logger.LogDebug("{Worker} execution is being cancelled", nameof(RequestQueueWorker));
         }
         catch (Exception ex)
         {

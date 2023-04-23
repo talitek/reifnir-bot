@@ -8,13 +8,13 @@ using Microsoft.Extensions.Options;
 
 namespace Nellebot.CommandHandlers;
 
-public class AddMissingMemberRolesRequest : CommandRequest
+public record AddMissingMemberRolesCommand : BotCommandCommand
 {
-    public AddMissingMemberRolesRequest(CommandContext ctx)
+    public AddMissingMemberRolesCommand(CommandContext ctx)
         : base(ctx) { }
 }
 
-public class AddMissingMembeRolesHandler : IRequestHandler<AddMissingMemberRolesRequest>
+public class AddMissingMembeRolesHandler : IRequestHandler<AddMissingMemberRolesCommand>
 {
     private readonly BotOptions _options;
 
@@ -23,7 +23,7 @@ public class AddMissingMembeRolesHandler : IRequestHandler<AddMissingMemberRoles
         _options = options.Value;
     }
 
-    public async Task Handle(AddMissingMemberRolesRequest request, CancellationToken cancellationToken)
+    public async Task Handle(AddMissingMemberRolesCommand request, CancellationToken cancellationToken)
     {
         var ctx = request.Ctx;
 

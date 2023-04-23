@@ -1,7 +1,6 @@
-﻿using DSharpPlus.Entities;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using DSharpPlus.Entities;
+using Nellebot.Helpers;
 
 namespace Nellebot.Utils;
 
@@ -28,5 +27,15 @@ public static class DiscordExtensions
         return !string.IsNullOrWhiteSpace(user.Username)
             ? $"{user.Username}#{user.Discriminator}"
             : string.Empty;
+    }
+
+    public static Task CreateSuccessReactionAsync(this DiscordMessage message)
+    {
+        return message.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.WhiteCheckmark));
+    }
+
+    public static Task CreateFailureReactionAsync(this DiscordMessage message)
+    {
+        return message.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.RedX));
     }
 }

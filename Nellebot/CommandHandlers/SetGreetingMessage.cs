@@ -7,18 +7,18 @@ using Nellebot.Services;
 
 namespace Nellebot.CommandHandlers;
 
-public class SetGreetingMessageRequest : CommandRequest
+public record SetGreetingMessageCommand : BotCommandCommand
 {
-    public string GreetingMessage { get; set; }
-
-    public SetGreetingMessageRequest(CommandContext ctx, string greetingMessage)
-        : base(ctx)
+    public SetGreetingMessageCommand(CommandContext ctx, string greetingMessage)
+    : base(ctx)
     {
         GreetingMessage = greetingMessage;
     }
+
+    public string GreetingMessage { get; set; }
 }
 
-public class SetGreetingMessageHandler : IRequestHandler<SetGreetingMessageRequest>
+public class SetGreetingMessageHandler : IRequestHandler<SetGreetingMessageCommand>
 {
     private readonly BotSettingsService _botSettingsService;
 
@@ -27,7 +27,7 @@ public class SetGreetingMessageHandler : IRequestHandler<SetGreetingMessageReque
         _botSettingsService = botSettingsService;
     }
 
-    public async Task Handle(SetGreetingMessageRequest request, CancellationToken cancellationToken)
+    public async Task Handle(SetGreetingMessageCommand request, CancellationToken cancellationToken)
     {
         var ctx = request.Ctx;
         var message = request.GreetingMessage;

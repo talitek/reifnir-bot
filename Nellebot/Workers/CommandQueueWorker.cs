@@ -25,7 +25,7 @@ public class CommandQueueWorker : BackgroundService
     {
         try
         {
-            await foreach (CommandRequest command in _channel.Reader.ReadAllAsync(stoppingToken))
+            await foreach (ICommand command in _channel.Reader.ReadAllAsync(stoppingToken))
             {
                 if (command != null)
                 {

@@ -7,11 +7,13 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using Microsoft.Extensions.Logging;
+using MediatR;
 using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
 using Nellebot.CommandHandlers;
+using Nellebot.CommandHandlers.Modmail;
 using Nellebot.Common.Extensions;
+using Nellebot.Services;
 using Nellebot.Workers;
 
 namespace Nellebot.CommandModules;
@@ -22,20 +24,23 @@ namespace Nellebot.CommandModules;
 [ModuleLifespan(ModuleLifespan.Transient)]
 public class AdminModule : BaseCommandModule
 {
-    private readonly ILogger<AdminModule> _logger;
     private readonly CommandQueueChannel _commandQueue;
-    private readonly CommandParallelQueueChannel _commandParallelQueue;
+    private readonly RequestQueueChannel _commandParallelQueue;
+    private readonly ModmailTicketPool _ticketPool;
+    private readonly IMediator _mediator;
     private readonly BotOptions _options;
 
     public AdminModule(
-        ILogger<AdminModule> logger,
         IOptions<BotOptions> options,
         CommandQueueChannel commandQueue,
-        CommandParallelQueueChannel commandParallelQueue)
+        RequestQueueChannel commandParallelQueue,
+        ModmailTicketPool ticketPool,
+        IMediator mediator)
     {
-        _logger = logger;
         _commandQueue = commandQueue;
         _commandParallelQueue = commandParallelQueue;
+        _ticketPool = ticketPool;
+        _mediator = mediator;
         _options = options.Value;
     }
 
@@ -90,19 +95,19 @@ public class AdminModule : BaseCommandModule
     [Command("add-missing-members")]
     public Task AddMissingMemberRoles(CommandContext ctx)
     {
-        return _commandQueue.Writer.WriteAsync(new AddMissingMemberRolesRequest(ctx)).AsTask();
+        return _commandQueue.Writer.WriteAsync(new AddMissingMemberRolesCommand(ctx)).AsTask();
     }
 
     [Command("set-greeting-message")]
     public Task SetGreetingMessage(CommandContext ctx, [RemainingText] string message)
     {
-        return _commandQueue.Writer.WriteAsync(new SetGreetingMessageRequest(ctx, message)).AsTask();
+        return _commandQueue.Writer.WriteAsync(new SetGreetingMessageCommand(ctx, message)).AsTask();
     }
 
     [Command("populate-messages")]
     public Task PopulateMessages(CommandContext ctx)
     {
-        return _commandParallelQueue.Writer.WriteAsync(new PopulateMessagesRequest(ctx)).AsTask();
+        return _commandParallelQueue.Writer.WriteAsync(new PopulateMessagesCommand(ctx)).AsTask();
     }
 
     [Command("delete-spam-after")]
@@ -115,5 +120,26 @@ public class AdminModule : BaseCommandModule
         await channel.DeleteMessagesAsync(messagesToDelete);
 
         await ctx.RespondAsync($"Deleted {messagesToDelete.Count} messages");
+    }
+
+    [Command("modmail-purge")]
+    public Task PurgeModmail(CommandContext ctx)
+    {
+        var purged = _ticketPool.Clear();
+
+        return ctx.Channel.SendMessageAsync($"Purged {purged} tickets");
+    }
+
+    [Command("modmail-close-all")]
+    public async Task CloseAll(CommandContext ctx)
+    {
+        var expiredTickets = _ticketPool.RemoveInactiveTickets(TimeSpan.FromSeconds(1)).ToList();
+
+        foreach (var ticket in expiredTickets)
+        {
+            await _mediator.Send(new CloseInactiveModmailTicketCommand(ticket));
+        }
+
+        await ctx.Channel.SendMessageAsync($"Closed {expiredTickets.Count} tickets");
     }
 }

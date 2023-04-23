@@ -12,61 +12,61 @@ namespace Nellebot.CommandModules;
 [ModuleLifespan(ModuleLifespan.Transient)]
 public class OrdbokModule : BaseCommandModule
 {
-    private readonly CommandQueueChannel _commandQueue;
+    private readonly RequestQueueChannel _requestQueue;
 
-    public OrdbokModule(CommandQueueChannel commandQueue)
+    public OrdbokModule(RequestQueueChannel commandQueue)
     {
-        _commandQueue = commandQueue;
+        _requestQueue = commandQueue;
     }
 
     [Command("bm")]
     [Aliases("nb")]
     public Task OrdbokSearchBokmal(CommandContext ctx, [RemainingText] string query)
     {
-        var searchOrdbokRequest = new SearchOrdbokRequest(ctx)
+        var searchOrdbokRequest = new SearchOrdbokQuery(ctx)
         {
             Dictionary = OrdbokDictionaryMap.Bokmal,
             Query = query,
         };
 
-        return _commandQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
+        return _requestQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
     }
 
     [Command("nn")]
     public Task OrdbokSearchNynorsk(CommandContext ctx, [RemainingText] string query)
     {
-        var searchOrdbokRequest = new SearchOrdbokRequest(ctx)
+        var searchOrdbokRequest = new SearchOrdbokQuery(ctx)
         {
             Dictionary = OrdbokDictionaryMap.Nynorsk,
             Query = query,
         };
 
-        return _commandQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
+        return _requestQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
     }
 
     [Command("bm-t")]
     public Task OrdbokSearchBokmalDebugTemplate(CommandContext ctx, [RemainingText] string query)
     {
-        var searchOrdbokRequest = new SearchOrdbokRequest(ctx)
+        var searchOrdbokRequest = new SearchOrdbokQuery(ctx)
         {
             Dictionary = OrdbokDictionaryMap.Bokmal,
             Query = query,
             AttachTemplate = true,
         };
 
-        return _commandQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
+        return _requestQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
     }
 
     [Command("nn-t")]
     public Task OrdbokSearchNynorskDebugTemplate(CommandContext ctx, [RemainingText] string query)
     {
-        var searchOrdbokRequest = new SearchOrdbokRequest(ctx)
+        var searchOrdbokRequest = new SearchOrdbokQuery(ctx)
         {
             Dictionary = OrdbokDictionaryMap.Nynorsk,
             Query = query,
             AttachTemplate = true,
         };
 
-        return _commandQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
+        return _requestQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
     }
 }

@@ -28,21 +28,26 @@ public class CommandRequestPipelineBehaviour<TRequest, TResponse> : IPipelineBeh
         {
             return await next().ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (request is ICommand command)
         {
-            if (request is CommandRequest commandRequest)
-            {
-                await HandeCommandRequestException(commandRequest, ex);
-                return default!;
-            }
-            else
-            {
-                throw;
-            }
+            HandeCommandException(command, ex);
+            return default!;
+        }
+        catch (Exception ex) when (request is BotCommandCommand commandCommand)
+        {
+            await HandeCommandCommandException(commandCommand, ex);
+            return default!;
         }
     }
 
-    private async Task HandeCommandRequestException(CommandRequest request, Exception ex)
+    private void HandeCommandException(ICommand request, Exception ex)
+    {
+        _discordErrorLogger.LogError(ex.Message);
+
+        _logger.LogError(ex, nameof(HandeCommandCommandException));
+    }
+
+    private async Task HandeCommandCommandException(BotCommandCommand request, Exception ex)
     {
         var ctx = request.Ctx;
 
@@ -50,6 +55,6 @@ public class CommandRequestPipelineBehaviour<TRequest, TResponse> : IPipelineBeh
 
         _discordErrorLogger.LogCommandError(ctx, ex.ToString());
 
-        _logger.LogError(ex, nameof(HandeCommandRequestException));
+        _logger.LogError(ex, nameof(HandeCommandCommandException));
     }
 }

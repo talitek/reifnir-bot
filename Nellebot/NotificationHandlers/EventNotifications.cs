@@ -17,5 +17,5 @@ public record MessageBulkDeletedNotification(MessageBulkDeleteEventArgs EventArg
 public record PresenceUpdatedNotification(PresenceUpdateEventArgs EventArgs) : EventNotification;
 
 public record ClientHeartbeatNotification(HeartbeatEventArgs EventArgs) : EventNotification;
-public record ClientReadyOrResumedNotification() : EventNotification();
-public record ClientDisconnected(SocketCloseEventArgs EventArgs) : EventNotification();
+public record ClientReadyOrResumedNotification() : EventNotification;
+public record ClientDisconnected(SocketCloseEventArgs EventArgs) : EventNotification;

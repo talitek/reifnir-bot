@@ -55,11 +55,7 @@ public class BotWorker : IHostedService
 
         _client.UseInteractivity();
 
-        _client.SocketOpened += OnClientConnected;
-        _client.SocketClosed += OnClientDisconnected;
-        _client.Ready += OnClientReady;
-        _client.Heartbeated += OnClientHeartbeat;
-        _client.Resumed += OnClientResumed;
+        RegisterLifecycleEventHandlers();
 
         _commandEventHandler.RegisterHandlers(commands);
         _awardEventHandler.RegisterHandlers();
@@ -68,6 +64,13 @@ public class BotWorker : IHostedService
         RegisterGuildEventHandlers();
 
         await _client.ConnectAsync();
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Stopping bot");
+
+        return _client.DisconnectAsync();
     }
 
     private CommandsNextExtension RegisterClassicCommands()
@@ -92,28 +95,32 @@ public class BotWorker : IHostedService
 
         slashCommands.RegisterCommands<GlobalSlashModule>();
         slashCommands.RegisterCommands<RoleSlashModule>(_options.GuildId);
+        slashCommands.RegisterCommands<ModmailModule>(_options.GuildId);
     }
 
     private void RegisterMessageHandlers()
     {
         _client.MessageCreated += (sender, args) => _eventQueue.Writer.WriteAsync(new MessageCreatedNotification(args)).AsTask();
-
         _client.MessageDeleted += (sender, args) => _eventQueue.Writer.WriteAsync(new MessageDeletedNotification(args)).AsTask();
-
         _client.MessagesBulkDeleted += (sender, args) => _eventQueue.Writer.WriteAsync(new MessageBulkDeletedNotification(args)).AsTask();
     }
 
     private void RegisterGuildEventHandlers()
     {
         _client.GuildMemberAdded += (sender, args) => _eventQueue.Writer.WriteAsync(new GuildMemberAddedNotification(args)).AsTask();
-
         _client.GuildMemberRemoved += (sender, args) => _eventQueue.Writer.WriteAsync(new GuildMemberRemovedNotification(args)).AsTask();
-
         _client.GuildMemberUpdated += (sender, args) => _eventQueue.Writer.WriteAsync(new GuildMemberUpdatedNotification(args)).AsTask();
-
         _client.GuildBanAdded += (sender, args) => _eventQueue.Writer.WriteAsync(new GuildBanAddedNotification(args)).AsTask();
-
         _client.GuildBanRemoved += (sender, args) => _eventQueue.Writer.WriteAsync(new GuildBanRemovedNotification(args)).AsTask();
+    }
+
+    private void RegisterLifecycleEventHandlers()
+    {
+        _client.SocketOpened += OnClientConnected;
+        _client.SocketClosed += OnClientDisconnected;
+        _client.Ready += OnClientReady;
+        _client.Heartbeated += OnClientHeartbeat;
+        _client.Resumed += OnClientResumed;
     }
 
     private Task OnClientHeartbeat(DiscordClient sender, HeartbeatEventArgs e)
@@ -156,12 +163,5 @@ public class BotWorker : IHostedService
         _logger.LogInformation("Bot resumed");
 
         return _eventQueue.Writer.WriteAsync(new ClientReadyOrResumedNotification()).AsTask();
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Stopping bot");
-
-        return _client.DisconnectAsync();
     }
 }
