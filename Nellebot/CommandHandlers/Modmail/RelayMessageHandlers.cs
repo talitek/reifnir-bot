@@ -42,7 +42,7 @@ public class RelayMessageHandlers : IRequestHandler<RelayRequesterMessageCommand
 
         var relayMessageContent = $"""
             {ticket.RequesterDisplayName} says
-            > {messageToRelay.Content}
+            {messageToRelay.GetQuotedContent()}
             """;
 
         await threadChannel.SendMessageAsync(relayMessageContent);
@@ -75,7 +75,7 @@ public class RelayMessageHandlers : IRequestHandler<RelayRequesterMessageCommand
 
         var relayMessageContent = $"""
             Message from moderator:
-            > {messageToRelay.Content}
+            {messageToRelay.GetQuotedContent()}
             """;
 
         var requesterMember = (await _resolver.ResolveGuildMember(request.Ticket.RequesterId))

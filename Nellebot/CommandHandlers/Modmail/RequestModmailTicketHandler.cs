@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus;
@@ -121,13 +122,13 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             messageToRelay = collectedMessage;
         }
 
-        await PostStubModmailTicket(stub, messageToRelay.Content);
+        await PostStubModmailTicket(stub, messageToRelay);
 
         await messageToRelay.CreateSuccessReactionAsync();
 
         var ticketCreateMessage = """
             Thanks! A staff member will get back to you soon.
-            In the meanwhile you may provide additional information if you so desire.
+            If there is something you wish to add do so by sending a new message as I won't be checking for updates to your messages. 
             """;
 
         await member.SendMessageAsync(ticketCreateMessage);
@@ -159,7 +160,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
     {
         var messageContent = $"""
             The following message will be sent to the moderators.
-            > {message.Content}
+            {message.GetQuotedContent()}
             Please react with {EmojiMap.WhiteCheckmark} to confirm or {EmojiMap.RedX} to cancel.
             """;
 
@@ -244,7 +245,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         _ = _ticketPool.TryRemove(ticket);
     }
 
-    private async Task PostStubModmailTicket(ModmailTicket ticket, string requestMesage)
+    private async Task PostStubModmailTicket(ModmailTicket ticket, DiscordMessage requestMesage)
     {
         var modmailChannelId = _options.ModmailChannelId;
 
@@ -256,7 +257,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
 
         var relayMessageContent = $"""
             {ticket.RequesterDisplayName} says
-            > {requestMesage}
+            {requestMesage.GetQuotedContent()}
             """;
 
         var modmailPostMessage = new DiscordMessageBuilder()

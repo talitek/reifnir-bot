@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using DSharpPlus.Entities;
 using Nellebot.Helpers;
 
@@ -37,5 +38,14 @@ public static class DiscordExtensions
     public static Task CreateFailureReactionAsync(this DiscordMessage message)
     {
         return message.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.RedX));
+    }
+
+    public static string GetQuotedContent(this DiscordMessage message)
+    {
+        var lines = message.Content.Split(DiscordConstants.NewLineChar).ToList();
+
+        var quotedLines = lines.Select(line => $"> {line}");
+
+        return string.Join(DiscordConstants.NewLineChar, quotedLines);
     }
 }
