@@ -4,8 +4,6 @@ namespace Nellebot.Common.Models.Modmail;
 
 public record ModmailTicket
 {
-    required public Guid Id { get; init; }
-
     required public ulong RequesterId { get; init; }
 
     required public string RequesterDisplayName { get; init; }

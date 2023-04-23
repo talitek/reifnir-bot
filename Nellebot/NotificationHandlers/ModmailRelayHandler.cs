@@ -59,7 +59,7 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
         if (message.Content.Equals(CancelMessageToken, StringComparison.InvariantCultureIgnoreCase))
             return Task.CompletedTask;
 
-        var userTicketInPool = _ticketPool.GetTicketByUserId(user.Id);
+        var userTicketInPool = _ticketPool.Get(user.Id);
 
         if (userTicketInPool == null)
         {

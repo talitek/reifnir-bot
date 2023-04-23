@@ -51,7 +51,7 @@ public class RelayMessageHandlers : IRequestHandler<RelayRequesterMessageCommand
 
         var updatedTicket = ticket.RefreshLastActivity();
 
-        _ticketPool.AddOrUpdate(updatedTicket);
+        _ = _ticketPool.TryUpdate(updatedTicket);
     }
 
     /// <summary>
@@ -87,6 +87,6 @@ public class RelayMessageHandlers : IRequestHandler<RelayRequesterMessageCommand
 
         var updatedTicket = request.Ticket.RefreshLastActivity();
 
-        _ticketPool.AddOrUpdate(updatedTicket);
+        _ = _ticketPool.TryUpdate(updatedTicket);
     }
 }

@@ -8,28 +8,18 @@ namespace Nellebot.Services;
 
 public class ModmailTicketPool
 {
-    private readonly ConcurrentDictionary<Guid, ModmailTicket> _ticketPool;
+    private readonly ConcurrentDictionary<ulong, ModmailTicket> _ticketPool;
 
     public ModmailTicketPool()
     {
-        _ticketPool = new ConcurrentDictionary<Guid, ModmailTicket>();
-
-#if DEBUG
-        // TryAdd(new ModmailTicket()
-        // {
-        //    TicketPost = new ModmailTicketPost(1099083673149657148, 1099083673149657148),
-        //    RequesterId = 78474916734701568,
-        //    //RequesterDisplayName = "Test",
-        //    //IsAnonymous = false,
-        //    RequesterDisplayName = "Hugh Mongous",
-        //    IsAnonymous = true,
-        // });
-#endif
+        _ticketPool = new ConcurrentDictionary<ulong, ModmailTicket>();
     }
 
-    public ModmailTicket? GetTicketByUserId(ulong requesterId)
+    public ModmailTicket? Get(ulong requesterId)
     {
-        return _ticketPool.SingleOrDefault(x => x.Value.RequesterId == requesterId).Value;
+        _ticketPool.TryGetValue(requesterId, out var ticket);
+
+        return ticket;
     }
 
     public ModmailTicket? GetTicketByChannelId(ulong channelId)
@@ -39,17 +29,19 @@ public class ModmailTicketPool
 
     public bool TryAdd(ModmailTicket ticket)
     {
-        return _ticketPool.TryAdd(ticket.Id, ticket);
+        return _ticketPool.TryAdd(ticket.RequesterId, ticket);
     }
 
     public bool TryRemove(ModmailTicket ticket)
     {
-        return _ticketPool.TryRemove(ticket.Id, out _);
+        return _ticketPool.TryRemove(ticket.RequesterId, out _);
     }
 
-    public ModmailTicket AddOrUpdate(ModmailTicket ticket)
+    public bool TryUpdate(ModmailTicket ticket)
     {
-        return _ticketPool.AddOrUpdate(ticket.Id, ticket, (key, oldValue) => ticket);
+        var current = _ticketPool[ticket.RequesterId];
+
+        return _ticketPool.TryUpdate(ticket.RequesterId, ticket, current);
     }
 
     public int Clear()

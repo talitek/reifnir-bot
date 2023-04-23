@@ -55,7 +55,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             throw new Exception("Couldn't fetch member");
         }
 
-        var existingTicket = _ticketPool.GetTicketByUserId(ctx.User.Id);
+        var existingTicket = _ticketPool.Get(ctx.User.Id);
 
         if (existingTicket != null)
         {
@@ -88,9 +88,9 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             requesterDisplayName = PseudonymGenerator.GetRandomPseudonym();
         }
 
-        await member.SendMessageAsync($"Understood. Your message will be sent as **{requesterDisplayName}**.");
-
         var stub = CreateStubModmailTicket(ctx, requesterDisplayName, requesterIsAnonymous);
+
+        await member.SendMessageAsync($"Understood. Your message will be sent as **{requesterDisplayName}**.");
 
         DiscordMessage messageToRelay;
 
@@ -109,14 +109,16 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         }
         else
         {
-            messageToRelay = await CollectRequestMessage(member);
+            var collectedMessage = await CollectRequestMessage(member);
 
-            if (messageToRelay.Content.Equals(CancelMessageToken, StringComparison.InvariantCultureIgnoreCase))
+            if (collectedMessage == null || collectedMessage.Content.Equals(CancelMessageToken, StringComparison.InvariantCultureIgnoreCase))
             {
                 await HandleCancellation(member, stub);
 
                 return;
             }
+
+            messageToRelay = collectedMessage;
         }
 
         await PostStubModmailTicket(stub, messageToRelay.Content);
@@ -135,13 +137,16 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
     /// Collect a request message if the user didn't provide one in the command.
     /// </summary>
     /// <returns>The collected <see cref="DiscordMessage"/>.</returns>
-    private static async Task<DiscordMessage> CollectRequestMessage(DiscordMember member)
+    private static async Task<DiscordMessage?> CollectRequestMessage(DiscordMember member)
     {
         var messageContent = "Please type your message here and I will pass it on. If you want to cancel just type `cancel`.";
 
         var promptForMessageMessage = await member.SendMessageAsync(messageContent);
 
         var promptInteractivityResult = await promptForMessageMessage.Channel.GetNextMessageAsync(member);
+
+        if (promptInteractivityResult.TimedOut)
+            return null;
 
         return promptInteractivityResult.Result;
     }
@@ -164,6 +169,9 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         await promptForConfirmMessage.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.RedX));
 
         var promptInteractivityResult = await promptForConfirmMessage.WaitForReactionAsync(member);
+
+        if (promptInteractivityResult.TimedOut)
+            return false;
 
         var choice = promptInteractivityResult.Result.Emoji.Name;
 
@@ -198,6 +206,9 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
 
         var interactionResult = await introMessage.WaitForButtonAsync(cancellationToken);
 
+        if (interactionResult.TimedOut)
+            return CancelButtonId; // Assume cancelled
+
         var choiceInteractionResponseBuilder = new DiscordInteractionResponseBuilder(introMessageBuilder);
         choiceInteractionResponseBuilder.ClearComponents();
 
@@ -217,13 +228,13 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
     {
         var modmailTicket = new ModmailTicket
         {
-            Id = Guid.NewGuid(),
             IsAnonymous = requesterIsAnonymous,
             RequesterId = ctx.User.Id,
             RequesterDisplayName = requesterDisplayName,
         };
 
-        _ = _ticketPool.TryAdd(modmailTicket);
+        if (!_ticketPool.TryAdd(modmailTicket))
+            throw new Exception("Failed to add stub ticket to pool as it already exists.");
 
         return modmailTicket;
     }
@@ -255,13 +266,19 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             .WithName(modmailPostTitle)
             .WithMessage(modmailPostMessage);
 
+        // Refresh the ticket in case it was updated while waiting for the user to type their message.
+        var refreshedTicket = _ticketPool.Get(ticket.RequesterId);
+
+        if (refreshedTicket!.TicketPost != null)
+            throw new Exception("Ticket already posted");
+
         var forumPost = await modmailChannel.CreateForumPostAsync(fpBuilder);
 
-        var postedTicket = ticket with
+        var postedTicket = refreshedTicket with
         {
             TicketPost = new ModmailTicketPost(forumPost.Channel.Id, forumPost.Message.Id),
         };
 
-        _ticketPool.AddOrUpdate(postedTicket);
+        _ = _ticketPool.TryUpdate(postedTicket);
     }
 }
