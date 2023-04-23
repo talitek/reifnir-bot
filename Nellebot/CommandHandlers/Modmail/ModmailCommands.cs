@@ -19,3 +19,4 @@ public record RequestModmailTicketCommand : BaseCommand
 
 public record RelayModeratorMessageCommand(MessageContext Ctx, ModmailTicket Ticket) : MessageCommand(Ctx);
 public record RelayRequesterMessageCommand(MessageContext Ctx, ModmailTicket Ticket) : MessageCommand(Ctx);
+public record CloseInactiveModmailTicketCommand(ModmailTicket Ticket) : ICommand;

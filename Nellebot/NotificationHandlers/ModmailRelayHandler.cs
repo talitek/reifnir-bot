@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
 using MediatR;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Options;
 using Nellebot.CommandHandlers;
 using Nellebot.CommandHandlers.Modmail;
 using Nellebot.Services;
+using Nellebot.Utils;
 using Nellebot.Workers;
 using BaseContext = Nellebot.CommandHandlers.BaseContext;
 
@@ -13,6 +15,8 @@ namespace Nellebot.NotificationHandlers;
 
 public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotification>
 {
+    private const string CancelMessageToken = "cancel";
+
     private readonly CommandQueueChannel _commandQueue;
     private readonly ModmailTicketPool _ticketPool;
     private readonly BotOptions _botOptions;
@@ -50,6 +54,11 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
 
     private Task HandlePrivateMessage(DiscordChannel channel, DiscordUser user, DiscordMessage message, CancellationToken cancellationToken)
     {
+        // The message could be an interactivity response containing the token "cancel".
+        // If so, disregard the message. Not the most elegant solution, but it should do.
+        if (message.Content.Equals(CancelMessageToken, StringComparison.InvariantCultureIgnoreCase))
+            return Task.CompletedTask;
+
         var userTicketInPool = _ticketPool.GetTicketByUserId(user.Id);
 
         if (userTicketInPool == null)
@@ -86,9 +95,7 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
 
         if (channelTicketInPool == null)
         {
-            // Something went wrong or is an old post
-            // TODO Log error/warning
-            return Task.CompletedTask;
+            return message.CreateFailureReactionAsync();
         }
 
         var moderatorMessageContext = new MessageContext

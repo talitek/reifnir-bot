@@ -32,9 +32,9 @@ public record MessageCommand : ICommand
     public MessageContext Ctx { get; init; }
 }
 
-public record CommandCommand : ICommand
+public record BotCommandCommand : ICommand
 {
-    public CommandCommand(CommandContext ctx)
+    public BotCommandCommand(CommandContext ctx)
     {
         Ctx = ctx;
     }
@@ -52,9 +52,9 @@ public record InteractionCommand : ICommand
     public InteractionContext Ctx { get; init; }
 }
 
-public record CommandQuery : IQuery
+public record BotCommandQuery : IQuery
 {
-    public CommandQuery(CommandContext ctx)
+    public BotCommandQuery(CommandContext ctx)
     {
         Ctx = ctx;
     }

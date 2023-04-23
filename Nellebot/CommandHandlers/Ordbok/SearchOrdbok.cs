@@ -18,7 +18,7 @@ using Vm = Nellebot.Common.Models.Ordbok.ViewModels;
 
 namespace Nellebot.CommandHandlers.Ordbok;
 
-public record SearchOrdbokQuery : CommandQuery
+public record SearchOrdbokQuery : BotCommandQuery
 {
     public SearchOrdbokQuery(CommandContext ctx)
         : base(ctx)

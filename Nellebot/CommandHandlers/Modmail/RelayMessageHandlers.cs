@@ -62,12 +62,12 @@ public class RelayMessageHandlers : IRequestHandler<RelayRequesterMessageCommand
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task Handle(RelayModeratorMessageCommand request, CancellationToken cancellationToken)
     {
-        var member = (await _resolver.ResolveGuildMember(request.Ctx.User.Id))
-                    ?? throw new Exception("Could not resolve member");
+        var moderatorMember = (await _resolver.ResolveGuildMember(request.Ctx.User.Id))
+                                ?? throw new Exception("Could not resolve member");
 
         var messageToRelay = request.Ctx.Message;
 
-        if (!member.Roles.Any(r => r.Id == _options.AdminRoleId))
+        if (!moderatorMember.Roles.Any(r => r.Id == _options.AdminRoleId))
         {
             await messageToRelay.CreateFailureReactionAsync();
             return;
@@ -78,7 +78,10 @@ public class RelayMessageHandlers : IRequestHandler<RelayRequesterMessageCommand
             > {messageToRelay.Content}
             """;
 
-        var relayedMessage = await member.SendMessageAsync(relayMessageContent);
+        var requesterMember = (await _resolver.ResolveGuildMember(request.Ticket.RequesterId))
+                                ?? throw new Exception("Could not resolve member");
+
+        var relayedMessage = await requesterMember.SendMessageAsync(relayMessageContent);
 
         await messageToRelay.CreateSuccessReactionAsync();
 

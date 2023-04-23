@@ -33,7 +33,7 @@ public class CommandRequestPipelineBehaviour<TRequest, TResponse> : IPipelineBeh
             HandeCommandException(command, ex);
             return default!;
         }
-        catch (Exception ex) when (request is CommandCommand commandCommand)
+        catch (Exception ex) when (request is BotCommandCommand commandCommand)
         {
             await HandeCommandCommandException(commandCommand, ex);
             return default!;
@@ -47,7 +47,7 @@ public class CommandRequestPipelineBehaviour<TRequest, TResponse> : IPipelineBeh
         _logger.LogError(ex, nameof(HandeCommandCommandException));
     }
 
-    private async Task HandeCommandCommandException(CommandCommand request, Exception ex)
+    private async Task HandeCommandCommandException(BotCommandCommand request, Exception ex)
     {
         var ctx = request.Ctx;
 

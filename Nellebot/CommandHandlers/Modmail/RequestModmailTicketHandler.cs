@@ -15,6 +15,11 @@ namespace Nellebot.CommandHandlers.Modmail;
 
 public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketCommand>
 {
+    private const string RealNameButtonId = "realNameButton";
+    private const string PseudonymButtonId = "pseudonymButton";
+    private const string CancelButtonId = "cancelButton";
+    private const string CancelMessageToken = "cancel";
+
     private readonly BotOptions _options;
     private readonly DiscordResolver _resolver;
     private readonly ModmailTicketPool _ticketPool;
@@ -61,7 +66,16 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             return;
         }
 
-        var requesterIsAnonymous = await CollectIdentityChoice(member, cancellationToken);
+        var choice = await CollectIdentityChoice(member, cancellationToken);
+
+        if (choice == CancelButtonId)
+        {
+            await HandleCancellation(member);
+
+            return;
+        }
+
+        var requesterIsAnonymous = choice == PseudonymButtonId;
 
         string requesterDisplayName;
 
@@ -80,18 +94,41 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
 
         DiscordMessage messageToRelay;
 
-        if (requestMessage != null && await CollectRequestMessageConfirmation(requestMessage, member))
+        if (requestMessage != null)
         {
+            var confirmed = await CollectRequestMessageConfirmation(requestMessage, member);
+
+            if (!confirmed)
+            {
+                await HandleCancellation(member, stub);
+
+                return;
+            }
+
             messageToRelay = requestMessage;
         }
         else
         {
             messageToRelay = await CollectRequestMessage(member);
+
+            if (messageToRelay.Content.Equals(CancelMessageToken, StringComparison.InvariantCultureIgnoreCase))
+            {
+                await HandleCancellation(member, stub);
+
+                return;
+            }
         }
 
         await PostStubModmailTicket(stub, messageToRelay.Content);
 
         await messageToRelay.CreateSuccessReactionAsync();
+
+        var ticketCreateMessage = """
+            Thanks! A staff member will get back to you soon.
+            In the meanwhile you may provide additional information if you so desire.
+            """;
+
+        await member.SendMessageAsync(ticketCreateMessage);
     }
 
     /// <summary>
@@ -100,7 +137,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
     /// <returns>The collected <see cref="DiscordMessage"/>.</returns>
     private static async Task<DiscordMessage> CollectRequestMessage(DiscordMember member)
     {
-        var messageContent = "Please type your message here and I will pass it on.";
+        var messageContent = "Please type your message here and I will pass it on. If you want to cancel just type `cancel`.";
 
         var promptForMessageMessage = await member.SendMessageAsync(messageContent);
 
@@ -140,7 +177,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
     /// Collect choice of identity from user i.e. use real name or pseudonym.
     /// </summary>
     /// <returns>Returns true if the user chooses to be anonymous.</returns>
-    private static async Task<bool> CollectIdentityChoice(DiscordMember member, CancellationToken cancellationToken)
+    private static async Task<string> CollectIdentityChoice(DiscordMember member, CancellationToken cancellationToken)
     {
         var realName = member.GetNicknameOrDisplayName();
 
@@ -149,15 +186,13 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             Would you like to send the message as **{realName}** or do you want to use a random pseudonym?
             """;
 
-        const string realNameButtonId = "realNameButton";
-        const string pseudonymButtonId = "pseudonymButton";
-
-        var realNameButton = new DiscordButtonComponent(ButtonStyle.Primary, realNameButtonId, realName);
-        var pseudonymButton = new DiscordButtonComponent(ButtonStyle.Primary, pseudonymButtonId, "Random pseudonym");
+        var realNameButton = new DiscordButtonComponent(ButtonStyle.Primary, RealNameButtonId, realName);
+        var pseudonymButton = new DiscordButtonComponent(ButtonStyle.Primary, PseudonymButtonId, "Random pseudonym");
+        var cancelButton = new DiscordButtonComponent(ButtonStyle.Secondary, CancelButtonId, "Cancel");
 
         var introMessageBuilder = new DiscordMessageBuilder()
             .WithContent(introMessageContent)
-            .AddComponents(realNameButton, pseudonymButton);
+            .AddComponents(realNameButton, pseudonymButton, cancelButton);
 
         var introMessage = await member.SendMessageAsync(introMessageBuilder);
 
@@ -168,9 +203,14 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
 
         await interactionResult.Result.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage, choiceInteractionResponseBuilder);
 
-        bool requesterIsAnonymous = interactionResult.Result.Id == pseudonymButtonId;
+        return interactionResult.Result.Id;
+    }
 
-        return requesterIsAnonymous;
+    private async Task HandleCancellation(DiscordMember member, ModmailTicket? stub = null)
+    {
+        if (stub != null) CancelStubModmailTicket(stub);
+
+        await member.SendMessageAsync("Understood. You can always request a ticket again later.");
     }
 
     private ModmailTicket CreateStubModmailTicket(BaseContext ctx, string requesterDisplayName, bool requesterIsAnonymous)
@@ -186,6 +226,11 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         _ = _ticketPool.TryAdd(modmailTicket);
 
         return modmailTicket;
+    }
+
+    private void CancelStubModmailTicket(ModmailTicket ticket)
+    {
+        _ = _ticketPool.TryRemove(ticket);
     }
 
     private async Task PostStubModmailTicket(ModmailTicket ticket, string requestMesage)

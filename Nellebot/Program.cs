@@ -155,6 +155,7 @@ public class Program
         services.AddHostedService<EventQueueWorker>();
         services.AddHostedService<DiscordLoggerWorker>();
         services.AddHostedService<MessageAwardQueueWorker>();
+        services.AddHostedService<ModmailCleanupWorker>();
         services.AddHostedService<BotWorker>();
     }
 }

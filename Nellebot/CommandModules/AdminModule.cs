@@ -7,10 +7,11 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using Microsoft.Extensions.Logging;
+using MediatR;
 using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
 using Nellebot.CommandHandlers;
+using Nellebot.CommandHandlers.Modmail;
 using Nellebot.Common.Extensions;
 using Nellebot.Services;
 using Nellebot.Workers;
@@ -26,17 +27,20 @@ public class AdminModule : BaseCommandModule
     private readonly CommandQueueChannel _commandQueue;
     private readonly RequestQueueChannel _commandParallelQueue;
     private readonly ModmailTicketPool _ticketPool;
+    private readonly IMediator _mediator;
     private readonly BotOptions _options;
 
     public AdminModule(
         IOptions<BotOptions> options,
         CommandQueueChannel commandQueue,
         RequestQueueChannel commandParallelQueue,
-        ModmailTicketPool ticketPool)
+        ModmailTicketPool ticketPool,
+        IMediator mediator)
     {
         _commandQueue = commandQueue;
         _commandParallelQueue = commandParallelQueue;
         _ticketPool = ticketPool;
+        _mediator = mediator;
         _options = options.Value;
     }
 
@@ -118,11 +122,24 @@ public class AdminModule : BaseCommandModule
         await ctx.RespondAsync($"Deleted {messagesToDelete.Count} messages");
     }
 
-    [Command("purge-modmail")]
+    [Command("modmail-purge")]
     public Task PurgeModmail(CommandContext ctx)
     {
-        _ticketPool.Clear();
+        var purged = _ticketPool.Clear();
 
-        return ctx.Channel.SendMessageAsync("Modmail purged");
+        return ctx.Channel.SendMessageAsync($"Purged {purged} tickets");
+    }
+
+    [Command("modmail-close-all")]
+    public async Task CloseAll(CommandContext ctx)
+    {
+        var expiredTickets = _ticketPool.RemoveInactiveTickets(TimeSpan.FromSeconds(1)).ToList();
+
+        foreach (var ticket in expiredTickets)
+        {
+            await _mediator.Send(new CloseInactiveModmailTicketCommand(ticket));
+        }
+
+        await ctx.Channel.SendMessageAsync($"Closed {expiredTickets.Count} tickets");
     }
 }
