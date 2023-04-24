@@ -114,7 +114,7 @@ namespace Nellebot.EventHandlers
                 {
                     errorMessage = "I do not care for DM commands.";
                 }
-                else if (failedCheck is RequireOwnerOrAdmin)
+                else if (failedCheck is RequireOwnerOrAdmin || failedCheck is RequireTrustedMember)
                 {
                     errorMessage = "You do not have permission to do that.";
                 }

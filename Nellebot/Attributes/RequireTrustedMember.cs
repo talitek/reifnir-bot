@@ -9,7 +9,7 @@ using Nellebot.Services;
 
 namespace Nellebot.Attributes;
 
-public class RequireOwnerOrAdmin : CheckBaseAttribute
+public class RequireTrustedMember : CheckBaseAttribute
 {
     public override Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
     {
@@ -24,7 +24,7 @@ public class RequireOwnerOrAdmin : CheckBaseAttribute
         AppDiscordMember appMember = DiscordMemberMapper.Map(ctx.Member);
         AppDiscordApplication appApplication = DiscordApplicationMapper.Map(ctx.Client.CurrentApplication);
 
-        bool result = authorizationService.IsOwnerOrAdmin(appMember, appApplication);
+        bool result = authorizationService.IsTrustedMember(appMember, appApplication);
 
         return Task.FromResult(result);
     }

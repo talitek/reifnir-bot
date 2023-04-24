@@ -1,4 +1,6 @@
-﻿namespace Nellebot
+﻿using System;
+
+namespace Nellebot
 {
     public class BotOptions
     {
@@ -24,6 +26,11 @@
         /// </summary>
         public ulong AdminRoleId { get; init; }
 
+        /// <summary>
+        /// Gets discord roles with access to some admin commands.
+        /// </summary>
+        public ulong[] TrustedRoleIds { get; init; } = Array.Empty<ulong>();
+
         public ulong ActivityLogChannelId { get; init; }
 
         public ulong ExtendedActivityLogChannelId { get; init; }
@@ -36,13 +43,13 @@
 
         public ulong AwardChannelId { get; init; }
 
-        public ulong[] AwardVoteGroupIds { get; init; } = null!;
+        public ulong[] AwardVoteGroupIds { get; init; } = Array.Empty<ulong>();
 
         public int RequiredAwardCount { get; init; }
 
         public ulong MemberRoleId { get; init; }
 
-        public ulong[] RequiredRoleIds { get; init; } = null!;
+        public ulong[] RequiredRoleIds { get; init; } = Array.Empty<ulong>();
 
         /// <summary>
         /// Gets a value indicating whether feature flag for populating message refs on Ready event.

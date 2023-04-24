@@ -221,7 +221,7 @@ public class AwardEventHandler
 
         ulong[] allowedGroupIds = _options.AwardVoteGroupIds;
 
-        if (allowedGroupIds == null || allowedGroupIds.Length == 0)
+        if (allowedGroupIds.Length == 0)
         {
             _logger.LogDebug($"{nameof(_options.AwardVoteGroupIds)} is empty");
             return false;

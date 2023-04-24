@@ -125,10 +125,11 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
             return;
         }
 
-        TryResolveResult<DiscordAuditLogMessageEntry> auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogMessageEntry>(
-
-                                                        // the target is supposed to be a Message but the id corresponds to a user
-                                                        guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == message.Author.Id);
+        // the target is supposed to be a Message but the id corresponds to a user
+        var auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogMessageEntry>(
+                                        guild,
+                                        AuditLogActionType.MessageDelete,
+                                        (x) => x.Target.Id == message.Author.Id);
 
         // User deleted their own message
         if (!auditResolveResult.Resolved)
@@ -185,8 +186,10 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
         string authorName = author.GetFullUsername();
 
-        TryResolveResult<DiscordAuditLogMessageEntry> auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogMessageEntry>(
-                            args.Guild, AuditLogActionType.MessageDelete, (x) => x.Target.Id == author.Id);
+        var auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogMessageEntry>(
+                                        args.Guild,
+                                        AuditLogActionType.MessageDelete,
+                                        (x) => x.Target.Id == author.Id);
 
         if (!auditResolveResult.Resolved)
         {
@@ -258,6 +261,8 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
             DiscordMember? memberResponsible = await _discordResolver.ResolveGuildMember(guild, auditKickEntry.UserResponsible.Id);
 
+            var kickReason = auditKickEntry.Reason.NullOrWhiteSpaceTo("*No reason provided*");
+
             if (memberResponsible == null)
             {
                 return;
@@ -265,8 +270,8 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
             string responsibleName = memberResponsible.GetNicknameOrDisplayName();
 
-            _discordLogger.LogActivityMessage($"**{memberName}** was kicked by **{responsibleName}**. Reason: {auditKickEntry.Reason}.");
-            _discordLogger.LogActivityMessage($"**{memberFullIdentifier}** was kicked by **{responsibleName}**. Reason: {auditKickEntry.Reason}.");
+            _discordLogger.LogActivityMessage($"**{memberName}** was kicked by **{responsibleName}**. Reason: {kickReason}.");
+            _discordLogger.LogExtendedActivityMessage($"**{memberFullIdentifier}** was kicked by **{responsibleName}**. Reason: {kickReason}.");
 
             await _userLogService.CreateUserLog(member.Id, DateTime.UtcNow, UserLogType.LeftServer, memberResponsible.Id);
         }

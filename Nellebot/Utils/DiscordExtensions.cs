@@ -48,4 +48,9 @@ public static class DiscordExtensions
 
         return string.Join(DiscordConstants.NewLineChar, quotedLines);
     }
+
+    public static string NullOrWhiteSpaceTo(this string input, string fallback)
+    {
+        return !string.IsNullOrWhiteSpace(input) ? input : fallback;
+    }
 }
