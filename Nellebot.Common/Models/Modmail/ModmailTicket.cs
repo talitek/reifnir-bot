@@ -2,6 +2,21 @@
 
 namespace Nellebot.Common.Models.Modmail;
 
+public record ModmailTicketEntity
+{
+    public Guid Id { get; init; }
+
+    public ulong? RequesterIdPlain { get; init; }
+
+    public ulong? RequesterIdEncrypted { get; init; }
+
+    public string RequesterDisplayName { get; init; } = null!;
+
+    public DateTime LastActivity { get; init; } = DateTime.UtcNow;
+
+    public ModmailTicketPost? TicketPost { get; init; }
+}
+
 public record ModmailTicket
 {
     required public ulong RequesterId { get; init; }

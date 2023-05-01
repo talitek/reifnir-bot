@@ -2,6 +2,7 @@ using System;
 using System.Threading.Channels;
 using DSharpPlus;
 using MediatR;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,6 +34,10 @@ public class Program
             .ConfigureServices((hostContext, services) =>
             {
                 services.Configure<BotOptions>(hostContext.Configuration.GetSection(BotOptions.OptionsKey));
+
+                services.AddDataProtection()
+                    .SetApplicationName(nameof(Nellebot))
+                    .SetDefaultKeyLifetime(TimeSpan.FromDays(180));
 
                 services.AddHttpClient<OrdbokHttpClient>();
 
