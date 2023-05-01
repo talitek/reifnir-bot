@@ -271,7 +271,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
             string responsibleName = memberResponsible.GetNicknameOrDisplayName();
 
             _discordLogger.LogActivityMessage($"**{memberName}** was kicked by **{responsibleName}**. Reason: {kickReason}.");
-            _discordLogger.LogExtendedActivityMessage($"**{memberFullIdentifier}** was kicked by **{responsibleName}**. Reason: {kickReason}.");
+            _discordLogger.LogExtendedActivityMessage($"{memberFullIdentifier} was kicked by **{responsibleName}**. Reason: {kickReason}.");
 
             await _userLogService.CreateUserLog(member.Id, DateTime.UtcNow, UserLogType.LeftServer, memberResponsible.Id);
         }

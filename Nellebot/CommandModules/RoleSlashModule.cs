@@ -7,6 +7,7 @@ using DSharpPlus.Entities;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.Options;
+using Nellebot.Common.Models.UserRoles;
 using Nellebot.Services;
 using Nellebot.Services.Loggers;
 
@@ -24,6 +25,37 @@ public class RoleSlashModule : ApplicationCommandModule
         _roleService = roleService;
         _discordErrorLogger = discordErrorLogger;
         _options = options.Value;
+    }
+
+    [SlashCommand("role", "Choose a new role or remove an existing role")]
+    public async Task SetSelfRole(InteractionContext ctx, [Option("role", "Role name or alias")] string role)
+    {
+        var member = ctx.Member ?? throw new Exception($"{nameof(ctx.Member)} is null");
+
+        await ctx.DeferAsync(true);
+
+        var userRole = await _roleService.GetUserRoleByNameOrAlias(role);
+
+        if (userRole == null)
+        {
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent($"**{role}** role does not exist"));
+            return;
+        }
+
+        var existingDiscordRole = member.Roles.SingleOrDefault(r => r.Id == userRole.RoleId);
+
+        if (existingDiscordRole == null)
+        {
+            await AddSelfDiscordRole(ctx, userRole);
+
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Enjoy your new role!"));
+        }
+        else
+        {
+            await member.RevokeRoleAsync(existingDiscordRole);
+
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("You are now one role lighter."));
+        }
     }
 
     [SlashCommand("test", "Test")]
@@ -64,7 +96,7 @@ public class RoleSlashModule : ApplicationCommandModule
         await interactionResult.Result.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage, responseBuilder);
     }
 
-    [SlashCommand("roles", "Choose your server roles")]
+    [SlashCommand("roles", "Choose one or more roles")]
     public Task Roles(InteractionContext ctx)
     {
         try
@@ -312,5 +344,45 @@ public class RoleSlashModule : ApplicationCommandModule
         var discordRole = ctx.Guild.Roles[discordRoleId];
 
         return member.RevokeRoleAsync(discordRole);
+    }
+
+    private async Task AddSelfDiscordRole(InteractionContext ctx, UserRole userRole)
+    {
+        var member = ctx.Member ?? throw new Exception($"{nameof(ctx.Member)} is null");
+        var guild = ctx.Guild;
+
+        // Check that the role exists in the guild
+        if (!guild.Roles.ContainsKey(userRole.RoleId))
+        {
+            throw new ArgumentException($"Role Id {userRole.RoleId} does not exist");
+        }
+
+        // Assign new role
+        var discordRole = ctx.Guild.Roles[userRole.RoleId];
+
+        await member.GrantRoleAsync(discordRole);
+
+        // If user role is part of a mutually exclusive group, remove all other roles from the group
+        await RemoveAllOtherRolesInMutexGroup(userRole, member, guild);
+    }
+
+    private async Task RemoveAllOtherRolesInMutexGroup(UserRole userRole, DiscordMember member, DiscordGuild guild)
+    {
+        if (userRole.Group == null || userRole.Group.MutuallyExclusive == false)
+            return;
+
+        var otherRolesInGroup = (await _roleService.GetUserRolesByGroup(userRole.Group.Id))
+                                            .Where(r => r.Id != userRole.Id);
+
+        var discordRolesInGroupToRemove = member.Roles
+                            .Where(r => otherRolesInGroup.Select(r => r.RoleId)
+                                        .ToList()
+                                        .Contains(r.Id))
+                            .ToList();
+
+        foreach (var discordRoleToRemove in discordRolesInGroupToRemove)
+        {
+            await member.RevokeRoleAsync(discordRoleToRemove);
+        }
     }
 }
