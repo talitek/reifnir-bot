@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -131,16 +132,18 @@ public class RoleSlashModule : ApplicationCommandModule
 
         var roleGroups = userRoles
             .GroupBy(r => r.Group)
-            .OrderBy(r => r.Key?.Id ?? int.MaxValue);
-
-        var currentInteraction = ctx.Interaction;
+            .OrderBy(r => r.Key?.Id ?? int.MaxValue)
+            .ToList();
 
         var rolesToAdd = new List<ulong>();
         var rolesToRemove = new List<ulong>();
 
-        foreach (var roleGroup in roleGroups.ToList())
+        foreach (var roleGroup in roleGroups)
         {
             var isSingleSelect = roleGroup.Key != null && roleGroup.Key.MutuallyExclusive;
+
+            // TODO: Temporary(tm) hack. Mandatory should be a flag on the group
+            var isMandatory = roleGroup == roleGroups.First();
 
             var roleDropdownOptions = new List<DiscordSelectComponentOption>();
 
@@ -154,23 +157,36 @@ public class RoleSlashModule : ApplicationCommandModule
             var maxOptions = isSingleSelect ? 1 : Math.Min(roleDropdownOptions.Count, MaxSelectComponentOptions);
             var minOptions = isSingleSelect ? 1 : 0;
 
-            var roleDropdownId = "dropdown_role";
+            const string roleDropdownId = "dropdown_role";
             var roleDropdownPlaceHolder = isSingleSelect ? $"Choose 1 role" : "Choose any roles";
             var roleDropdown = new DiscordSelectComponent(roleDropdownId, roleDropdownPlaceHolder, roleDropdownOptions, minOptions: minOptions, maxOptions: maxOptions);
 
+            const string skipButtonId = "skip_button";
+            var skipButton = new DiscordButtonComponent(ButtonStyle.Secondary, skipButtonId, "Skip", disabled: isMandatory);
+
             var interactionResultResponse = new DiscordWebhookBuilder()
                 .WithContent(roleGroup.Key != null ? $"{roleGroup.Key.Name} roles" : "Ungrouped roles")
-                .AddComponents(roleDropdown);
+                .AddComponents(roleDropdown)
+                .AddComponents(skipButton);
 
             // Respond by editing the deferred message
-            var theMessage = await currentInteraction.EditOriginalResponseAsync(interactionResultResponse);
+            var theMessage = await ctx.Interaction.EditOriginalResponseAsync(interactionResultResponse);
 
-            // Wait for the user to select a role
-            var interactionResult = await theMessage.WaitForSelectAsync(roleDropdownId);
+            // Wait for a choice, either dropdown selection or skip button
+            var messageCancellationTokenSource = new CancellationTokenSource();
+            var waitForSelectTask = theMessage.WaitForSelectAsync(roleDropdownId, messageCancellationTokenSource.Token);
+            var waitForButtonTask = theMessage.WaitForButtonAsync(skipButtonId, messageCancellationTokenSource.Token);
+
+            var interactionResult = (await Task.WhenAny(waitForSelectTask, waitForButtonTask)).Result;
+            messageCancellationTokenSource.Cancel();
 
             // Acknowledge the interaction.
             // This deferred message will be handled either in the next interation or outside the loop when we're done
             await interactionResult.Result.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
+
+            var isSkipped = interactionResult.Result.Id == skipButtonId;
+
+            if (isSkipped) continue;
 
             var chosenRoleIds = interactionResult.Result.Values.Select(ulong.Parse).ToList();
 
@@ -185,9 +201,6 @@ public class RoleSlashModule : ApplicationCommandModule
                 .Except(chosenRoleIds);
 
             rolesToRemove.AddRange(rolesFromGroupToRemove);
-
-            // Set the interaction for the next iteration
-            currentInteraction = interactionResult.Result.Interaction;
         }
 
         foreach (var roleToAdd in rolesToAdd)
@@ -203,7 +216,7 @@ public class RoleSlashModule : ApplicationCommandModule
         // Respond by editing the deferred message with a thank you message
         var responseBuilder = new DiscordWebhookBuilder().WithContent("Enjoy your new roles!");
 
-        await currentInteraction.EditOriginalResponseAsync(responseBuilder);
+        await ctx.Interaction.EditOriginalResponseAsync(responseBuilder);
     }
 
     /// <summary>
