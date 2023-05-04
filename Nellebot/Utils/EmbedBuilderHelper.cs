@@ -1,25 +1,24 @@
-﻿using DSharpPlus.Entities;
-using System;
+﻿using System;
+using DSharpPlus.Entities;
 
-namespace Nellebot.Utils
+namespace Nellebot.Utils;
+
+public static class EmbedBuilderHelper
 {
-    public static class EmbedBuilderHelper
+    public static DiscordEmbed BuildSimpleEmbed(string title, string message)
     {
-        public static DiscordEmbed BuildSimpleEmbed(string title, string message)
-        {
-            return BuildSimpleEmbed(title, message, DiscordConstants.DefaultEmbedColor);
-        }
+        return BuildSimpleEmbed(title, message, DiscordConstants.DefaultEmbedColor);
+    }
 
-        public static DiscordEmbed BuildSimpleEmbed(string title, string message, int color)
-        {
-            var truncatedMessage = message.Substring(0, Math.Min(message.Length, DiscordConstants.MaxEmbedContentLength));
+    public static DiscordEmbed BuildSimpleEmbed(string title, string message, int color)
+    {
+        var truncatedMessage = message.Substring(0, Math.Min(message.Length, DiscordConstants.MaxEmbedContentLength));
 
-            var eb = new DiscordEmbedBuilder()
-                .WithTitle(title)
-                .WithDescription(truncatedMessage)
-                .WithColor(color);
+        var eb = new DiscordEmbedBuilder()
+            .WithTitle(title)
+            .WithDescription(truncatedMessage)
+            .WithColor(color);
 
-            return eb.Build();
-        }
+        return eb.Build();
     }
 }
