@@ -138,39 +138,17 @@ public class RoleSlashModule : ApplicationCommandModule
         var rolesToAdd = new List<ulong>();
         var rolesToRemove = new List<ulong>();
 
+        const string roleDropdownId = "dropdown_role";
+
         foreach (var roleGroup in roleGroups)
         {
-            var isSingleSelect = roleGroup.Key != null && roleGroup.Key.MutuallyExclusive;
-
             // TODO: Temporary(tm) hack. Mandatory should be a flag on the group
             var isMandatory = roleGroup == roleGroups.First();
-
-            var roleDropdownOptions = new List<DiscordSelectComponentOption>();
-
-            foreach (var userRole in roleGroup.ToList())
-            {
-                var userHasRole = user.Roles.Select(r => r.Id).Contains(userRole.RoleId);
-
-                roleDropdownOptions.Add(new DiscordSelectComponentOption(userRole.Name, userRole.RoleId.ToString(), userRole.Name, isDefault: userHasRole));
-            }
-
-            var maxOptions = isSingleSelect ? 1 : Math.Min(roleDropdownOptions.Count, MaxSelectComponentOptions);
-            var minOptions = isSingleSelect ? 1 : 0;
-
-            const string roleDropdownId = "dropdown_role";
-            var roleDropdownPlaceHolder = isSingleSelect ? $"Choose 1 role" : "Choose any roles";
-            var roleDropdown = new DiscordSelectComponent(roleDropdownId, roleDropdownPlaceHolder, roleDropdownOptions, minOptions: minOptions, maxOptions: maxOptions);
 
             const string skipButtonId = "skip_button";
             var skipButton = new DiscordButtonComponent(ButtonStyle.Secondary, skipButtonId, "Skip", disabled: isMandatory);
 
-            var interactionResultResponse = new DiscordWebhookBuilder()
-                .WithContent(roleGroup.Key != null ? $"{roleGroup.Key.Name} roles" : "Ungrouped roles")
-                .AddComponents(roleDropdown)
-                .AddComponents(skipButton);
-
-            // Respond by editing the deferred message
-            var theMessage = await ctx.EditResponseAsync(interactionResultResponse);
+            var theMessage = await PresentRolesDropdown(ctx, roleGroup, user, roleDropdownId, skipButton);
 
             // Wait for a choice, either dropdown selection or skip button
             var messageCancellationTokenSource = new CancellationTokenSource();
@@ -262,7 +240,9 @@ public class RoleSlashModule : ApplicationCommandModule
                 ? roleGroups.Single(g => g.Key?.Id == uint.Parse(chosenButtonId))
                 : roleGroups.Single(g => g.Key == null);
 
-            theMessage = await PresentRolesDropdown(ctx, roleGroupToChange, user, roleDropdownId, backButtonId);
+            var backButton = new DiscordButtonComponent(ButtonStyle.Secondary, backButtonId, "Back");
+
+            theMessage = await PresentRolesDropdown(ctx, roleGroupToChange, user, roleDropdownId, backButton);
 
             // Wait for a choice, either dropdown selection or skip button
             var messageCancellationTokenSource = new CancellationTokenSource();
@@ -329,7 +309,7 @@ public class RoleSlashModule : ApplicationCommandModule
         return await ctx.EditResponseAsync(roleGroupButtonsResponse);
     }
 
-    private async Task<DiscordMessage> PresentRolesDropdown(InteractionContext ctx, IGrouping<UserRoleGroup?, UserRole> roleGroupToChange, DiscordMember user, string roleDropdownId, string backButtonId)
+    private async Task<DiscordMessage> PresentRolesDropdown(InteractionContext ctx, IGrouping<UserRoleGroup?, UserRole> roleGroupToChange, DiscordMember user, string roleDropdownId, DiscordButtonComponent extraButton)
     {
         var roleDropdownOptions = new List<DiscordSelectComponentOption>();
 
@@ -348,12 +328,10 @@ public class RoleSlashModule : ApplicationCommandModule
         var roleDropdownPlaceHolder = isSingleSelect ? "Choose 1 role" : "Choose any roles";
         var roleDropdown = new DiscordSelectComponent(roleDropdownId, roleDropdownPlaceHolder, roleDropdownOptions, minOptions: minOptions, maxOptions: maxOptions);
 
-        var backButton = new DiscordButtonComponent(ButtonStyle.Secondary, backButtonId, "Back");
-
         var buttonInteractionResultResponse = new DiscordWebhookBuilder()
             .WithContent(roleGroupToChange.Key != null ? $"{roleGroupToChange.Key.Name} roles" : "Ungrouped roles")
             .AddComponents(roleDropdown)
-            .AddComponents(backButton);
+            .AddComponents(extraButton);
 
         // Respond by editing the deferred message 
         return await ctx.EditResponseAsync(buttonInteractionResultResponse);
