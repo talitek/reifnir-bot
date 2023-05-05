@@ -2,6 +2,7 @@ using System;
 using System.Threading.Channels;
 using DSharpPlus;
 using MediatR;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,6 +35,10 @@ public class Program
             {
                 services.Configure<BotOptions>(hostContext.Configuration.GetSection(BotOptions.OptionsKey));
 
+                services.AddDataProtection()
+                    .SetApplicationName(nameof(Nellebot))
+                    .SetDefaultKeyLifetime(TimeSpan.FromDays(180));
+
                 services.AddHttpClient<OrdbokHttpClient>();
 
                 services.AddMediatR(cfg =>
@@ -46,7 +51,6 @@ public class Program
                 services.AddSingleton<SharedCache>();
                 services.AddSingleton<ILocalizationService, LocalizationService>();
                 services.AddSingleton<PuppeteerFactory>();
-                services.AddSingleton<ModmailTicketPool>();
 
                 AddWorkers(services);
 
@@ -111,6 +115,7 @@ public class Program
         services.AddTransient<BotSettingsRepository>();
         services.AddTransient<MessageRefRepository>();
         services.AddTransient<UserLogRepository>();
+        services.AddTransient<ModmailTicketRepository>();
     }
 
     private static void AddInternalServices(IServiceCollection services)
@@ -150,12 +155,12 @@ public class Program
 
     private static void AddWorkers(IServiceCollection services)
     {
+        services.AddHostedService<BotWorker>();
         services.AddHostedService<CommandQueueWorker>();
         services.AddHostedService<RequestQueueWorker>();
         services.AddHostedService<EventQueueWorker>();
         services.AddHostedService<DiscordLoggerWorker>();
         services.AddHostedService<MessageAwardQueueWorker>();
         services.AddHostedService<ModmailCleanupWorker>();
-        services.AddHostedService<BotWorker>();
     }
 }

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.CommandHandlers.Modmail;
-using Nellebot.Services;
+using Nellebot.Data.Repositories;
 
 namespace Nellebot.Workers;
 
@@ -16,14 +16,18 @@ public class ModmailCleanupWorker : BackgroundService
 
     private readonly ILogger<RequestQueueWorker> _logger;
     private readonly IMediator _mediator;
-    private readonly ModmailTicketPool _ticketPool;
+    private readonly ModmailTicketRepository _modmailTicketRepo;
     private readonly BotOptions _options;
 
-    public ModmailCleanupWorker(ILogger<RequestQueueWorker> logger, IMediator mediator, ModmailTicketPool ticketPool, IOptions<BotOptions> options)
+    public ModmailCleanupWorker(
+        ILogger<RequestQueueWorker> logger,
+        IMediator mediator,
+        ModmailTicketRepository modmailTicketRepo,
+        IOptions<BotOptions> options)
     {
         _logger = logger;
         _mediator = mediator;
-        _ticketPool = ticketPool;
+        _modmailTicketRepo = modmailTicketRepo;
         _options = options.Value;
     }
 
@@ -35,7 +39,7 @@ public class ModmailCleanupWorker : BackgroundService
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                var expiredTickets = _ticketPool.RemoveInactiveTickets(cleanupInterval);
+                var expiredTickets = await _modmailTicketRepo.GetOpenExpiredTickets(cleanupInterval);
 
                 foreach (var ticket in expiredTickets)
                 {

@@ -1,8 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.IO;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.IO;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Nellebot.Data.Migrations
 {
@@ -10,8 +12,19 @@ namespace Nellebot.Data.Migrations
     {
         public BotDbContext CreateDbContext(string[] args)
         {
+            var services = new ServiceCollection();
+
+            services.AddDataProtection()
+                    .SetApplicationName(nameof(Nellebot))
+                    .SetDefaultKeyLifetime(TimeSpan.FromDays(180));
+
+            var provider = services.BuildServiceProvider();
+
+            var dataProtector = provider.GetDataProtectionProvider();
+
             var config = new ConfigurationBuilder()
-                .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(),
+                .SetBasePath(Path.Combine(
+                            Directory.GetCurrentDirectory(),
                             $"../{typeof(BotDbContextDesignTimeFactory).Namespace}"))
                 .AddJsonFile("appsettings.json", optional: false)
                 .AddUserSecrets(typeof(BotDbContextDesignTimeFactory).Assembly)
@@ -21,11 +34,12 @@ namespace Nellebot.Data.Migrations
 
             var dbConnString = config["Nellebot:ConnectionString"];
 
-            builder.UseNpgsql(dbConnString, options => {
+            builder.UseNpgsql(dbConnString, options =>
+            {
                 options.MigrationsAssembly(typeof(BotDbContextDesignTimeFactory).Assembly.FullName);
             });
 
-            return new BotDbContext(builder.Options);
+            return new BotDbContext(builder.Options, dataProtector);
         }
     }
 }

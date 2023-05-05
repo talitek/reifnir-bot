@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus;
@@ -8,8 +7,8 @@ using DSharpPlus.Interactivity.Extensions;
 using MediatR;
 using Microsoft.Extensions.Options;
 using Nellebot.Common.Models.Modmail;
+using Nellebot.Data.Repositories;
 using Nellebot.Helpers;
-using Nellebot.Services;
 using Nellebot.Utils;
 
 namespace Nellebot.CommandHandlers.Modmail;
@@ -23,13 +22,13 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
 
     private readonly BotOptions _options;
     private readonly DiscordResolver _resolver;
-    private readonly ModmailTicketPool _ticketPool;
+    private readonly ModmailTicketRepository _modmailTicketRepo;
 
-    public RequestModmailTicketHandler(IOptions<BotOptions> options, DiscordResolver resolver, ModmailTicketPool ticketPool)
+    public RequestModmailTicketHandler(IOptions<BotOptions> options, DiscordResolver resolver, ModmailTicketRepository modmailTicketRepo)
     {
         _options = options.Value;
         _resolver = resolver;
-        _ticketPool = ticketPool;
+        _modmailTicketRepo = modmailTicketRepo;
     }
 
     public async Task Handle(RequestModmailTicketCommand request, CancellationToken cancellationToken)
@@ -56,7 +55,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             throw new Exception("Couldn't fetch member");
         }
 
-        var existingTicket = _ticketPool.Get(ctx.User.Id);
+        var existingTicket = await _modmailTicketRepo.GetActiveTicketByRequesterId(ctx.User.Id, cancellationToken);
 
         if (existingTicket != null)
         {
@@ -71,7 +70,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
 
         if (choice == CancelButtonId)
         {
-            await HandleCancellation(member);
+            await HandleCancellation(member, null, cancellationToken);
 
             return;
         }
@@ -89,7 +88,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             requesterDisplayName = PseudonymGenerator.GetRandomPseudonym();
         }
 
-        var stub = CreateStubModmailTicket(ctx, requesterDisplayName, requesterIsAnonymous);
+        var stub = await CreateStubModmailTicket(ctx, requesterDisplayName, requesterIsAnonymous, cancellationToken);
 
         await member.SendMessageAsync($"Understood. Your message will be sent as **{requesterDisplayName}**.");
 
@@ -101,7 +100,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
 
             if (!confirmed)
             {
-                await HandleCancellation(member, stub);
+                await HandleCancellation(member, stub, cancellationToken);
 
                 return;
             }
@@ -114,7 +113,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
 
             if (collectedMessage == null || collectedMessage.Content.Equals(CancelMessageToken, StringComparison.InvariantCultureIgnoreCase))
             {
-                await HandleCancellation(member, stub);
+                await HandleCancellation(member, stub, cancellationToken);
 
                 return;
             }
@@ -122,7 +121,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             messageToRelay = collectedMessage;
         }
 
-        await PostStubModmailTicket(stub, messageToRelay);
+        await PostStubModmailTicket(stub, messageToRelay, cancellationToken);
 
         await messageToRelay.CreateSuccessReactionAsync();
 
@@ -218,14 +217,14 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         return interactionResult.Result.Id;
     }
 
-    private async Task HandleCancellation(DiscordMember member, ModmailTicket? stub = null)
+    private async Task HandleCancellation(DiscordMember member, ModmailTicket? stub = null, CancellationToken cancellationToken = default)
     {
-        if (stub != null) CancelStubModmailTicket(stub);
+        if (stub != null) await CancelStubModmailTicket(stub, cancellationToken);
 
         await member.SendMessageAsync("Understood. You can always request a ticket again later.");
     }
 
-    private ModmailTicket CreateStubModmailTicket(BaseContext ctx, string requesterDisplayName, bool requesterIsAnonymous)
+    private Task<ModmailTicket> CreateStubModmailTicket(BaseContext ctx, string requesterDisplayName, bool requesterIsAnonymous, CancellationToken cancellationToken)
     {
         var modmailTicket = new ModmailTicket
         {
@@ -234,18 +233,15 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             RequesterDisplayName = requesterDisplayName,
         };
 
-        if (!_ticketPool.TryAdd(modmailTicket))
-            throw new Exception("Failed to add stub ticket to pool as it already exists.");
-
-        return modmailTicket;
+        return _modmailTicketRepo.CreateTicket(modmailTicket, cancellationToken);
     }
 
-    private void CancelStubModmailTicket(ModmailTicket ticket)
+    private Task CancelStubModmailTicket(ModmailTicket ticket, CancellationToken cancellationToken)
     {
-        _ = _ticketPool.TryRemove(ticket);
+        return _modmailTicketRepo.DeleteTicket(ticket, cancellationToken);
     }
 
-    private async Task PostStubModmailTicket(ModmailTicket ticket, DiscordMessage requestMesage)
+    private async Task PostStubModmailTicket(ModmailTicket ticket, DiscordMessage requestMesage, CancellationToken cancellationToken)
     {
         var modmailChannelId = _options.ModmailChannelId;
 
@@ -268,9 +264,10 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             .WithMessage(modmailPostMessage);
 
         // Refresh the ticket in case it was updated while waiting for the user to type their message.
-        var refreshedTicket = _ticketPool.Get(ticket.RequesterId);
+        var refreshedTicket = (await _modmailTicketRepo.GetActiveTicketByRequesterId(ticket.RequesterId, cancellationToken))
+            ?? throw new Exception($"Ticket's gone");
 
-        if (refreshedTicket!.TicketPost != null)
+        if (refreshedTicket.TicketPost != null)
             throw new Exception("Ticket already posted");
 
         var forumPost = await modmailChannel.CreateForumPostAsync(fpBuilder);
@@ -280,6 +277,6 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             TicketPost = new ModmailTicketPost(forumPost.Channel.Id, forumPost.Message.Id),
         };
 
-        _ = _ticketPool.TryUpdate(postedTicket);
+        _ = await _modmailTicketRepo.UpdateTicketPost(postedTicket, cancellationToken);
     }
 }

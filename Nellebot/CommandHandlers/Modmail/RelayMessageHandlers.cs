@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Linq;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.Extensions.Options;
+using Nellebot.Data.Repositories;
 using Nellebot.Services;
 using Nellebot.Utils;
 
@@ -14,13 +16,13 @@ public class RelayMessageHandlers : IRequestHandler<RelayRequesterMessageCommand
 {
     private readonly BotOptions _options;
     private readonly DiscordResolver _resolver;
-    private readonly ModmailTicketPool _ticketPool;
+    private readonly ModmailTicketRepository _modmailTicketRepo;
 
-    public RelayMessageHandlers(IOptions<BotOptions> options, DiscordResolver resolver, ModmailTicketPool ticketPool)
+    public RelayMessageHandlers(IOptions<BotOptions> options, DiscordResolver resolver, ModmailTicketRepository modmailTicketRepo)
     {
         _options = options.Value;
         _resolver = resolver;
-        _ticketPool = ticketPool;
+        _modmailTicketRepo = modmailTicketRepo;
     }
 
     /// <summary>
@@ -49,9 +51,7 @@ public class RelayMessageHandlers : IRequestHandler<RelayRequesterMessageCommand
 
         await messageToRelay.CreateSuccessReactionAsync();
 
-        var updatedTicket = ticket.RefreshLastActivity();
-
-        _ = _ticketPool.TryUpdate(updatedTicket);
+        _ = await _modmailTicketRepo.RefreshTicketLastActivity(ticket, cancellationToken);
     }
 
     /// <summary>
@@ -85,8 +85,6 @@ public class RelayMessageHandlers : IRequestHandler<RelayRequesterMessageCommand
 
         await messageToRelay.CreateSuccessReactionAsync();
 
-        var updatedTicket = request.Ticket.RefreshLastActivity();
-
-        _ = _ticketPool.TryUpdate(updatedTicket);
+        _ = await _modmailTicketRepo.RefreshTicketLastActivity(request.Ticket, cancellationToken);
     }
 }
