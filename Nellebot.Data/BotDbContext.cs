@@ -78,15 +78,15 @@ public class BotDbContext : DbContext
                 convertToProviderExpression: x => x.FullName ?? typeof(object).FullName!,
                 convertFromProviderExpression: x => Type.GetType(x) ?? typeof(object));
 
-        builder.Entity<ModmailTicketEntity>()
+        builder.Entity<ModmailTicket>()
             .OwnsOne(x => x.TicketPost, x =>
             {
                 x.Property(x => x.ChannelThreadId).HasColumnName("ChannelThreadId");
                 x.Property(x => x.MessageId).HasColumnName("MessageId");
             });
 
-        builder.Entity<ModmailTicketEntity>()
-            .Property(x => x.RequesterIdEncrypted)
+        builder.Entity<ModmailTicket>()
+            .Property(x => x.RequesterId)
             .HasConversion(new ProtectedConverter(_dataProtectionProvider, "RequesterId"));
     }
 
@@ -105,5 +105,5 @@ public class BotDbContext : DbContext
 
     public DbSet<UserLog> UserLogs { get; set; }
 
-    public DbSet<ModmailTicketEntity> ModmailTickets { get; set; }
+    public DbSet<ModmailTicket> ModmailTickets { get; set; }
 }

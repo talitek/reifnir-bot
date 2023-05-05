@@ -1,19 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using MediatR;
-using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
 using Nellebot.CommandHandlers;
 using Nellebot.CommandHandlers.Modmail;
 using Nellebot.Common.Extensions;
-using Nellebot.Services;
+using Nellebot.Data.Repositories;
 using Nellebot.Workers;
 
 namespace Nellebot.CommandModules;
@@ -25,19 +21,19 @@ namespace Nellebot.CommandModules;
 public class AdminModule : BaseCommandModule
 {
     private readonly CommandQueueChannel _commandQueue;
-    private readonly RequestQueueChannel _commandParallelQueue;
-    private readonly ModmailTicketPool _ticketPool;
+    private readonly RequestQueueChannel _requestQueue;
+    private readonly ModmailTicketRepository _modmailTicketRepo;
     private readonly IMediator _mediator;
 
     public AdminModule(
         CommandQueueChannel commandQueue,
-        RequestQueueChannel commandParallelQueue,
-        ModmailTicketPool ticketPool,
+        RequestQueueChannel requestQueue,
+        ModmailTicketRepository modmailTicketRepo,
         IMediator mediator)
     {
         _commandQueue = commandQueue;
-        _commandParallelQueue = commandParallelQueue;
-        _ticketPool = ticketPool;
+        _requestQueue = requestQueue;
+        _modmailTicketRepo = modmailTicketRepo;
         _mediator = mediator;
     }
 
@@ -67,7 +63,7 @@ public class AdminModule : BaseCommandModule
     [Command("populate-messages")]
     public Task PopulateMessages(CommandContext ctx)
     {
-        return _commandParallelQueue.Writer.WriteAsync(new PopulateMessagesCommand(ctx)).AsTask();
+        return _requestQueue.Writer.WriteAsync(new PopulateMessagesCommand(ctx)).AsTask();
     }
 
     [Command("delete-spam-after")]
@@ -82,18 +78,10 @@ public class AdminModule : BaseCommandModule
         await ctx.RespondAsync($"Deleted {messagesToDelete.Count} messages");
     }
 
-    [Command("modmail-purge")]
-    public Task PurgeModmail(CommandContext ctx)
-    {
-        var purged = _ticketPool.Clear();
-
-        return ctx.Channel.SendMessageAsync($"Purged {purged} tickets");
-    }
-
     [Command("modmail-close-all")]
     public async Task CloseAll(CommandContext ctx)
     {
-        var expiredTickets = _ticketPool.RemoveInactiveTickets(TimeSpan.FromSeconds(1)).ToList();
+        var expiredTickets = await _modmailTicketRepo.GetOpenExpiredTickets(TimeSpan.FromSeconds(1));
 
         foreach (var ticket in expiredTickets)
         {

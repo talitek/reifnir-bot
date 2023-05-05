@@ -6,7 +6,7 @@ using MediatR;
 using Microsoft.Extensions.Options;
 using Nellebot.CommandHandlers;
 using Nellebot.CommandHandlers.Modmail;
-using Nellebot.Services;
+using Nellebot.Data.Repositories;
 using Nellebot.Utils;
 using Nellebot.Workers;
 using BaseContext = Nellebot.CommandHandlers.BaseContext;
@@ -18,13 +18,13 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
     private const string CancelMessageToken = "cancel";
 
     private readonly CommandQueueChannel _commandQueue;
-    private readonly ModmailTicketPool _ticketPool;
+    private readonly ModmailTicketRepository _modmailTicketRepo;
     private readonly BotOptions _botOptions;
 
-    public ModmailRelayHandler(CommandQueueChannel commandQueue, ModmailTicketPool ticketPool, IOptions<BotOptions> botOptions)
+    public ModmailRelayHandler(CommandQueueChannel commandQueue, ModmailTicketRepository modmailTicketRepo, IOptions<BotOptions> botOptions)
     {
         _commandQueue = commandQueue;
-        _ticketPool = ticketPool;
+        _modmailTicketRepo = modmailTicketRepo;
         _botOptions = botOptions.Value;
     }
 
@@ -52,14 +52,14 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
         return Task.CompletedTask;
     }
 
-    private Task HandlePrivateMessage(DiscordChannel channel, DiscordUser user, DiscordMessage message, CancellationToken cancellationToken)
+    private async Task HandlePrivateMessage(DiscordChannel channel, DiscordUser user, DiscordMessage message, CancellationToken cancellationToken)
     {
         // The message could be an interactivity response containing the token "cancel".
         // If so, disregard the message. Not the most elegant solution, but it should do.
         if (message.Content.Equals(CancelMessageToken, StringComparison.InvariantCultureIgnoreCase))
-            return Task.CompletedTask;
+            return;
 
-        var userTicketInPool = _ticketPool.Get(user.Id);
+        var userTicketInPool = await _modmailTicketRepo.GetActiveTicketByRequesterId(user.Id, cancellationToken);
 
         if (userTicketInPool == null)
         {
@@ -71,11 +71,13 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
 
             var requestTicketCommand = new RequestModmailTicketCommand(baseContext, message);
 
-            return _commandQueue.Writer.WriteAsync(requestTicketCommand, cancellationToken).AsTask();
+            await _commandQueue.Writer.WriteAsync(requestTicketCommand, cancellationToken);
+
+            return;
         }
 
         // User is still in the process of requesting a ticket
-        if (userTicketInPool.IsStub) return Task.CompletedTask;
+        if (userTicketInPool.IsStub) return;
 
         var requesterMessageContext = new MessageContext
         {
@@ -86,16 +88,18 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
 
         var relayRequesterMessageCommand = new RelayRequesterMessageCommand(requesterMessageContext, userTicketInPool);
 
-        return _commandQueue.Writer.WriteAsync(relayRequesterMessageCommand, cancellationToken).AsTask();
+        await _commandQueue.Writer.WriteAsync(relayRequesterMessageCommand, cancellationToken);
     }
 
-    private Task HandleThreadMessage(DiscordChannel channel, DiscordUser user, DiscordMessage message, CancellationToken cancellationToken)
+    private async Task HandleThreadMessage(DiscordChannel channel, DiscordUser user, DiscordMessage message, CancellationToken cancellationToken)
     {
-        var channelTicketInPool = _ticketPool.GetTicketByChannelId(channel.Id);
+        var channelTicketInPool = await _modmailTicketRepo.GetTicketByChannelId(channel.Id, cancellationToken);
 
         if (channelTicketInPool == null)
         {
-            return message.CreateFailureReactionAsync();
+            await message.CreateFailureReactionAsync();
+
+            return;
         }
 
         var moderatorMessageContext = new MessageContext
@@ -107,6 +111,6 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
 
         var relayModeratorMessageCommand = new RelayModeratorMessageCommand(moderatorMessageContext, channelTicketInPool);
 
-        return _commandQueue.Writer.WriteAsync(relayModeratorMessageCommand, cancellationToken).AsTask();
+        await _commandQueue.Writer.WriteAsync(relayModeratorMessageCommand, cancellationToken);
     }
 }

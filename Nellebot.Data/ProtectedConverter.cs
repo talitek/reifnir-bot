@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Nellebot.Data;
 
-public class ProtectedConverter : ValueConverter<string?, string?>
+public class ProtectedConverter : ValueConverter<ulong, string>
 {
     public ProtectedConverter(IDataProtectionProvider provider, string purpose)
     : this(new Wrapper(provider, purpose))
@@ -24,8 +24,8 @@ public class ProtectedConverter : ValueConverter<string?, string?>
             _dataProtector = dataProtectionProvider.CreateProtector(purpose);
         }
 
-        public Expression<Func<string?, string?>> To => x => x != null ? _dataProtector.Protect(x) : null;
+        public Expression<Func<ulong, string>> To => x => _dataProtector.Protect(x.ToString());
 
-        public Expression<Func<string?, string?>> From => x => x != null ? _dataProtector.Unprotect(x) : null;
+        public Expression<Func<string, ulong>> From => x => ulong.Parse(_dataProtector.Unprotect(x));
     }
 }
