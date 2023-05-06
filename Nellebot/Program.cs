@@ -52,6 +52,8 @@ public class Program
                 services.AddSingleton<ILocalizationService, LocalizationService>();
                 services.AddSingleton<PuppeteerFactory>();
 
+                services.AddSingleton<GoodbyeMessageBuffer>();
+
                 AddWorkers(services);
 
                 AddChannels(services);

@@ -14,11 +14,13 @@ public class GreetingHandler :
 {
     private readonly DiscordLogger _discordLogger;
     private readonly BotSettingsService _botSettingsService;
+    private readonly GoodbyeMessageBuffer _goodbyeMessageBuffer;
 
-    public GreetingHandler(DiscordLogger discordLogger, BotSettingsService botSettingsService)
+    public GreetingHandler(DiscordLogger discordLogger, BotSettingsService botSettingsService, GoodbyeMessageBuffer goodbyeMessageBuffer)
     {
         _discordLogger = discordLogger;
         _botSettingsService = botSettingsService;
+        _goodbyeMessageBuffer = goodbyeMessageBuffer;
     }
 
     public async Task Handle(GuildMemberAddedNotification notification, CancellationToken cancellationToken)
@@ -39,7 +41,7 @@ public class GreetingHandler :
     {
         string memberName = notification.EventArgs.Member.GetNicknameOrDisplayName();
 
-        _discordLogger.LogGreetingMessage($"**{memberName}** has left the server. Goodbye!");
+        _goodbyeMessageBuffer.AddUser(memberName);
 
         return Task.CompletedTask;
     }
