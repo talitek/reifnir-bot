@@ -1,8 +1,9 @@
-﻿using DSharpPlus.CommandsNext;
+﻿using System.Threading.Tasks;
+using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
 using Nellebot.Attributes;
-using System;
-using System.Threading.Tasks;
+using Nellebot.Utils;
 
 namespace Nellebot.CommandModules
 {
@@ -31,6 +32,15 @@ namespace Nellebot.CommandModules
         public Task Meowdy(CommandContext ctx)
         {
             return ctx.RespondAsync(".\n                <:meowcowboy:993855998601220166> are u gonna say meowdy\n　＿ノ ヽ ノ＼＿ back or are we\n/      / ⌒ Ｙ ⌒ Ｙ     ヽ gonna have a\n( 　(三ヽ人　 /　　 | heckin problem\n|　ﾉ⌒＼ ￣￣ヽ　 ノ here purrdner?\nヽ＿＿＿＞､＿＿_／\n　　 ｜( 王 ﾉ〈\n　　 /ﾐ`ー―彡\n      /      ╰  ╯");
+        }
+
+        [Command("slap")]
+        public Task Slap(CommandContext ctx, DiscordMember member)
+        {
+            var slapper = ctx.Member?.GetNicknameOrDisplayName() ?? ctx.User.Username;
+            var slapee = member.GetNicknameOrDisplayName();
+
+            return ctx.RespondAsync($"{slapper} slaps {slapee} around a bit with a large trout");
         }
     }
 }
