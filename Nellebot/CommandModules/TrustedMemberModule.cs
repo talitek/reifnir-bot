@@ -19,10 +19,10 @@ namespace Nellebot.CommandModules;
 [ModuleLifespan(ModuleLifespan.Transient)]
 public class TrustedMemberModule : BaseCommandModule
 {
-    private readonly CommandQueueChannel _commandQueue;
+    private readonly CommandParallelQueueChannel _commandQueue;
     private readonly BotOptions _options;
 
-    public TrustedMemberModule(CommandQueueChannel commandQueue, IOptions<BotOptions> options)
+    public TrustedMemberModule(CommandParallelQueueChannel commandQueue, IOptions<BotOptions> options)
     {
         _commandQueue = commandQueue;
         _options = options.Value;

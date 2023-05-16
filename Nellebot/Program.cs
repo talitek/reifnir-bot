@@ -118,6 +118,7 @@ public class Program
         services.AddTransient<MessageRefRepository>();
         services.AddTransient<UserLogRepository>();
         services.AddTransient<ModmailTicketRepository>();
+        services.AddTransient<OrdbokRepository>();
     }
 
     private static void AddInternalServices(IServiceCollection services)
@@ -150,6 +151,7 @@ public class Program
 
         services.AddSingleton((_) => new RequestQueueChannel(Channel.CreateBounded<IRequest>(channelSize)));
         services.AddSingleton((_) => new CommandQueueChannel(Channel.CreateBounded<ICommand>(channelSize)));
+        services.AddSingleton((_) => new CommandParallelQueueChannel(Channel.CreateBounded<ICommand>(channelSize)));
         services.AddSingleton((_) => new EventQueueChannel(Channel.CreateBounded<INotification>(channelSize)));
         services.AddSingleton((_) => new DiscordLogChannel(Channel.CreateBounded<BaseDiscordLogItem>(channelSize)));
         services.AddSingleton((_) => new MessageAwardQueueChannel(Channel.CreateBounded<MessageAwardItem>(channelSize)));
@@ -158,8 +160,9 @@ public class Program
     private static void AddWorkers(IServiceCollection services)
     {
         services.AddHostedService<BotWorker>();
-        services.AddHostedService<CommandQueueWorker>();
         services.AddHostedService<RequestQueueWorker>();
+        services.AddHostedService<CommandQueueWorker>();
+        services.AddHostedService<CommandParallelQueueWorker>();
         services.AddHostedService<EventQueueWorker>();
         services.AddHostedService<DiscordLoggerWorker>();
         services.AddHostedService<MessageAwardQueueWorker>();

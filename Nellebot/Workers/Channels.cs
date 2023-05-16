@@ -46,6 +46,14 @@ public class CommandQueueChannel : AbstractQueueChannel<ICommand>
     }
 }
 
+public class CommandParallelQueueChannel : AbstractQueueChannel<ICommand>
+{
+    public CommandParallelQueueChannel(Channel<ICommand> channel)
+        : base(channel)
+    {
+    }
+}
+
 public class EventQueueChannel : AbstractQueueChannel<INotification>
 {
     public EventQueueChannel(Channel<INotification> channel)

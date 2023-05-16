@@ -65,9 +65,7 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
 
         var searchResponse = await _ordbokClient.Search(request.Dictionary, query);
 
-        var articleIds = dictionary == OrdbokDictionaryMap.Bokmal
-                            ? searchResponse?.Articles?.BokmalArticleIds
-                            : searchResponse?.Articles?.NynorskArticleIds;
+        var articleIds = searchResponse?.Articles[dictionary];
 
         if (articleIds == null || articleIds.Count == 0)
         {
