@@ -15,6 +15,21 @@ public class BotDbContext : DbContext
     private const string JsonbColumnType = "jsonb";
     private readonly IDataProtectionProvider _dataProtectionProvider;
 
+#if DEBUG
+    public BotDbContext(DbContextOptions options)
+    : base(options)
+    {
+        var insideLINQPad = AppDomain.CurrentDomain.FriendlyName.StartsWith("LINQPad");
+
+        if (!insideLINQPad)
+        {
+            throw new Exception("This constructor should only be used in LINQPad");
+        }
+
+        _dataProtectionProvider = new MockProtector();
+    }
+#endif
+
     public BotDbContext(DbContextOptions options, IDataProtectionProvider dataProtectionProvider)
         : base(options)
     {

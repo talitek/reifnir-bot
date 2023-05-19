@@ -7,93 +7,91 @@ using System.Threading;
 using System.Threading.Tasks;
 using Nellebot.Common.Models.Ordbok.Api;
 
-namespace Nellebot.Services.Ordbok
+namespace Nellebot.Services.Ordbok;
+
+public class OrdbokHttpClient
 {
-    public class OrdbokHttpClient
+    private const int MaxArticles = 5;
+
+    private readonly HttpClient _client;
+
+    public OrdbokHttpClient(HttpClient client)
     {
-        private const int MaxArticles = 5;
+        _client = client;
 
-        // TODO use HttpClientFactory
-        private readonly HttpClient _client;
+        _client.BaseAddress = new Uri("https://ord.uib.no/");
+        _client.DefaultRequestHeaders.Add("Accept", "application/json");
+    }
 
-        public OrdbokHttpClient(HttpClient client)
-        {
-            _client = client;
+    public async Task<OrdbokSearchResponse?> Search(string dictionary, string query, CancellationToken cancellationToken = default)
+    {
+        var requestUri = $"api/articles?w={query}&dict={dictionary}&scope=ei";
 
-            _client.BaseAddress = new Uri("https://ord.uib.no/");
-            _client.DefaultRequestHeaders.Add("Accept", "application/json");
-        }
+        var response = await _client.GetAsync(requestUri, cancellationToken);
 
-        public async Task<OrdbokSearchResponse?> Search(string dictionary, string query, CancellationToken cancellationToken = default)
-        {
-            var requestUri = $"api/articles?w={query}&dict={dictionary}&scope=ei";
+        response.EnsureSuccessStatusCode();
 
-            var response = await _client.GetAsync(requestUri, cancellationToken);
+        var jsonStream = await response.Content.ReadAsStreamAsync(cancellationToken);
 
-            response.EnsureSuccessStatusCode();
+        var searchResponse = await JsonSerializer.DeserializeAsync<OrdbokSearchResponse>(jsonStream, options: null, cancellationToken);
 
-            var jsonStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        return searchResponse;
+    }
 
-            var searchResponse = await JsonSerializer.DeserializeAsync<OrdbokSearchResponse>(jsonStream, options: null, cancellationToken);
+    public async Task<OrdbokSearchResponse?> GetAll(string dictionary, string wordClass, CancellationToken cancellationToken = default)
+    {
+        var requestUri = $"api/articles?w=*&wc={wordClass}&dict={dictionary}&scope=f";
 
-            return searchResponse;
-        }
+        var response = await _client.GetAsync(requestUri, cancellationToken);
 
-        public async Task<OrdbokSearchResponse?> GetAll(string dictionary, string wordClass, CancellationToken cancellationToken = default)
-        {
-            var requestUri = $"api/articles?w=*&wc={wordClass}&dict={dictionary}&scope=f";
+        response.EnsureSuccessStatusCode();
 
-            var response = await _client.GetAsync(requestUri, cancellationToken);
+        var jsonStream = await response.Content.ReadAsStreamAsync(cancellationToken);
 
-            response.EnsureSuccessStatusCode();
+        var searchResponse = await JsonSerializer.DeserializeAsync<OrdbokSearchResponse>(jsonStream, options: null, cancellationToken);
 
-            var jsonStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        return searchResponse;
+    }
 
-            var searchResponse = await JsonSerializer.DeserializeAsync<OrdbokSearchResponse>(jsonStream, options: null, cancellationToken);
+    public async Task<Article?> GetArticle(string dictionary, int articleId, CancellationToken cancellationToken = default)
+    {
+        var requestUri = $"{dictionary}/article/{articleId}.json";
 
-            return searchResponse;
-        }
+        var response = await _client.GetAsync(requestUri, cancellationToken);
 
-        public async Task<Article?> GetArticle(string dictionary, int articleId, CancellationToken cancellationToken = default)
-        {
-            var requestUri = $"{dictionary}/article/{articleId}.json";
+        response.EnsureSuccessStatusCode();
 
-            var response = await _client.GetAsync(requestUri, cancellationToken);
+        var jsonStream = await response.Content.ReadAsStreamAsync(cancellationToken);
 
-            response.EnsureSuccessStatusCode();
+        var article = await JsonSerializer.DeserializeAsync<Article>(jsonStream, options: null, cancellationToken);
 
-            var jsonStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        return article;
+    }
 
-            var article = await JsonSerializer.DeserializeAsync<Article>(jsonStream, options: null, cancellationToken);
+    public async Task<List<Article?>> GetArticles(string dictionary, List<int> articleIds, CancellationToken cancellationToken = default)
+    {
+        var tasks = articleIds.Take(MaxArticles).Select(id => GetArticle(dictionary, id));
 
-            return article;
-        }
+        var result = await Task.WhenAll(tasks);
 
-        public async Task<List<Article?>> GetArticles(string dictionary, List<int> articleIds, CancellationToken cancellationToken = default)
-        {
-            var tasks = articleIds.Take(MaxArticles).Select(id => GetArticle(dictionary, id));
+        if (result == null)
+            return Enumerable.Empty<Article?>().ToList();
 
-            var result = await Task.WhenAll(tasks);
+        return result.ToList();
+    }
 
-            if (result == null)
-                return Enumerable.Empty<Article?>().ToList();
+    public async Task<OrdbokConcepts?> GetConcepts(string dictionary, CancellationToken cancellationToken = default)
+    {
+        var requestUri = $"{dictionary}/concepts.json";
 
-            return result.ToList();
-        }
+        var response = await _client.GetAsync(requestUri, cancellationToken);
 
-        public async Task<OrdbokConcepts?> GetConcepts(string dictionary, CancellationToken cancellationToken = default)
-        {
-            var requestUri = $"{dictionary}/concepts.json";
+        response.EnsureSuccessStatusCode();
 
-            var response = await _client.GetAsync(requestUri, cancellationToken);
+        var jsonStream = await response.Content.ReadAsStreamAsync(cancellationToken);
 
-            response.EnsureSuccessStatusCode();
+        var article = await JsonSerializer.DeserializeAsync<OrdbokConcepts>(jsonStream, options: null, cancellationToken);
 
-            var jsonStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-
-            var article = await JsonSerializer.DeserializeAsync<OrdbokConcepts>(jsonStream, options: null, cancellationToken);
-
-            return article;
-        }
+        return article;
     }
 }

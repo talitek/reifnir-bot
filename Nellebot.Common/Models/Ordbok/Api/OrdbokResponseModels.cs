@@ -9,7 +9,7 @@ public record OrdbokSearchResponse
     public Dictionary<string, ArticleMeta> Meta { get; set; } = new Dictionary<string, ArticleMeta>();
 
     [JsonPropertyName("articles")]
-    public Dictionary<string, List<int>> Articles { get; set; } = new Dictionary<string, List<int>>();
+    public Dictionary<string, int[]> Articles { get; set; } = new Dictionary<string, int[]>();
 }
 
 public record ArticleMeta

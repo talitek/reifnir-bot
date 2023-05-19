@@ -1,5 +1,7 @@
-﻿using System.Threading;
+﻿using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Nellebot.Common.Models.Ordbok.Store;
 
 namespace Nellebot.Data.Repositories;
@@ -13,9 +15,9 @@ public class OrdbokRepository
         _dbContext = dbContext;
     }
 
-    public Task<OrdbokArticleStore?> GetArticleStore(string dictionary, string wordClass, CancellationToken cancellationToken = default)
+    public async Task<OrdbokArticleStore?> GetArticleStore(string dictionary, string wordClass, CancellationToken cancellationToken = default)
     {
-        return _dbContext.OrdbokArticlesStore.FindAsync(new[] { dictionary, wordClass }, cancellationToken).AsTask();
+        return await _dbContext.OrdbokArticlesStore.FindAsync(new[] { dictionary, wordClass }, cancellationToken);
     }
 
     public async Task SaveArticleStore(OrdbokArticleStore ordbokArticleStore, CancellationToken cancellationToken = default)
@@ -37,9 +39,29 @@ public class OrdbokRepository
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public Task<OrdbokConceptStore?> GetConceptStore(string dictionary, CancellationToken cancellationToken = default)
+    public async Task<int> GetArticleCount(string dictionary, string wordClass, CancellationToken cancellationToken = default)
     {
-        return _dbContext.OrdbokConceptStore.FindAsync(new[] { dictionary }, cancellationToken).AsTask();
+        var count = await _dbContext.OrdbokArticlesStore
+                        .Where(x => x.Dictionary == dictionary && x.WordClass == wordClass)
+                        .Select(x => x.ArticleCount)
+                        .SingleOrDefaultAsync(cancellationToken);
+
+        return count;
+    }
+
+    public async Task<int> GetArticleIdAtIndex(string dictionary, string wordClass, int index, CancellationToken cancellationToken = default)
+    {
+        var articleId = await _dbContext.OrdbokArticlesStore
+                            .Where(x => x.Dictionary == dictionary && x.WordClass == wordClass)
+                            .Select(x => x.ArticleList[index])
+                            .SingleOrDefaultAsync(cancellationToken);
+
+        return articleId;
+    }
+
+    public async Task<OrdbokConceptStore?> GetConceptStore(string dictionary, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.OrdbokConceptStore.FindAsync(new[] { dictionary }, cancellationToken);
     }
 
     public async Task SaveConceptStore(OrdbokConceptStore ordbokConcepts, CancellationToken cancellationToken = default)

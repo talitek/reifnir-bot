@@ -63,17 +63,17 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
         var dictionary = request.Dictionary;
         var attachTemplate = request.AttachTemplate;
 
-        var searchResponse = await _ordbokClient.Search(request.Dictionary, query);
+        var searchResponse = await _ordbokClient.Search(request.Dictionary, query, cancellationToken);
 
         var articleIds = searchResponse?.Articles[dictionary];
 
-        if (articleIds == null || articleIds.Count == 0)
+        if (articleIds == null || articleIds.Length == 0)
         {
             await ctx.RespondAsync("No match");
             return;
         }
 
-        var ordbokArticles = await _ordbokClient.GetArticles(dictionary, articleIds);
+        var ordbokArticles = await _ordbokClient.GetArticles(dictionary, articleIds.ToList(), cancellationToken);
 
         var articles = MapAndSelectArticles(ordbokArticles);
 

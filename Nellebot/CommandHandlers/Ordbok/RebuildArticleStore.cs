@@ -57,7 +57,7 @@ public class RebuildArticleStoreHandler : IRequestHandler<RebuildArticleStoreCom
                         Dictionary = dictionary,
                         WordClass = wordClass,
                         ArticleCount = articles.Meta[dictionary]?.Total ?? 0,
-                        ArticleList = articles.Articles[dictionary] ?? new List<int>(),
+                        ArticleList = articles.Articles[dictionary] ?? Array.Empty<int>(),
                     };
 
                     await _ordbokRepo.SaveArticleStore(articleStore, cancellationToken);

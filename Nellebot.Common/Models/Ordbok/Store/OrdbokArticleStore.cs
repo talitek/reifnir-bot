@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Nellebot.Common.Models.Ordbok.Store;
 
@@ -10,5 +11,5 @@ public record OrdbokArticleStore
 
     public int ArticleCount { get; set; }
 
-    public IEnumerable<int> ArticleList { get; set; } = new List<int>();
+    public int[] ArticleList { get; set; } = Array.Empty<int>();
 }
