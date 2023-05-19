@@ -166,7 +166,6 @@ namespace Nellebot.Services.Ordbok
             return finalContentString;
         }
 
-
         public string GetExampleContent(api.Example example, string dictionary)
         {
             var contentString = example.Quote.Content;

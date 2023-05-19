@@ -1,6 +1,5 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using Nellebot.Common.Models.Ordbok.Api;
 using Nellebot.Common.Models.Ordbok.Store;
 
 namespace Nellebot.Data.Repositories;
@@ -12,6 +11,11 @@ public class OrdbokRepository
     public OrdbokRepository(BotDbContext dbContext)
     {
         _dbContext = dbContext;
+    }
+
+    public Task<OrdbokArticleStore?> GetArticleStore(string dictionary, string wordClass, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.OrdbokArticlesStore.FindAsync(new[] { dictionary, wordClass }, cancellationToken).AsTask();
     }
 
     public async Task SaveArticleStore(OrdbokArticleStore ordbokArticleStore, CancellationToken cancellationToken = default)
@@ -31,6 +35,11 @@ public class OrdbokRepository
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public Task<OrdbokConceptStore?> GetConceptStore(string dictionary, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.OrdbokConceptStore.FindAsync(new[] { dictionary }, cancellationToken).AsTask();
     }
 
     public async Task SaveConceptStore(OrdbokConceptStore ordbokConcepts, CancellationToken cancellationToken = default)
