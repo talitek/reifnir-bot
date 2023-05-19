@@ -13,6 +13,7 @@ public class DiscordConstants
     public const string UnauthorizedErrorMessage = "Unauthorized: 403";
 
     public const char NewLineChar = '\n';
+    public const string SlashCommandPrefix = "/";
 
     public static readonly DateTimeOffset DiscordEpoch = new(2015, 1, 1, 0, 0, 0, TimeSpan.Zero);
     public static readonly long DiscordEpochMs = DiscordEpoch.ToUnixTimeMilliseconds();
