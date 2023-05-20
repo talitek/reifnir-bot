@@ -14,14 +14,14 @@ using Nellebot.Services.Loggers;
 
 namespace Nellebot.CommandModules;
 
-public class RoleSlashModule : ApplicationCommandModule
+public class RoleModule : ApplicationCommandModule
 {
     private const int MaxSelectComponentOptions = 25;
     private readonly RoleService _roleService;
     private readonly IDiscordErrorLogger _discordErrorLogger;
     private readonly BotOptions _options;
 
-    public RoleSlashModule(RoleService roleService, IOptions<BotOptions> options, IDiscordErrorLogger discordErrorLogger)
+    public RoleModule(RoleService roleService, IOptions<BotOptions> options, IDiscordErrorLogger discordErrorLogger)
     {
         _roleService = roleService;
         _discordErrorLogger = discordErrorLogger;
