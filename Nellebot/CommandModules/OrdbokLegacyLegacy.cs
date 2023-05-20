@@ -10,11 +10,11 @@ namespace Nellebot.CommandModules;
 
 [BaseCommandCheck]
 [ModuleLifespan(ModuleLifespan.Transient)]
-public class OrdbokModule : BaseCommandModule
+public class OrdbokLegacyLegacy : BaseCommandModule
 {
     private readonly RequestQueueChannel _requestQueue;
 
-    public OrdbokModule(RequestQueueChannel commandQueue)
+    public OrdbokLegacyLegacy(RequestQueueChannel commandQueue)
     {
         _requestQueue = commandQueue;
     }

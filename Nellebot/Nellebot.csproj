@@ -32,6 +32,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Resources\ScribanTemplates\OrdbokArticleV2.sbntxt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\ScribanTemplates\OrdbokArticle.sbnhtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

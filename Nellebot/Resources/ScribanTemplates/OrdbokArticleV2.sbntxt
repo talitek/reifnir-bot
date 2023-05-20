@@ -1,0 +1,16 @@
+﻿{{for article in articles-}}
+{{for lemma in article.lemmas-}}
+**{{lemma.value}}**
+{{-for paradigm in lemma.unique_paradigm_values}} {{paradigm}}
+{{-if !for.last; ","; end}}
+{{-end}}
+{{-if !for.last; ", "; end}}
+{{-end}}
+{{for definition in article.definitions | array.limit max_definitions -}}
+{{if definition.explanations.size > 0 -}}
+{{if article.definitions.size > 1}}**{{for.index + 1}}** {{end}}{{for explanation in definition.explanations_simple-}}{{explanation}}{{if !for.last; "; "; end}}{{end}}
+{{end-}}
+{{end~}}
+{{~if article.definitions.size > max_definitions; "[...]"; end~}}
+
+{{end}}
