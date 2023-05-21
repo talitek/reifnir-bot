@@ -3,13 +3,10 @@ using System.Text.Json.Serialization;
 
 namespace Nellebot.Common.Models.Ordbok.Api;
 
-public class Article
+public record Article
 {
-    [JsonPropertyName("dictionary")]
-    public string Dictionary { get; set; } = string.Empty;
-
     [JsonPropertyName("article_id")]
-    public dynamic? ArticleId { get; set; }
+    public int ArticleId { get; set; }
 
     [JsonPropertyName("body")]
     public Body Body { get; set; } = null!;
@@ -18,7 +15,7 @@ public class Article
     public List<Lemma> Lemmas { get; set; } = new List<Lemma>();
 }
 
-public class Body
+public record Body
 {
     [JsonPropertyName("definitions")]
     public List<DefinitionElement> DefinitionElements { get; set; } = new List<DefinitionElement>();
@@ -27,13 +24,13 @@ public class Body
     public List<EtymologyGroup> EtymologyGroups { get; set; } = new List<EtymologyGroup>();
 }
 
-public class SubArticle
+public record SubArticle
 {
     [JsonPropertyName("body")]
     public SubArticleBody Body { get; set; } = null!;
 }
 
-public class SubArticleBody
+public record SubArticleBody
 {
     [JsonPropertyName("definitions")]
     public List<DefinitionElement> DefinitionElements { get; set; } = new List<DefinitionElement>();

@@ -75,7 +75,7 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
 
         var ordbokArticles = await _ordbokClient.GetArticles(dictionary, articleIds.ToList(), cancellationToken);
 
-        var articles = MapAndSelectArticles(ordbokArticles);
+        var articles = MapAndSelectArticles(ordbokArticles, dictionary);
 
         var queryUrl = $"https://ordbokene.no/{(dictionary == OrdbokDictionaryMap.Bokmal ? "bm" : "nn")}/w/{query}";
 
@@ -152,11 +152,11 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
         return htmlTemplateResult;
     }
 
-    private List<Vm.Article> MapAndSelectArticles(List<Api.Article?> ordbokArticles)
+    private List<Vm.Article> MapAndSelectArticles(List<Api.Article?> ordbokArticles, string dictionary)
     {
         var articles = ordbokArticles
             .Where(a => a != null)
-            .Select(_ordbokModelMapper.MapArticle!)
+            .Select(x => _ordbokModelMapper.MapArticle(x!, dictionary))
             .OrderBy(a => a.Lemmas.Max(l => l.HgNo))
             .ToList();
 

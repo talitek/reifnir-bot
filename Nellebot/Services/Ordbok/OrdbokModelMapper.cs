@@ -18,13 +18,11 @@ public class OrdbokModelMapper
         _localizationService = localizationService;
     }
 
-    public Vm.Article MapArticle(Api.Article article)
+    public Vm.Article MapArticle(Api.Article article, string dictionary)
     {
         var vmResult = new Vm.Article();
 
-        var dictionary = article.Dictionary;
-
-        vmResult.ArticleId = int.TryParse(Convert.ToString(article.ArticleId), out int intArticleId) ? intArticleId : 0;
+        vmResult.ArticleId = article.ArticleId;
 
         vmResult.Lemmas = article.Lemmas.Select(MapLemma).ToList();
 

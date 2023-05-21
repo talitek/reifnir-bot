@@ -37,7 +37,7 @@ namespace Nellebot.Tests
 
                 var modelMapper = new OrdbokModelMapper(ordbokContentParser, localizationService.Object);
 
-                var article = modelMapper.MapArticle(result!);
+                var article = modelMapper.MapArticle(result!, "bm");
             }
             catch (Exception ex)
             {

@@ -38,21 +38,15 @@ public class SearchOrdbokHandlerV2 : IRequestHandler<SearchOrdbokQueryV2>
     private readonly OrdbokHttpClient _ordbokClient;
     private readonly OrdbokModelMapper _ordbokModelMapper;
     private readonly ScribanTemplateLoader _templateLoader;
-    private readonly HtmlToImageService _htmlToImageService;
-    private readonly ILogger<SearchOrdbokHandler> _logger;
 
     public SearchOrdbokHandlerV2(
         OrdbokHttpClient ordbokClient,
         OrdbokModelMapper ordbokModelMapper,
-        ScribanTemplateLoader templateLoader,
-        HtmlToImageService htmlToImageService,
-        ILogger<SearchOrdbokHandler> logger)
+        ScribanTemplateLoader templateLoader)
     {
         _ordbokClient = ordbokClient;
         _ordbokModelMapper = ordbokModelMapper;
         _templateLoader = templateLoader;
-        _htmlToImageService = htmlToImageService;
-        _logger = logger;
     }
 
     public async Task Handle(SearchOrdbokQueryV2 request, CancellationToken cancellationToken)
@@ -75,7 +69,7 @@ public class SearchOrdbokHandlerV2 : IRequestHandler<SearchOrdbokQueryV2>
 
         var ordbokArticles = await _ordbokClient.GetArticles(dictionary, articleIds.ToList(), cancellationToken);
 
-        var articles = MapAndSelectArticles(ordbokArticles);
+        var articles = MapAndSelectArticles(ordbokArticles, dictionary);
 
         var queryUrl = $"https://ordbokene.no/{(dictionary == OrdbokDictionaryMap.Bokmal ? "bm" : "nn")}/w/{query}";
 
@@ -107,11 +101,11 @@ public class SearchOrdbokHandlerV2 : IRequestHandler<SearchOrdbokQueryV2>
         return textTemplateResult;
     }
 
-    private List<Vm.Article> MapAndSelectArticles(List<Api.Article?> ordbokArticles)
+    private List<Vm.Article> MapAndSelectArticles(List<Api.Article?> ordbokArticles, string dictionary)
     {
         var articles = ordbokArticles
             .Where(a => a != null)
-            .Select(_ordbokModelMapper.MapArticle!)
+            .Select(x => _ordbokModelMapper.MapArticle(x!, dictionary))
             .OrderBy(a => a.Lemmas.Max(l => l.HgNo))
             .ToList();
 

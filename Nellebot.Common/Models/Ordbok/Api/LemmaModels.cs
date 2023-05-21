@@ -10,16 +10,16 @@ public record Lemma
     public int Id { get; set; }
 
     [JsonPropertyName("lemma")]
-    public string Value { get; set; } = string.Empty;
+    public string Value { get; set; } = null!;
 
     [JsonPropertyName("hgno")]
     public int HgNo { get; set; }
 
     [JsonPropertyName("initial_lexeme")]
-    public string InitialLexeme { get; set; } = string.Empty;
+    public string InitialLexeme { get; set; } = null!;
 
     [JsonPropertyName("final_lexeme")]
-    public string FinalLexeme { get; set; } = string.Empty;
+    public string FinalLexeme { get; set; } = null!;
 
     [JsonPropertyName("paradigm_info")]
     public List<Paradigm> Paradigms { get; set; } = new List<Paradigm>();
@@ -28,7 +28,7 @@ public record Lemma
 public record Inflection
 {
     [JsonPropertyName("word_form")]
-    public string WordForm { get; set; } = string.Empty;
+    public string WordForm { get; set; } = null!;
 
     [JsonPropertyName("tags")]
     public List<string> Tags { get; set; } = new List<string>();
@@ -40,10 +40,10 @@ public record Paradigm
     public int ParadigmId { get; set; }
 
     [JsonPropertyName("inflection_group")]
-    public string InflectionGroup { get; set; } = string.Empty;
+    public string InflectionGroup { get; set; } = null!;
 
     [JsonPropertyName("standardisation")]
-    public string Standardisation { get; set; } = string.Empty;
+    public string Standardisation { get; set; } = null!;
 
     [JsonPropertyName("tags")]
     public string[] Tags { get; set; } = Array.Empty<string>();
@@ -61,7 +61,7 @@ public record Paradigm
 public record SimpleLemma
 {
     [JsonPropertyName("lemma")]
-    public string Value { get; set; } = string.Empty;
+    public string Value { get; set; } = null!;
 
     [JsonPropertyName("hgno")]
     public int HgNo { get; set; }

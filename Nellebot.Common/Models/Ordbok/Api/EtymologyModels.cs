@@ -1,118 +1,112 @@
-﻿using Nellebot.Common.Models.Ordbok.Converters;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+using Nellebot.Common.Models.Ordbok.Converters;
 
-namespace Nellebot.Common.Models.Ordbok.Api
+namespace Nellebot.Common.Models.Ordbok.Api;
+
+[JsonConverter(typeof(EtymologyGroupConverter))]
+public abstract record EtymologyGroup : ITypeElement
 {
-    [JsonConverter(typeof(EtymologyGroupConverter))]
-    public abstract class EtymologyGroup : ITypeElement
-    {
-        [JsonPropertyName("type_")]
-        public string Type { get; set; } = string.Empty;
+    [JsonPropertyName("type_")]
+    public string Type { get; set; } = null!;
 
-        [JsonPropertyName("content")]
-        public string Content { get; set; } = string.Empty;
-    }
+    [JsonPropertyName("content")]
+    public string Content { get; set; } = null!;
+}
 
-    // EtymologyLanguage
+// EtymologyLanguage
+public record EtymologyLanguage : EtymologyGroup
+{
+    [JsonPropertyName("items")]
+    public List<EtymologyLanguageElement> EtymologyLanguageElements { get; set; } = new List<EtymologyLanguageElement>();
+}
 
-    public class EtymologyLanguage : EtymologyGroup
-    {
-        [JsonPropertyName("items")]
-        public List<EtymologyLanguageElement> EtymologyLanguageElements { get; set; } = new List<EtymologyLanguageElement>();
-    }
+[JsonConverter(typeof(EtymologyLanguageElementConverter))]
+public abstract record EtymologyLanguageElement : ITypeElement
+{
+    [JsonPropertyName("type_")]
+    public string Type { get; set; } = null!;
+}
 
-    [JsonConverter(typeof(EtymologyLanguageElementConverter))]
-    public abstract class EtymologyLanguageElement : ITypeElement
-    {
-        [JsonPropertyName("type_")]
-        public string Type { get; set; } = string.Empty;
-    }
+/// <summary>
+/// Api types so far: relation, language, grammar.
+/// </summary>
+public record EtymologyLanguageIdElement : EtymologyLanguageElement
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = null!;
+}
 
-    /// <summary>
-    /// Api types so far: relation, language, grammar
-    /// </summary>
-    public class EtymologyLanguageIdElement : EtymologyLanguageElement
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
-    }
+/// <summary>
+/// Api types so far: usage.
+/// </summary>
+public record EtymologyLanguageTextElement : EtymologyLanguageElement
+{
+    [JsonPropertyName("text")]
+    public string Text { get; set; } = null!;
+}
 
-    /// <summary>
-    /// Api types so far: usage
-    /// </summary>
-    public class EtymologyLanguageTextElement : EtymologyLanguageElement
-    {
-        [JsonPropertyName("text")]
-        public string Text { get; set; } = string.Empty;
-    }
+// EtymologyReference
+public record EtymologyReference : EtymologyGroup
+{
+    [JsonPropertyName("items")]
+    public List<EtymologyReferenceElement> EtymologyReferenceElements { get; set; } = new List<EtymologyReferenceElement>();
+}
 
-    // EtymologyReference
+[JsonConverter(typeof(EtymologyReferenceElementConverter))]
+public abstract record EtymologyReferenceElement : ITypeElement
+{
+    [JsonPropertyName("type_")]
+    public string Type { get; set; } = null!;
+}
 
-    public class EtymologyReference : EtymologyGroup
-    {
-        [JsonPropertyName("items")]
-        public List<EtymologyReferenceElement> EtymologyReferenceElements { get; set; } = new List<EtymologyReferenceElement>();
-    }
+// Api types so far: relation, entity, grammar
+public record EtymologyReferenceIdElement : EtymologyReferenceElement
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = null!;
+}
 
-    [JsonConverter(typeof(EtymologyReferenceElementConverter))]
-    public abstract class EtymologyReferenceElement : ITypeElement
-    {
-        [JsonPropertyName("type_")]
-        public string Type { get; set; } = string.Empty;
-    }
+public record EtymologyReferenceArticleRef : EtymologyReferenceElement
+{
+    [JsonPropertyName("article_id")]
+    public int ArticleId { get; set; }
 
-    /// Api types so far: relation, entity, grammar
-    public class EtymologyReferenceIdElement : EtymologyReferenceElement
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
-    }
+    [JsonPropertyName("definition_id")]
+    public int? DefinitionId { get; set; }
 
-    public class EtymologyReferenceArticleRef : EtymologyReferenceElement
-    {
-        [JsonPropertyName("article_id")]
-        public int ArticleId { get; set; }
-        [JsonPropertyName("definition_id")]
-        public int? DefinitionId { get; set; }
-        [JsonPropertyName("lemmas")]
-        public List<SimpleLemma> Lemmas { get; set; } = new List<SimpleLemma>();
-    }
+    [JsonPropertyName("lemmas")]
+    public List<SimpleLemma> Lemmas { get; set; } = new List<SimpleLemma>();
+}
 
-    // Etymology litt?
+// Etymology litt?
+public record EtymologyLitt : EtymologyGroup
+{
+    [JsonPropertyName("items")]
+    public List<EtymologyLittElement> EtymologyLittElements { get; set; } = new List<EtymologyLittElement>();
+}
 
-    public class EtymologyLitt: EtymologyGroup
-    {
-        [JsonPropertyName("items")]
-        public List<EtymologyLittElement> EtymologyLittElements { get; set; } = new List<EtymologyLittElement>();
-    }
+[JsonConverter(typeof(EtymologyLittElementConverter))]
+public abstract record EtymologyLittElement : ITypeElement
+{
+    [JsonPropertyName("type_")]
+    public string Type { get; set; } = null!;
+}
 
-    [JsonConverter(typeof(EtymologyLittElementConverter))]
-    public abstract class EtymologyLittElement: ITypeElement
-    {
-        [JsonPropertyName("type_")]
-        public string Type { get; set; } = string.Empty;
-    }
+/// <summary>
+/// Api types so far: entity.
+/// </summary>
+public record EtymologyLittIdElement : EtymologyLittElement
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = null!;
+}
 
-    /// <summary>
-    /// Api types so far: entity
-    /// </summary>
-    public class EtymologyLittIdElement : EtymologyLittElement
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
-    }
-
-    /// <summary>
-    /// Api types so far: usage
-    /// </summary>
-    public class EtymologyLittTextElement : EtymologyLittElement
-    {
-        [JsonPropertyName("text")]
-        public string Text { get; set; } = string.Empty;
-    }
+/// <summary>
+/// Api types so far: usage.
+/// </summary>
+public record EtymologyLittTextElement : EtymologyLittElement
+{
+    [JsonPropertyName("text")]
+    public string Text { get; set; } = null!;
 }
