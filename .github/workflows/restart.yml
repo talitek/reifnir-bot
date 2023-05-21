@@ -13,5 +13,6 @@ jobs:
         host: ${{secrets.VPS_HOST}}
         port: ${{secrets.VPS_PORT}}
         username: ${{secrets.NELLEBOT_USER}}
-        password: ${{secrets.NELLEBOT_PASSWORD}}      
+        key: ${{secrets.NELLEBOT_KEY}}
+        passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}    
         script: systemctl --user restart nellebot
