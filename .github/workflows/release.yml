@@ -120,7 +120,7 @@ jobs:
         username: ${{secrets.NELLEBOT_USER}}
         key: ${{secrets.NELLEBOT_KEY}}
         passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
-        script: psql -U postgres -d nellebot -q -f $HOME/nellebot/database_migration.sql
+        script: psql -U "nellebot-user" -d nellebot -q -f $HOME/nellebot/database_migration.sql
  
     - name: Deploy - Start service
       if: github.event.inputs.updateDatabase == 'no' || github.event.inputs.updateDatabase == 'auto'
