@@ -27,22 +27,32 @@ public class MessageRefsService
 
     public async Task<int> PopulateMessageRefs(DateTimeOffset lastHeartbeat)
     {
-        DiscordGuild guild = _discordResolver.ResolveGuild();
+        var guild = _discordResolver.ResolveGuild();
 
-        IEnumerable<DiscordChannel> channels = guild.Channels.Values.Where(c => c.Type == DSharpPlus.ChannelType.Text);
+        var channels = guild.Channels.Values.Where(c => c.Type == DSharpPlus.ChannelType.Text).ToList();
+
+        if (channels == null || !channels.Any())
+        {
+            _discordErrorLogger.LogWarning("No channels found", "No channels found when populating message refs");
+            _logger.LogWarning("No channels found");
+            return 0;
+        }
 
         int messageRefCreatedCount = 0;
 
-        DateTimeOffset lastHeartbeatWithMargin = lastHeartbeat - TimeSpan.FromMinutes(5);
+        var lastHeartbeatWithMargin = lastHeartbeat - TimeSpan.FromMinutes(5);
 
         ulong lastHeartbeatSnowflake = GetSnowflakeFromDateTimeOffset(lastHeartbeatWithMargin);
 
         const int messageBatchSize = 100;
 
-        foreach (DiscordChannel? channel in channels)
+        foreach (var channel in channels)
         {
             try
             {
+                if (channel == null) continue;
+
+
                 var messages = (await channel.GetMessagesAfterAsync(lastHeartbeatSnowflake, messageBatchSize))
                                 .Where(m => !m.Author.IsCurrent)
                                 .ToList();
