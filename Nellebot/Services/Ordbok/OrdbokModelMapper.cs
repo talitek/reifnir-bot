@@ -10,10 +10,12 @@ namespace Nellebot.Services.Ordbok;
 public class OrdbokModelMapper
 {
     private readonly IOrdbokContentParser _contentParser;
+    private readonly ILocalizationService _localizationService;
 
-    public OrdbokModelMapper(IOrdbokContentParser contentParser)
+    public OrdbokModelMapper(IOrdbokContentParser contentParser, ILocalizationService localizationService)
     {
         _contentParser = contentParser;
+        _localizationService = localizationService;
     }
 
     public Vm.Article MapArticle(Api.Article article)
@@ -31,6 +33,8 @@ public class OrdbokModelMapper
         vmResult.SubArticles = MapSubArticles(article.Body.DefinitionElements, dictionary);
 
         vmResult.Etymologies = MapEtymologies(article.Body.EtymologyGroups, dictionary);
+
+        vmResult.Paradigm = MapParadigmV2(article.Lemmas, dictionary);
 
         return vmResult;
     }
@@ -71,6 +75,52 @@ public class OrdbokModelMapper
                 "abbr" => "fork.",
                 _ => $"?{paradigm.InflectionGroup.ToLower()}?",
             };
+        }
+
+        return vmResult;
+    }
+
+    public Vm.ParadigmV2 MapParadigmV2(List<Api.Lemma> lemmas, string dictionary)
+    {
+        var vmResult = new Vm.ParadigmV2();
+
+        if (lemmas == null || !lemmas.Any())
+        {
+            return vmResult;
+        }
+
+        var paradigms = lemmas.First().Paradigms;
+
+        if (paradigms == null || !paradigms.Any())
+        {
+            return vmResult;
+        }
+
+        var inflectionGroup = paradigms.First().InflectionGroup;
+
+        inflectionGroup = inflectionGroup.Split("_")[0].ToLower(); // make noun_regular to noun, det_simple to det, etc.
+
+        string? inflectionClass = null;
+
+        var uniqueLevel1Tags = paradigms.Where(x => x.Tags.Length > 1).Select(x => x.Tags[1]).Distinct().ToArray();
+
+        if (uniqueLevel1Tags.Length > 0)
+        {
+            if (inflectionGroup == "noun" && uniqueLevel1Tags.Length == 2)
+            {
+                inflectionClass = "masc_or_fem";
+            }
+            else
+            {
+                inflectionClass = uniqueLevel1Tags[0].ToLower();
+            }
+        }
+
+
+        vmResult.WordClass = _localizationService.GetString(inflectionGroup, LocalizationResource.Ordbok, dictionary);
+        if (inflectionClass != null)
+        {
+            vmResult.InflectionClass = _localizationService.GetString(inflectionClass, LocalizationResource.Ordbok, dictionary);
         }
 
         return vmResult;

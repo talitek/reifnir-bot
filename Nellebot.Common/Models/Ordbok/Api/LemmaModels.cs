@@ -46,7 +46,7 @@ public record Paradigm
     public string Standardisation { get; set; } = string.Empty;
 
     [JsonPropertyName("tags")]
-    public List<string> Tags { get; set; } = new List<string>();
+    public string[] Tags { get; set; } = Array.Empty<string>();
 
     [JsonPropertyName("from")]
     public DateTime? From { get; set; }

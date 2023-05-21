@@ -1,0 +1,15 @@
+{
+  "adj": "adjektiv",
+  "adv": "adverb",
+  "dem": "demonstrativ",
+  "det": "determinativ",
+  "noun": "substantiv",
+  "verb": "verb",
+  "quant": "kvantor",
+  "masc": "hankjønn",
+  "fem": "hokjønn",
+  "neuter": "inkjekjønn",
+  "pron": "pronomen",
+  "intj": "interjeksjon",
+  "masc_or_fem": "hankjønn eller hokjønn"
+} 

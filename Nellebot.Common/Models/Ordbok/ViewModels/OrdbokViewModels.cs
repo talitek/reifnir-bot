@@ -14,28 +14,35 @@ public record Article
     public List<SubArticle> SubArticles { get; set; } = new List<SubArticle>();
 
     public List<Etymology> Etymologies { get; set; } = new List<Etymology>();
+
+    public ParadigmV2 Paradigm { get; set; } = null!;
 }
 
 public record Lemma
 {
     public int Id { get; set; }
 
-    public string Value { get; set; } = string.Empty;
+    public string Value { get; set; } = null!;
 
     public int HgNo { get; set; }
 
-    public string HgNoRoman { get; set; } = string.Empty;
+    public string HgNoRoman { get; set; } = null!;
 
     public List<Paradigm> Paradigms { get; set; } = new List<Paradigm>();
 
     public List<string> UniqueParadigmValues => Paradigms.Select(p => p.Value).Distinct().ToList();
 }
 
+public record ParadigmV2
+{
+    public string WordClass { get; set; } = null!;
+
+    public string? InflectionClass { get; set; }
+}
+
 public record Paradigm
 {
-    public string Value { get; set; } = string.Empty;
-
-    ////public List<Inflection> Inflection { get; set; } = new List<Inflection>();
+    public string Value { get; set; } = null!;
 }
 
 public record Definition
@@ -58,5 +65,5 @@ public record SubArticle
 
 public record Etymology
 {
-    public string Content { get; set; } = string.Empty;
+    public string Content { get; set; } = null!;
 }

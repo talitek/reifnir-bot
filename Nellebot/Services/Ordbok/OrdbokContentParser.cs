@@ -42,7 +42,7 @@ public class OrdbokContentParser : IOrdbokContentParser
             switch (item)
             {
                 case Api.EtymologyLanguageIdElement idElement:
-                    var localizedIdElement = _localizationService.GetString(idElement.Id, LocalizationResource.OrdbokConcepts, dictionary);
+                    var localizedIdElement = _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
                     replacementValues.Add(localizedIdElement);
                     break;
                 case Api.EtymologyLanguageTextElement textElement:
@@ -67,7 +67,7 @@ public class OrdbokContentParser : IOrdbokContentParser
             switch (item)
             {
                 case Api.EtymologyLittIdElement idElement:
-                    var localizedIdElement = _localizationService.GetString(idElement.Id, LocalizationResource.OrdbokConcepts, dictionary);
+                    var localizedIdElement = _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
                     replacementValues.Add(localizedIdElement);
                     break;
                 case Api.EtymologyLittTextElement textElement:
@@ -92,7 +92,7 @@ public class OrdbokContentParser : IOrdbokContentParser
             switch (item)
             {
                 case Api.EtymologyReferenceIdElement idElement:
-                    var localizedElementId = _localizationService.GetString(idElement.Id, LocalizationResource.OrdbokConcepts, dictionary);
+                    var localizedElementId = _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
 
                     replacementValues.Add(localizedElementId);
                     break;
@@ -130,7 +130,7 @@ public class OrdbokContentParser : IOrdbokContentParser
             switch (item)
             {
                 case Api.ExplanationIdItem idElement:
-                    var localizedElementId = _localizationService.GetString(idElement.Id, LocalizationResource.OrdbokConcepts, dictionary);
+                    var localizedElementId = _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
                     replacementValues.Add(localizedElementId);
                     break;
                 case Api.ExplanationTextItem textElement:
@@ -183,7 +183,7 @@ public class OrdbokContentParser : IOrdbokContentParser
             switch (item)
             {
                 case Api.QuoteIdItem idElement:
-                    var localizedIdItem = _localizationService.GetString(idElement.Id, LocalizationResource.OrdbokConcepts, dictionary);
+                    var localizedIdItem = _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
                     replacementValues.Add(localizedIdItem);
                     break;
                 case Api.QuoteTextItem textElement:
