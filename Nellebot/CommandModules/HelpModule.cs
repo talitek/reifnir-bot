@@ -26,15 +26,17 @@ public class HelpModule : BaseCommandModule
         var sb = new StringBuilder();
 
         var commandPrefix = _options.CommandPrefix;
+        const string slashPrefix = DiscordConstants.SlashCommandPrefix;
 
-        sb.AppendLine($"On NELLE, you can assign roles to yourself using the `/roles` command `{commandPrefix}role` command followed by the `name` of the role.");
-        sb.AppendLine($"Alternatively you can use the `{commandPrefix}role` command followed by the `name` of the role.");
-        sb.AppendLine($"For example: `{commandPrefix}role beginner`");
-        sb.AppendLine($"To unassign a role from yourself, type the same command again.");
-        sb.AppendLine($"To view all the available roles, type `{commandPrefix}roles`.");
+        sb.AppendLine($"On NELLE, you can manage your roles using the `{slashPrefix}roles` command.");
+        sb.AppendLine($"Alternatively, you can use the `{slashPrefix}role` command followed by the `name` of the role. For example: `{slashPrefix}role beginner`");
+        sb.AppendLine($"Use the same command to unassign a role from yourself.");
+        sb.AppendLine($"A complete overview of the server roles can be found in #roles channel.");
 
         sb.AppendLine();
-        sb.AppendLine("If you have any problems, you can always contact one of the moderators.");
+        sb.AppendLine($"If you have any problems, you can always ask the moderators for help.");
+        sb.AppendLine($"You can privately message the moderator team either by using the `{slashPrefix}modmail` command");
+        sb.AppendLine($"or by sending me a DM. I will then pass your message on to the moderators.");
 
         sb.AppendLine();
         sb.AppendLine("Dictionary commands:");

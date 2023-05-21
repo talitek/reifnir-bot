@@ -1,114 +1,119 @@
-﻿using Nellebot.Common.Models.Ordbok.Converters;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using Nellebot.Common.Models.Ordbok.Converters;
 
-namespace Nellebot.Common.Models.Ordbok.Api
+namespace Nellebot.Common.Models.Ordbok.Api;
+
+[JsonConverter(typeof(DefinitionElementConverter))]
+public abstract record DefinitionElement : ITypeElement
 {
-    [JsonConverter(typeof(DefinitionElementConverter))]
-    public abstract class DefinitionElement : ITypeElement
-    {
-        [JsonPropertyName("type_")]
-        public string Type { get; set; } = string.Empty;
-    }
+    [JsonPropertyName("type_")]
+    public string Type { get; set; } = null!;
+}
 
-    public class Definition : DefinitionElement
-    {
-        [JsonPropertyName("id")]
-        public int Id { get; set; }
-        [JsonPropertyName("elements")]
-        public List<DefinitionElement> DefinitionElements { get; set; } = new List<DefinitionElement>();
-    }
+public record Definition : DefinitionElement
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
 
-    public class Explanation : DefinitionElement
-    {
-        [JsonPropertyName("content")]
-        public string Content { get; set; } = string.Empty;
-        [JsonPropertyName("items")]
-        public List<ExplanationItem> ExplanationItems { get; set; } = new List<ExplanationItem>();
-    }
+    [JsonPropertyName("elements")]
+    public List<DefinitionElement> DefinitionElements { get; set; } = new List<DefinitionElement>();
+}
 
-    [JsonConverter(typeof(ExplanationItemConverter))]
-    public abstract class ExplanationItem : ITypeElement
-    {
-        [JsonPropertyName("type_")]
-        public string Type { get; set; } = string.Empty;
-    }
+public record Explanation : DefinitionElement
+{
+    [JsonPropertyName("content")]
+    public string Content { get; set; } = null!;
 
-    /// <summary>
-    /// Api types so far: relation, domain, entity, modifier, grammar, rhetoric, language, temporal
-    /// </summary>
-    public class ExplanationIdItem: ExplanationItem
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
-    }
+    [JsonPropertyName("items")]
+    public List<ExplanationItem> ExplanationItems { get; set; } = new List<ExplanationItem>();
+}
 
-    /// <summary>
-    /// Api types so far: usage
-    /// </summary>
-    public class ExplanationTextItem : ExplanationItem
-    {
-        [JsonPropertyName("text")]
-        public string Text { get; set; } = string.Empty;
-    }
+[JsonConverter(typeof(ExplanationItemConverter))]
+public abstract record ExplanationItem : ITypeElement
+{
+    [JsonPropertyName("type_")]
+    public string Type { get; set; } = null!;
+}
 
-    public class ExplanationArticleRefItem : ExplanationItem
-    {
-        [JsonPropertyName("article_id")]
-        public int ArticleId { get; set; }
-        [JsonPropertyName("definition_order")]
-        public int DefinitionOrder { get; set; }
-        [JsonPropertyName("lemmas")]
-        public List<SimpleLemma> Lemmas { get; set; } = new List<SimpleLemma>();
-    }
+/// <summary>
+/// Api types so far: relation, domain, entity, modifier, grammar, rhetoric, language, temporal.
+/// </summary>
+public record ExplanationIdItem : ExplanationItem
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = null!;
+}
 
-    public class Example : DefinitionElement
-    {
-        [JsonPropertyName("quote")]
-        public Quote Quote { get; set; } = null!;
-        [JsonPropertyName("explanation")]
-        public ExampleExplanation Explanation { get; set; } = null!;
-    }
+/// <summary>
+/// Api types so far: usage.
+/// </summary>
+public record ExplanationTextItem : ExplanationItem
+{
+    [JsonPropertyName("text")]
+    public string Text { get; set; } = null!;
+}
 
-    public class Quote
-    {
-        [JsonPropertyName("content")]
-        public string Content { get; set; } = string.Empty;
-        [JsonPropertyName("items")]
-        public List<QuoteItem> QuoteItems { get; set; } = new List<QuoteItem>();
-    }
+public record ExplanationArticleRefItem : ExplanationItem
+{
+    [JsonPropertyName("article_id")]
+    public int ArticleId { get; set; }
 
-    [JsonConverter(typeof(QuoteItemConverter))]
-    public abstract class QuoteItem: ITypeElement
-    {
-        [JsonPropertyName("type_")]
-        public string Type { get; set; } = string.Empty;
-    }
+    [JsonPropertyName("definition_order")]
+    public int DefinitionOrder { get; set; }
 
-    public class QuoteIdItem : QuoteItem
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
-    }
+    [JsonPropertyName("lemmas")]
+    public List<SimpleLemma> Lemmas { get; set; } = new List<SimpleLemma>();
+}
 
-    public class QuoteTextItem: QuoteItem
-    {
-        [JsonPropertyName("text")]
-        public string Text { get; set; } = string.Empty;
-    }
+public record Example : DefinitionElement
+{
+    [JsonPropertyName("quote")]
+    public Quote Quote { get; set; } = null!;
 
-    public class ExampleExplanation
-    {
-        [JsonPropertyName("content")]
-        public string Content { get; set; } = string.Empty;
-    }
+    [JsonPropertyName("explanation")]
+    public ExampleExplanation Explanation { get; set; } = null!;
+}
 
-    public class DefinitionSubArticle : DefinitionElement
-    {
-        [JsonPropertyName("article_id")]
-        public int ArticleId { get; set; }
-        [JsonPropertyName("article")]
-        public SubArticle Article { get; set; } = null!;
-        // intro?
-    }
+public record Quote
+{
+    [JsonPropertyName("content")]
+    public string Content { get; set; } = null!;
+
+    [JsonPropertyName("items")]
+    public List<QuoteItem> QuoteItems { get; set; } = new List<QuoteItem>();
+}
+
+[JsonConverter(typeof(QuoteItemConverter))]
+public abstract record QuoteItem : ITypeElement
+{
+    [JsonPropertyName("type_")]
+    public string Type { get; set; } = null!;
+}
+
+public record QuoteIdItem : QuoteItem
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = null!;
+}
+
+public record QuoteTextItem : QuoteItem
+{
+    [JsonPropertyName("text")]
+    public string Text { get; set; } = null!;
+}
+
+public record ExampleExplanation
+{
+    [JsonPropertyName("content")]
+    public string Content { get; set; } = null!;
+}
+
+public record DefinitionSubArticle : DefinitionElement
+{
+    [JsonPropertyName("article_id")]
+    public int ArticleId { get; set; }
+
+    [JsonPropertyName("article")]
+    public SubArticle Article { get; set; } = null!;
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Nellebot.Common.Models;
 using Nellebot.Common.Models.Modmail;
+using Nellebot.Common.Models.Ordbok.Store;
 using Nellebot.Common.Models.UserLogs;
 using Nellebot.Common.Models.UserRoles;
 
@@ -11,7 +12,23 @@ namespace Nellebot.Data;
 
 public class BotDbContext : DbContext
 {
+    private const string JsonbColumnType = "jsonb";
     private readonly IDataProtectionProvider _dataProtectionProvider;
+
+#if DEBUG
+    public BotDbContext(DbContextOptions options)
+    : base(options)
+    {
+        var insideLINQPad = AppDomain.CurrentDomain.FriendlyName.StartsWith("LINQPad");
+
+        if (!insideLINQPad)
+        {
+            throw new Exception("This constructor should only be used in LINQPad");
+        }
+
+        _dataProtectionProvider = new MockProtector();
+    }
+#endif
 
     public BotDbContext(DbContextOptions options, IDataProtectionProvider dataProtectionProvider)
         : base(options)
@@ -88,6 +105,20 @@ public class BotDbContext : DbContext
         builder.Entity<ModmailTicket>()
             .Property(x => x.RequesterId)
             .HasConversion(new ProtectedConverter(_dataProtectionProvider, "RequesterId"));
+
+        builder.Entity<OrdbokArticleStore>()
+            .HasKey(x => new { x.Dictionary, x.WordClass });
+
+        builder.Entity<OrdbokArticleStore>()
+            .Property(x => x.ArticleList)
+            .HasColumnType(JsonbColumnType);
+
+        builder.Entity<OrdbokConceptStore>()
+            .HasKey(x => x.Dictionary);
+
+        builder.Entity<OrdbokConceptStore>()
+            .Property(x => x.Concepts)
+            .HasColumnType(JsonbColumnType);
     }
 
 #pragma warning disable SA1201 // Elements should appear in the correct order
@@ -106,4 +137,8 @@ public class BotDbContext : DbContext
     public DbSet<UserLog> UserLogs { get; set; }
 
     public DbSet<ModmailTicket> ModmailTickets { get; set; }
+
+    public DbSet<OrdbokArticleStore> OrdbokArticlesStore { get; set; }
+
+    public DbSet<OrdbokConceptStore> OrdbokConceptStore { get; set; }
 }

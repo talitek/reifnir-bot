@@ -25,11 +25,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nellebot.Data.Migrations", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nellebot.Tests", "Nellebot.Tests\Nellebot.Tests.csproj", "{B391AD0D-0EF3-4657-966D-57712930C29D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{0210AAB2-8605-4704-A23B-F94455581BF8}"
-	ProjectSection(SolutionItems) = preProject
-		download_orbok_concepts.ps1 = download_orbok_concepts.ps1
-	EndProjectSection
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deploy", "deploy", "{CC59BDCF-9F25-4CD1-B796-939DFD3D69F6}"
 	ProjectSection(SolutionItems) = preProject
 		deploy\nellebot-backup-db.sh = deploy\nellebot-backup-db.sh
@@ -68,7 +63,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{0210AAB2-8605-4704-A23B-F94455581BF8} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
 		{CC59BDCF-9F25-4CD1-B796-939DFD3D69F6} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

@@ -10,11 +10,11 @@ namespace Nellebot.CommandModules;
 
 [BaseCommandCheck]
 [ModuleLifespan(ModuleLifespan.Transient)]
-public class OrdbokModule : BaseCommandModule
+public class OrdbokLegacyLegacy : BaseCommandModule
 {
     private readonly RequestQueueChannel _requestQueue;
 
-    public OrdbokModule(RequestQueueChannel commandQueue)
+    public OrdbokLegacyLegacy(RequestQueueChannel commandQueue)
     {
         _requestQueue = commandQueue;
     }
@@ -68,5 +68,13 @@ public class OrdbokModule : BaseCommandModule
         };
 
         return _requestQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
+    }
+
+    [Command("gibb")]
+    public Task Gibb(CommandContext ctx)
+    {
+        var gibbCommand = new GibbCommand(ctx);
+
+        return _requestQueue.Writer.WriteAsync(gibbCommand).AsTask();
     }
 }

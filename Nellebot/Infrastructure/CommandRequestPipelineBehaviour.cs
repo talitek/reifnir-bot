@@ -28,19 +28,19 @@ public class CommandRequestPipelineBehaviour<TRequest, TResponse> : IPipelineBeh
         {
             return await next().ConfigureAwait(false);
         }
-        catch (Exception ex) when (request is ICommand command)
-        {
-            HandeCommandException(command, ex);
-            return default!;
-        }
         catch (Exception ex) when (request is BotCommandCommand commandCommand)
         {
             await HandeCommandCommandException(commandCommand, ex);
             return default!;
         }
+        catch (Exception ex) when (request is IRequest command)
+        {
+            HandleRequestException(command, ex);
+            return default!;
+        }
     }
 
-    private void HandeCommandException(ICommand request, Exception ex)
+    private void HandleRequestException(IRequest request, Exception ex)
     {
         _discordErrorLogger.LogError(ex.Message);
 

@@ -17,11 +17,11 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
 {
     private const string CancelMessageToken = "cancel";
 
-    private readonly CommandQueueChannel _commandQueue;
+    private readonly CommandParallelQueueChannel _commandQueue;
     private readonly ModmailTicketRepository _modmailTicketRepo;
     private readonly BotOptions _botOptions;
 
-    public ModmailRelayHandler(CommandQueueChannel commandQueue, ModmailTicketRepository modmailTicketRepo, IOptions<BotOptions> botOptions)
+    public ModmailRelayHandler(CommandParallelQueueChannel commandQueue, ModmailTicketRepository modmailTicketRepo, IOptions<BotOptions> botOptions)
     {
         _commandQueue = commandQueue;
         _modmailTicketRepo = modmailTicketRepo;

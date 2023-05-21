@@ -8,9 +8,9 @@ namespace Nellebot.CommandModules;
 
 public class ModmailModule : ApplicationCommandModule
 {
-    private readonly CommandQueueChannel _channel;
+    private readonly CommandParallelQueueChannel _channel;
 
-    public ModmailModule(CommandQueueChannel channel)
+    public ModmailModule(CommandParallelQueueChannel channel)
     {
         _channel = channel;
     }

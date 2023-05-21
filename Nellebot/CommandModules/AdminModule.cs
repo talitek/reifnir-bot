@@ -8,6 +8,7 @@ using MediatR;
 using Nellebot.Attributes;
 using Nellebot.CommandHandlers;
 using Nellebot.CommandHandlers.Modmail;
+using Nellebot.CommandHandlers.Ordbok;
 using Nellebot.Common.Extensions;
 using Nellebot.Data.Repositories;
 using Nellebot.Workers;
@@ -21,18 +22,15 @@ namespace Nellebot.CommandModules;
 public class AdminModule : BaseCommandModule
 {
     private readonly CommandQueueChannel _commandQueue;
-    private readonly RequestQueueChannel _requestQueue;
     private readonly ModmailTicketRepository _modmailTicketRepo;
     private readonly IMediator _mediator;
 
     public AdminModule(
         CommandQueueChannel commandQueue,
-        RequestQueueChannel requestQueue,
         ModmailTicketRepository modmailTicketRepo,
         IMediator mediator)
     {
         _commandQueue = commandQueue;
-        _requestQueue = requestQueue;
         _modmailTicketRepo = modmailTicketRepo;
         _mediator = mediator;
     }
@@ -63,7 +61,7 @@ public class AdminModule : BaseCommandModule
     [Command("populate-messages")]
     public Task PopulateMessages(CommandContext ctx)
     {
-        return _requestQueue.Writer.WriteAsync(new PopulateMessagesCommand(ctx)).AsTask();
+        return _commandQueue.Writer.WriteAsync(new PopulateMessagesCommand(ctx)).AsTask();
     }
 
     [Command("delete-spam-after")]
@@ -89,5 +87,11 @@ public class AdminModule : BaseCommandModule
         }
 
         await ctx.Channel.SendMessageAsync($"Closed {expiredTickets.Count} tickets");
+    }
+
+    [Command("rebuild-ordbok")]
+    public Task RebuildOrbok(CommandContext ctx)
+    {
+        return _commandQueue.Writer.WriteAsync(new RebuildArticleStoreCommand(ctx)).AsTask();
     }
 }

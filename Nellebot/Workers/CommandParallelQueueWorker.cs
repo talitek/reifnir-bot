@@ -8,13 +8,13 @@ using Nellebot.CommandHandlers;
 
 namespace Nellebot.Workers;
 
-public class CommandQueueWorker : BackgroundService
+public class CommandParallelQueueWorker : BackgroundService
 {
-    private readonly ILogger<CommandQueueWorker> _logger;
+    private readonly ILogger<CommandParallelQueueWorker> _logger;
     private readonly CommandQueueChannel _channel;
     private readonly IMediator _mediator;
 
-    public CommandQueueWorker(ILogger<CommandQueueWorker> logger, CommandQueueChannel channel, IMediator mediator)
+    public CommandParallelQueueWorker(ILogger<CommandParallelQueueWorker> logger, CommandQueueChannel channel, IMediator mediator)
     {
         _logger = logger;
         _channel = channel;
@@ -29,15 +29,15 @@ public class CommandQueueWorker : BackgroundService
             {
                 if (command != null)
                 {
-                    _logger.LogDebug("Dequeued command. {RemainingMessageCount} left in queue", _channel.Reader.Count);
+                    _logger.LogDebug("Dequeued parallel command. {RemainingMessageCount} left in queue", _channel.Reader.Count);
 
-                    await _mediator.Send(command, stoppingToken);
+                    _ = Task.Run(() => _mediator.Send(command, stoppingToken), stoppingToken);
                 }
             }
         }
         catch (TaskCanceledException)
         {
-            _logger.LogDebug("{Worker} execution is being cancelled", nameof(CommandQueueWorker));
+            _logger.LogDebug("{Worker} execution is being cancelled", nameof(CommandParallelQueueWorker));
         }
         catch (Exception ex)
         {

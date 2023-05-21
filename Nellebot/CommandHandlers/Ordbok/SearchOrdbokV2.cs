@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
+using DSharpPlus.SlashCommands;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Nellebot.Common.Models.Ordbok;
@@ -18,9 +19,9 @@ using Vm = Nellebot.Common.Models.Ordbok.ViewModels;
 
 namespace Nellebot.CommandHandlers.Ordbok;
 
-public record SearchOrdbokQuery : BotCommandQuery
+public record SearchOrdbokQueryV2 : InteractionCommand
 {
-    public SearchOrdbokQuery(CommandContext ctx)
+    public SearchOrdbokQueryV2(InteractionContext ctx)
         : base(ctx)
     {
     }
@@ -28,40 +29,33 @@ public record SearchOrdbokQuery : BotCommandQuery
     public string Query { get; set; } = string.Empty;
 
     public string Dictionary { get; set; } = string.Empty;
-
-    public bool AttachTemplate { get; set; } = false;
 }
 
-public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
+public class SearchOrdbokHandlerV2 : IRequestHandler<SearchOrdbokQueryV2>
 {
     private const int MaxDefinitionsInTextForm = 5;
 
     private readonly OrdbokHttpClient _ordbokClient;
     private readonly OrdbokModelMapper _ordbokModelMapper;
     private readonly ScribanTemplateLoader _templateLoader;
-    private readonly HtmlToImageService _htmlToImageService;
-    private readonly ILogger<SearchOrdbokHandler> _logger;
 
-    public SearchOrdbokHandler(
+    public SearchOrdbokHandlerV2(
         OrdbokHttpClient ordbokClient,
         OrdbokModelMapper ordbokModelMapper,
-        ScribanTemplateLoader templateLoader,
-        HtmlToImageService htmlToImageService,
-        ILogger<SearchOrdbokHandler> logger)
+        ScribanTemplateLoader templateLoader)
     {
         _ordbokClient = ordbokClient;
         _ordbokModelMapper = ordbokModelMapper;
         _templateLoader = templateLoader;
-        _htmlToImageService = htmlToImageService;
-        _logger = logger;
     }
 
-    public async Task Handle(SearchOrdbokQuery request, CancellationToken cancellationToken)
+    public async Task Handle(SearchOrdbokQueryV2 request, CancellationToken cancellationToken)
     {
         var ctx = request.Ctx;
         var query = request.Query;
         var dictionary = request.Dictionary;
-        var attachTemplate = request.AttachTemplate;
+
+        await ctx.DeferAsync();
 
         var searchResponse = await _ordbokClient.Search(request.Dictionary, query, cancellationToken);
 
@@ -69,7 +63,7 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
 
         if (articleIds == null || articleIds.Length == 0)
         {
-            await ctx.RespondAsync("No match");
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("No match"));
             return;
         }
 
@@ -81,9 +75,7 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
 
         string textTemplateResult = await RenderTextTemplate(articles);
 
-        string htmlTemplateResult = await RenderHtmlTemplate(dictionary, articles);
-
-        var truncatedContent = textTemplateResult.Substring(0, Math.Min(textTemplateResult.Length, DiscordConstants.MaxEmbedContentLength));
+        var truncatedContent = textTemplateResult[..Math.Min(textTemplateResult.Length, DiscordConstants.MaxEmbedContentLength)];
 
         var eb = new DiscordEmbedBuilder()
             .WithTitle(dictionary == OrdbokDictionaryMap.Bokmal ? "Bokmålsordboka" : "Nynorskordboka")
@@ -92,47 +84,14 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
             .WithFooter("Universitetet i Bergen og Språkrådet - ordbokene.no")
             .WithColor(DiscordConstants.DefaultEmbedColor);
 
-        var mb = new DiscordMessageBuilder();
+        var response = new DiscordWebhookBuilder().AddEmbed(eb.Build());
 
-        FileStream? imageFileStream = null;
-        FileStream? htmlFileStream = null;
-
-        try
-        {
-            var result = await _htmlToImageService.GenerateImageFile(htmlTemplateResult);
-
-            imageFileStream = result.ImageFileStream;
-            htmlFileStream = result.HtmlFileStream;
-
-            if (!attachTemplate)
-            {
-                eb = eb.WithImageUrl($"attachment://{result.ImageFileName}");
-                mb = mb.AddFile(result.ImageFileName, result.ImageFileStream);
-            }
-            else
-            {
-                mb = mb.AddFile(result.HtmlFileStream);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, nameof(SearchOrdbokQuery));
-        }
-
-        mb = mb.WithEmbed(eb.Build());
-
-        await ctx.RespondAsync(mb);
-
-        if (imageFileStream != null)
-            await imageFileStream.DisposeAsync();
-
-        if (htmlFileStream != null)
-            await htmlFileStream.DisposeAsync();
+        await ctx.EditResponseAsync(response);
     }
 
     private async Task<string> RenderTextTemplate(List<Vm.Article> articles)
     {
-        var textTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Text);
+        var textTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticleV2", ScribanTemplateType.Text);
         var textTemplate = Template.Parse(textTemplateSource);
 
         var maxDefinitions = MaxDefinitionsInTextForm;
@@ -140,16 +99,6 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
         var textTemplateResult = textTemplate.Render(new { articles, maxDefinitions });
 
         return textTemplateResult;
-    }
-
-    private async Task<string> RenderHtmlTemplate(string dictionary, List<Vm.Article> articles)
-    {
-        var htmlTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Html);
-        var htmlTemplate = Template.Parse(htmlTemplateSource);
-
-        var htmlTemplateResult = htmlTemplate.Render(new { articles, dictionary });
-
-        return htmlTemplateResult;
     }
 
     private List<Vm.Article> MapAndSelectArticles(List<Api.Article?> ordbokArticles, string dictionary)

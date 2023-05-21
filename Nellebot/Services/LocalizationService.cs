@@ -5,93 +5,86 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Nellebot.Data.Repositories;
 
-namespace Nellebot.Services
+namespace Nellebot.Services;
+
+public enum LocalizationResource
 {
-    public interface ILocalizationService
+    Ordbok,
+}
+
+public interface ILocalizationService
+{
+    string GetString(string key, LocalizationResource resource, string dictionaryName);
+}
+
+public class LocalizationService : ILocalizationService
+{
+    private readonly Lazy<ValueTask<Dictionary<string, string>>> _ordbokDictionaryNb;
+    private readonly Lazy<ValueTask<Dictionary<string, string>>> _ordbokDictionaryNn;
+    private readonly OrdbokRepository _ordbokRepo;
+
+    public LocalizationService(OrdbokRepository ordbokRepo)
     {
-        string GetString(string key, LocalizationResource resource, LocalizationLocale? locale);
-        string GetString(string key, LocalizationResource resource, string? locale);
+        _ordbokDictionaryNb = new Lazy<ValueTask<Dictionary<string, string>>>(() => LoadDictionary("bm", "no_nb"));
+        _ordbokDictionaryNn = new Lazy<ValueTask<Dictionary<string, string>>>(() => LoadDictionary("nn", "no_nn"));
+        _ordbokRepo = ordbokRepo;
     }
 
-    public class LocalizationService : ILocalizationService
+    public string GetString(string key, LocalizationResource resource, string dictionaryName)
     {
-        private Lazy<Dictionary<string, string>> _ordbokConceptsDictionaryNb;
-        private Lazy<Dictionary<string, string>> _ordbokConceptsDictionaryNn;
+        var lazyDictionary = GetResourceDictionary(resource, dictionaryName);
 
-        public LocalizationService()
-        {
-            _ordbokConceptsDictionaryNb = new Lazy<Dictionary<string, string>>(() => LoadDictionary("OrdbokConcepts_no_nb"));
-            _ordbokConceptsDictionaryNn = new Lazy<Dictionary<string, string>>(() => LoadDictionary("OrdbokConcepts_no_nn"));
-        }
+        // TODO rewrite to async
+        var dictionary = lazyDictionary.Value.GetAwaiter().GetResult();
 
-        public string GetString(string key, LocalizationResource resource, LocalizationLocale? locale)
-        {
-            var dictionary = GetResourceDictionary(resource, locale);
+        if (dictionary.TryGetValue(key, out string? value) && value != null)
+            return value;
 
-            if (dictionary.Value == null)
-                return key;
-
-            if (dictionary.Value.ContainsKey(key))
-                return dictionary.Value[key];
-
-            // Temporarily mark elements that are missing from localization file
-            return $"?{key}?";
-        }
-
-        public string GetString(string key, LocalizationResource resource, string? locale)
-        {
-            var localizationLocale = locale?.ToLower() switch
-            {
-                "bob" => LocalizationLocale.NoNb,
-                "nob" => LocalizationLocale.NoNn,
-                _ => LocalizationLocale.NoNb
-            };
-
-            return GetString(key, resource, localizationLocale);
-        }
-
-        private Lazy<Dictionary<string, string>> GetResourceDictionary(LocalizationResource resource, LocalizationLocale? locale)
-        {
-            return resource switch
-            {
-                LocalizationResource.OrdbokConcepts => locale switch 
-                {
-                    LocalizationLocale.NoNb => _ordbokConceptsDictionaryNb,
-                    LocalizationLocale.NoNn => _ordbokConceptsDictionaryNn,
-                    _ => _ordbokConceptsDictionaryNb
-                },
-                _ => throw new ArgumentException($"Unknown dictionary {resource}")
-            };
-        }
-
-        private Dictionary<string, string> LoadDictionary(string filename)
-        {
-            // TODO double check if Latin1 works on linux
-            var fileContent = File.ReadAllText($"Resources/Localization/{filename}.json", Encoding.Latin1);
-
-            var serializerOptions = new JsonSerializerOptions()
-            {
-                AllowTrailingCommas = true
-            };
-
-            var dictionary = JsonSerializer.Deserialize<Dictionary<string, string>>(fileContent, serializerOptions);
-
-            if (dictionary == null)
-                throw new ArgumentException($"Could not load dictionary resource for {filename}");
-
-            return dictionary;
-        }
+        // Mark elements that are missing from localization file
+        return $"?{key}?";
     }
 
-    public enum LocalizationResource
+    private Lazy<ValueTask<Dictionary<string, string>>> GetResourceDictionary(LocalizationResource resource, string dictionaryName)
     {
-        OrdbokConcepts
+        return resource switch
+        {
+            LocalizationResource.Ordbok => dictionaryName switch
+            {
+                "nb" => _ordbokDictionaryNb,
+                "bm" => _ordbokDictionaryNb,
+                "nn" => _ordbokDictionaryNn,
+                _ => _ordbokDictionaryNb,
+            },
+            _ => throw new ArgumentException($"Unknown dictionary {resource}"),
+        };
     }
 
-    public enum LocalizationLocale
+    private async ValueTask<Dictionary<string, string>> LoadDictionary(string dictionaryName, string locale)
     {
-        NoNb,
-        NoNn
+        var concepts = (await _ordbokRepo.GetConceptStore(dictionaryName))
+            ?? throw new Exception($"Could not load dictionary resource for {dictionaryName}");
+
+        var result = concepts.Concepts;
+
+        var fileContent = await File.ReadAllTextAsync($"Resources/Localization/Ordbok_{locale}.json", Encoding.UTF8);
+
+        var serializerOptions = new JsonSerializerOptions()
+        {
+            AllowTrailingCommas = true,
+        };
+
+        var conceptsExtra = JsonSerializer.Deserialize<Dictionary<string, string>>(fileContent, serializerOptions)
+            ?? throw new Exception($"Could not load dictionary resource for {locale}");
+
+        // append extra concepts to result dictionary if they are not already present
+        foreach (var (key, value) in conceptsExtra)
+        {
+            if (!result.ContainsKey(key))
+                result.Add(key, value);
+        }
+
+        return result;
     }
 }
