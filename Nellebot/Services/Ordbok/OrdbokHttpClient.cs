@@ -12,6 +12,7 @@ namespace Nellebot.Services.Ordbok;
 public class OrdbokHttpClient
 {
     private const int MaxArticles = 5;
+    private const int MaxArticlesV2 = 50;
 
     private readonly HttpClient _client;
 
@@ -70,7 +71,19 @@ public class OrdbokHttpClient
 
     public async Task<List<Article?>> GetArticles(string dictionary, List<int> articleIds, CancellationToken cancellationToken = default)
     {
-        var tasks = articleIds.Take(MaxArticles).Select(id => GetArticle(dictionary, id));
+        var tasks = articleIds.Take(MaxArticles).Select(id => GetArticle(dictionary, id, cancellationToken));
+
+        var result = await Task.WhenAll(tasks);
+
+        if (result == null)
+            return Enumerable.Empty<Article?>().ToList();
+
+        return result.ToList();
+    }
+
+    public async Task<List<Article?>> GetArticlesV2(string dictionary, int[] articleIds, CancellationToken cancellationToken = default)
+    {
+        var tasks = articleIds.Take(MaxArticlesV2).Select(id => GetArticle(dictionary, id, cancellationToken));
 
         var result = await Task.WhenAll(tasks);
 

@@ -1,19 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.SlashCommands;
 using MediatR;
-using Microsoft.Extensions.Logging;
 using Nellebot.Common.Models.Ordbok;
+using Nellebot.Common.Models.Ordbok.ViewModels;
 using Nellebot.Services;
 using Nellebot.Services.Ordbok;
 using Nellebot.Utils;
-using Scriban;
 using Api = Nellebot.Common.Models.Ordbok.Api;
 using Vm = Nellebot.Common.Models.Ordbok.ViewModels;
 
@@ -33,7 +32,9 @@ public record SearchOrdbokQueryV2 : InteractionCommand
 
 public class SearchOrdbokHandlerV2 : IRequestHandler<SearchOrdbokQueryV2>
 {
+    private const int MaxArticlesPerPage = 5;
     private const int MaxDefinitionsInTextForm = 5;
+    private const string CopyrightText = "Universitetet i Bergen og Språkrådet - ordbokene.no";
 
     private readonly OrdbokHttpClient _ordbokClient;
     private readonly OrdbokModelMapper _ordbokModelMapper;
@@ -54,6 +55,7 @@ public class SearchOrdbokHandlerV2 : IRequestHandler<SearchOrdbokQueryV2>
         var ctx = request.Ctx;
         var query = request.Query;
         var dictionary = request.Dictionary;
+        var user = ctx.User;
 
         await ctx.DeferAsync();
 
@@ -67,36 +69,56 @@ public class SearchOrdbokHandlerV2 : IRequestHandler<SearchOrdbokQueryV2>
             return;
         }
 
-        var ordbokArticles = await _ordbokClient.GetArticles(dictionary, articleIds.ToList(), cancellationToken);
+        var ordbokArticles = await _ordbokClient.GetArticlesV2(dictionary, articleIds, cancellationToken);
 
         var articles = MapAndSelectArticles(ordbokArticles, dictionary);
 
-        var queryUrl = $"https://ordbokene.no/{(dictionary == OrdbokDictionaryMap.Bokmal ? "bm" : "nn")}/w/{query}";
+        var title = $"{(dictionary == OrdbokDictionaryMap.Bokmal ? "Bokmålsordboka" : "Nynorskordboka")} | {articles.Count} treff";
 
-        string textTemplateResult = await RenderTextTemplate(articles);
+        var queryUrl = $"https://ordbokene.no/{(dictionary == OrdbokDictionaryMap.Bokmal ? "bm" : "nn")}/search?q={query}&scope=ei";
 
-        var truncatedContent = textTemplateResult[..Math.Min(textTemplateResult.Length, DiscordConstants.MaxEmbedContentLength)];
+        var messagePages = await BuildPages(articles, title, queryUrl);
 
-        var eb = new DiscordEmbedBuilder()
-            .WithTitle(dictionary == OrdbokDictionaryMap.Bokmal ? "Bokmålsordboka" : "Nynorskordboka")
-            .WithUrl(queryUrl)
-            .WithDescription(truncatedContent)
-            .WithFooter("Universitetet i Bergen og Språkrådet - ordbokene.no")
-            .WithColor(DiscordConstants.DefaultEmbedColor);
-
-        var response = new DiscordWebhookBuilder().AddEmbed(eb.Build());
-
-        await ctx.EditResponseAsync(response);
+        await ctx.Interaction.SendPaginatedResponseAsync(ephemeral: false, user, messagePages, asEditResponse: true);
     }
 
-    private async Task<string> RenderTextTemplate(List<Vm.Article> articles)
+    private async Task<IEnumerable<Page>> BuildPages(List<Article> articles, string title, string queryUrl)
     {
-        var textTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticleV2", ScribanTemplateType.Text);
-        var textTemplate = Template.Parse(textTemplateSource);
+        var pages = new List<Page>();
 
-        var maxDefinitions = MaxDefinitionsInTextForm;
+        var articleCount = articles.Count;
+        var pageCount = (int)Math.Ceiling((double)articleCount / MaxArticlesPerPage);
 
-        var textTemplateResult = textTemplate.Render(new { articles, maxDefinitions });
+        for (int i = 0; i < pageCount; i++)
+        {
+            int offset = i * MaxArticlesPerPage;
+
+            var articlesOnPage = articles.Skip(offset).Take(MaxArticlesPerPage).ToList();
+
+            var pagination = new PaginationArgs(offset + 1, i + 1, pageCount);
+
+            var renderedTemplate = await RenderTextTemplate(articlesOnPage, pagination);
+
+            var truncatedContent = renderedTemplate[..Math.Min(renderedTemplate.Length, DiscordConstants.MaxEmbedContentLength)];
+
+            var eb = new DiscordEmbedBuilder()
+                .WithTitle(title)
+                .WithUrl(queryUrl)
+                .WithDescription(truncatedContent)
+                .WithFooter(CopyrightText)
+                .WithColor(DiscordConstants.DefaultEmbedColor);
+
+            pages.Add(new Page(embed: eb));
+        }
+
+        return pages;
+    }
+
+    private async Task<string> RenderTextTemplate(List<Vm.Article> articles, PaginationArgs pagination)
+    {
+        var textTemplate = await _templateLoader.LoadTemplateV2("OrdbokArticleV2", ScribanTemplateType.Text);
+
+        var textTemplateResult = textTemplate.Render(new { articles, pagination, maxDefinitions = MaxDefinitionsInTextForm });
 
         return textTemplateResult;
     }
@@ -112,3 +134,5 @@ public class SearchOrdbokHandlerV2 : IRequestHandler<SearchOrdbokQueryV2>
         return articles;
     }
 }
+
+internal record PaginationArgs(int PageOffset, int CurrentPage, int PageCount);

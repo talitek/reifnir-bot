@@ -6,6 +6,8 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.Hosting;
@@ -53,7 +55,7 @@ public class BotWorker : IHostedService
 
         RegisterSlashCommands();
 
-        _client.UseInteractivity();
+        ConfigureInteractivity();
 
         RegisterLifecycleEventHandlers();
 
@@ -97,6 +99,14 @@ public class BotWorker : IHostedService
         slashCommands.RegisterCommands<RoleModule>(_options.GuildId);
         slashCommands.RegisterCommands<ModmailModule>(_options.GuildId);
         slashCommands.RegisterCommands<OrdbokSlashModule>(_options.GuildId);
+    }
+
+    private void ConfigureInteractivity()
+    {
+        _client.UseInteractivity(new InteractivityConfiguration()
+        {
+            PaginationBehaviour = PaginationBehaviour.Ignore,
+        });
     }
 
     private void RegisterMessageHandlers()
