@@ -50,14 +50,11 @@ public class MessageRefsService
         {
             try
             {
-                if (channel == null) continue;
-
-
                 var messages = (await channel.GetMessagesAfterAsync(lastHeartbeatSnowflake, messageBatchSize))
-                                .Where(m => !m.Author.IsCurrent)
+                                .Where(m => m.Author != null && !m.Author.IsCurrent)
                                 .ToList();
 
-                foreach (DiscordMessage? message in messages)
+                foreach (var message in messages)
                 {
                     bool created = await _messageRefRepo.CreateMessageRefIfNotExists(message.Id, message.Channel.Id, message.Author.Id);
 
