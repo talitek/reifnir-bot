@@ -50,11 +50,23 @@ public class MessageRefsService
         {
             try
             {
-                var messages = (await channel.GetMessagesAfterAsync(lastHeartbeatSnowflake, messageBatchSize))
-                                .Where(m => m.Author != null && !m.Author.IsCurrent)
-                                .ToList();
+                if (channel == null)
+                {
+                    _discordErrorLogger.LogWarning("PopulateMessageRefs", "Channel was null");
+                    continue;
+                }
 
-                foreach (var message in messages)
+                var messagesAfter = await channel.GetMessagesAfterAsync(lastHeartbeatSnowflake, messageBatchSize);
+
+                if (messagesAfter == null)
+                {
+                    _discordErrorLogger.LogWarning("PopulateMessageRefs", "GetMessagesAfterAsync returned null");
+                    continue;
+                }
+
+                var messageByAuthor = messagesAfter.Where(m => m.Author != null && !m.Author.IsCurrent).ToList();
+
+                foreach (var message in messageByAuthor)
                 {
                     bool created = await _messageRefRepo.CreateMessageRefIfNotExists(message.Id, message.Channel.Id, message.Author.Id);
 
