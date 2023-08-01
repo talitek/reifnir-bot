@@ -146,7 +146,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         string responsibleName = memberResponsible?.GetNicknameOrDisplayName() ?? "Unknown mod";
 
         string authorName = authorAsMember?.GetNicknameOrDisplayName() ?? "Unknown user";
-        string authorMention = authorAsMember?.Mention ?? "Unknow user";
+        string authorMention = authorAsMember?.Mention ?? "Unknown user";
 
         _discordLogger.LogActivityMessage(
             $"Message written by **{authorName}** in **{channel.Name}** was removed by **{responsibleName}**.");

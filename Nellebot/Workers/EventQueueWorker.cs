@@ -58,6 +58,11 @@ public class EventQueueWorker : BackgroundService
                         _logger.LogError(innerEx, nameof(EventQueueWorker));
                     }
                 }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, nameof(EventQueueWorker));
+                    _discordErrorLogger.LogError(ex.Message);
+                }
             }
         }
         catch (TaskCanceledException)
