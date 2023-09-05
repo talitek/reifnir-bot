@@ -129,9 +129,9 @@ public class BotWorker : IHostedService
     {
         _client.SocketOpened += OnClientConnected;
         _client.SocketClosed += OnClientDisconnected;
-        _client.Ready += OnClientReady;
+        _client.SessionCreated += OnSessionCreated;
         _client.Heartbeated += OnClientHeartbeat;
-        _client.Resumed += OnClientResumed;
+        _client.SessionResumed += OnSessionResumed;
     }
 
     private Task OnClientHeartbeat(DiscordClient sender, HeartbeatEventArgs e)
@@ -151,9 +151,9 @@ public class BotWorker : IHostedService
         return Task.CompletedTask;
     }
 
-    private async Task OnClientReady(DiscordClient sender, ReadyEventArgs e)
+    private async Task OnSessionCreated(DiscordClient sender, SessionReadyEventArgs e)
     {
-        await _eventQueue.Writer.WriteAsync(new ClientReadyOrResumedNotification());
+        await _eventQueue.Writer.WriteAsync(new SessionCreatedOrResumedNotification());
 
         try
         {
@@ -169,10 +169,10 @@ public class BotWorker : IHostedService
         }
     }
 
-    private Task OnClientResumed(DiscordClient sender, ReadyEventArgs e)
+    private Task OnSessionResumed(DiscordClient sender, SessionReadyEventArgs e)
     {
         _logger.LogInformation("Bot resumed");
 
-        return _eventQueue.Writer.WriteAsync(new ClientReadyOrResumedNotification()).AsTask();
+        return _eventQueue.Writer.WriteAsync(new SessionCreatedOrResumedNotification()).AsTask();
     }
 }

@@ -155,7 +155,7 @@ namespace Nellebot.Utils
         public async Task<T?> ResolveAuditLogEntry<T>(DiscordGuild guild, AuditLogActionType logType, Func<T, bool> predicate)
             where T : DiscordAuditLogEntry
         {
-            var entry = (await guild.GetAuditLogsAsync(limit: 50, by_member: null, action_type: logType))
+            var entry = (await guild.GetAuditLogsAsync(limit: 50, byMember: null!, actionType: logType))
                 .Cast<T>()
                 .FirstOrDefault(predicate);
 
@@ -171,7 +171,7 @@ namespace Nellebot.Utils
         public async Task<TryResolveResult<T>> TryResolveAuditLogEntry<T>(DiscordGuild guild, AuditLogActionType logType, Func<T, bool> predicate)
             where T : DiscordAuditLogEntry
         {
-            var entry = (await guild.GetAuditLogsAsync(limit: 50, by_member: null, action_type: logType))
+            var entry = (await guild.GetAuditLogsAsync(limit: 50, byMember: null!, actionType: logType))
                 .Where(x => x.CreationTimestamp > DateTimeOffset.UtcNow.AddMinutes(-1))
                 .Cast<T>()
                 .FirstOrDefault(predicate);
