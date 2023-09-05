@@ -1,16 +1,13 @@
-﻿using FluentAssertions;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 using Nellebot.Common.AppDiscordModels;
 using Nellebot.Common.Models.UserRoles;
 using Nellebot.Data.Repositories;
 using Nellebot.Services;
-using Nellebot.Services.Loggers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using NSubstitute;
 
 namespace Nellebot.Tests
 {
@@ -18,13 +15,13 @@ namespace Nellebot.Tests
     public class UserRoleServiceTests
     {
         private UserRoleService _sut = null!;
-        private Mock<IUserRoleRepository> _userRoleRepoMock = null!;
+        private IUserRoleRepository _userRoleRepoMock = null!;
 
         [TestInitialize]
         public void Initialize()
         {
             _sut = null!;
-            _userRoleRepoMock = new Mock<IUserRoleRepository>();
+            _userRoleRepoMock = Substitute.For<IUserRoleRepository>();
         }
 
         [TestMethod]
@@ -34,8 +31,8 @@ namespace Nellebot.Tests
             var aliases = "alias";
 
             _userRoleRepoMock
-                .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
-                .ReturnsAsync(new UserRole());
+                .GetRoleByDiscordRoleId(Arg.Any<ulong>())
+                .Returns(new UserRole());
 
             _sut = BuildSutWithMocks();
 
@@ -52,8 +49,8 @@ namespace Nellebot.Tests
             var discordRole = new AppDiscordRole();
 
             _userRoleRepoMock
-                .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
-                .ReturnsAsync((UserRole)null!);
+                .GetRoleByDiscordRoleId(Arg.Any<ulong>())
+                .Returns((UserRole)null!);
 
             _sut = BuildSutWithMocks();
 
@@ -70,8 +67,8 @@ namespace Nellebot.Tests
             var discordRole = new AppDiscordRole();
 
             _userRoleRepoMock
-                .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
-                .ReturnsAsync((UserRole)null!);
+               .GetRoleByDiscordRoleId(Arg.Any<ulong>())
+               .Returns((UserRole)null!);
 
             _sut = BuildSutWithMocks();
 
@@ -88,7 +85,7 @@ namespace Nellebot.Tests
         [DataRow(" ")]
         public void AddRoleAlias_WithEmptyName_ThrowsException(string inputAlias)
         {
-            var discordRole = It.IsAny<AppDiscordRole>();
+            var discordRole = new AppDiscordRole();
             var alias = inputAlias;
 
             _sut = BuildSutWithMocks();
@@ -107,8 +104,8 @@ namespace Nellebot.Tests
             var alias = "alias";
 
             _userRoleRepoMock
-                .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
-                .ReturnsAsync((UserRole)null!);
+               .GetRoleByDiscordRoleId(Arg.Any<ulong>())
+               .Returns((UserRole)null!);
 
             _sut = BuildSutWithMocks();
 
@@ -126,12 +123,12 @@ namespace Nellebot.Tests
             var alias = "alias";
 
             _userRoleRepoMock
-                .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
-                .ReturnsAsync(new UserRole());
+                .GetRoleByDiscordRoleId(Arg.Any<ulong>())
+                .Returns(new UserRole());
 
             _userRoleRepoMock
-                .Setup(x => x.GetRoleAlias(It.IsAny<string>()))
-                .ReturnsAsync(new UserRoleAlias());
+                .GetRoleAlias(Arg.Any<string>())
+                .Returns(new UserRoleAlias());
 
             _sut = BuildSutWithMocks();
 
@@ -149,8 +146,8 @@ namespace Nellebot.Tests
             var alias = "alias";
 
             _userRoleRepoMock
-                .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
-                .ReturnsAsync((UserRole)null!);
+                .GetRoleByDiscordRoleId(Arg.Any<ulong>())
+                .Returns((UserRole)null!);
 
             _sut = BuildSutWithMocks();
 
@@ -169,12 +166,12 @@ namespace Nellebot.Tests
 
             var userRole = new UserRole()
             {
-                UserRoleAliases = new List<UserRoleAlias>()
+                UserRoleAliases = new List<UserRoleAlias>(),
             };
 
             _userRoleRepoMock
-                .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
-                .ReturnsAsync(userRole);
+                .GetRoleByDiscordRoleId(Arg.Any<ulong>())
+                .Returns(userRole);
 
             _sut = BuildSutWithMocks();
 
@@ -192,8 +189,8 @@ namespace Nellebot.Tests
             uint groupNumber = 1;
 
             _userRoleRepoMock
-                .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
-                .ReturnsAsync((UserRole)null!);
+                .GetRoleByDiscordRoleId(Arg.Any<ulong>())
+                .Returns((UserRole)null!);
 
             _sut = BuildSutWithMocks();
 
@@ -210,8 +207,8 @@ namespace Nellebot.Tests
             var discordRole = new AppDiscordRole();
 
             _userRoleRepoMock
-                .Setup(x => x.GetRoleByDiscordRoleId(It.IsAny<ulong>()))
-                .ReturnsAsync((UserRole)null!);
+                .GetRoleByDiscordRoleId(Arg.Any<ulong>())
+                .Returns((UserRole)null!);
 
             _sut = BuildSutWithMocks();
 
@@ -224,7 +221,7 @@ namespace Nellebot.Tests
 
         private UserRoleService BuildSutWithMocks()
         {
-            return new UserRoleService(_userRoleRepoMock.Object);
+            return new UserRoleService(_userRoleRepoMock);
         }
     }
 }

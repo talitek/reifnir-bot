@@ -3,10 +3,10 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 using Nellebot.Services;
 using Nellebot.Services.Ordbok;
-using api = Nellebot.Common.Models.Ordbok.Api;
+using NSubstitute;
+using OrdbokApi = Nellebot.Common.Models.Ordbok.Api;
 
 namespace Nellebot.Tests
 {
@@ -14,7 +14,6 @@ namespace Nellebot.Tests
     public class OrdbokTests
     {
         [TestMethod]
-        [Ignore]
         public async Task TestArticleDeserialization()
         {
             var directory = AppDomain.CurrentDomain.BaseDirectory;
@@ -25,17 +24,17 @@ namespace Nellebot.Tests
 
             try
             {
-                var result = JsonSerializer.Deserialize<api.Article>(json);
+                var result = JsonSerializer.Deserialize<OrdbokApi.Article>(json);
 
-                var localizationService = new Mock<ILocalizationService>();
+                var localizationService = Substitute.For<ILocalizationService>();
 
                 localizationService
-                    .Setup(m => m.GetString(It.IsAny<string>(), It.IsAny<LocalizationResource>(), It.IsAny<string>()))
-                    .Returns((string s, LocalizationResource rs, string loc) => s);
+                    .GetString(Arg.Any<string>(), Arg.Any<LocalizationResource>(), Arg.Any<string>())
+                    .Returns(x => x[0]);
 
-                var ordbokContentParser = new OrdbokContentParser(localizationService.Object);
+                var ordbokContentParser = new OrdbokContentParser(localizationService);
 
-                var modelMapper = new OrdbokModelMapper(ordbokContentParser, localizationService.Object);
+                var modelMapper = new OrdbokModelMapper(ordbokContentParser, localizationService);
 
                 var article = modelMapper.MapArticle(result!, "bm");
             }
