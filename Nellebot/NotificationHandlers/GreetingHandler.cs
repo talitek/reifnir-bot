@@ -39,7 +39,7 @@ public class GreetingHandler :
 
     public Task Handle(GuildMemberRemovedNotification notification, CancellationToken cancellationToken)
     {
-        string memberName = notification.EventArgs.Member.GetNicknameOrDisplayName();
+        string memberName = notification.EventArgs.Member.DisplayName;
 
         _goodbyeMessageBuffer.AddUser(memberName);
 
