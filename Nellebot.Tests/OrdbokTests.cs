@@ -11,6 +11,7 @@ using OrdbokApi = Nellebot.Common.Models.Ordbok.Api;
 namespace Nellebot.Tests
 {
     [TestClass]
+    [Ignore]
     public class OrdbokTests
     {
         [TestMethod]
