@@ -38,7 +38,7 @@ public static class DiscordExtensions
 
     private static bool HasLegacyUsername(this DiscordUser user)
     {
-        return user.Discriminator == "0";
+        return user.Discriminator != "0";
     }
 
     public static Task CreateSuccessReactionAsync(this DiscordMessage message)
