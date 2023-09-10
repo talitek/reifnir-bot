@@ -50,7 +50,7 @@ public class MessageRefsService
         {
             try
             {
-                if (channel == null)
+                if (channel is null)
                 {
                     _discordErrorLogger.LogWarning("PopulateMessageRefs", "Channel was null");
                     continue;
@@ -78,7 +78,7 @@ public class MessageRefsService
             }
             catch (Exception ex)
             {
-                if (ex.Message == DiscordConstants.UnauthorizedErrorMessage)
+                if (ex.Message.Trim() == DiscordConstants.UnauthorizedErrorMessage)
                 {
                     continue;
                 }

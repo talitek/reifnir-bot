@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
 using Nellebot.Helpers;
@@ -7,27 +8,37 @@ namespace Nellebot.Utils;
 
 public static class DiscordExtensions
 {
+    [Obsolete("Function implemented in D# library.")]
     public static string GetNicknameOrDisplayName(this DiscordMember member)
     {
-        var username = !string.IsNullOrWhiteSpace(member.Nickname)
-            ? member.Nickname
-            : member.DisplayName;
+        return member.DisplayName;
+    }
 
-        return username;
+    public static string GetDetailedUserIdentifier(this DiscordUser user)
+    {
+        return $"{user.GetFullUsername()} ({user.Id})";
     }
 
     public static string GetDetailedMemberIdentifier(this DiscordMember member)
     {
-        return !string.IsNullOrWhiteSpace(member.Username)
-            ? $"{member.Username}#{member.Discriminator}, User Id: {member.Id}"
-            : string.Empty;
+        var memberUsername = member.Username;
+        var memberDisplayName = member.DisplayName;
+
+        var memberFormattedDisplayName = memberUsername != memberDisplayName
+                ? $"{member.DisplayName} ({member.GetFullUsername()}, {member.Id})"
+                : $"{member.GetFullUsername()} ({member.Id})";
+
+        return memberFormattedDisplayName;
     }
 
     public static string GetFullUsername(this DiscordUser user)
     {
-        return !string.IsNullOrWhiteSpace(user.Username)
-            ? $"{user.Username}#{user.Discriminator}"
-            : string.Empty;
+        return user.HasLegacyUsername() ? $"{user.Username}#{user.Discriminator}" : user.Username;
+    }
+
+    private static bool HasLegacyUsername(this DiscordUser user)
+    {
+        return user.Discriminator != "0";
     }
 
     public static Task CreateSuccessReactionAsync(this DiscordMessage message)

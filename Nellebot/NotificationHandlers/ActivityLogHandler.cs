@@ -46,8 +46,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
     {
         GuildBanAddEventArgs args = notification.EventArgs;
 
-        string memberName = args.Member.GetNicknameOrDisplayName();
-        string memberIdentifier = args.Member.GetDetailedMemberIdentifier();
+        string memberName = args.Member.GetDetailedMemberIdentifier();
 
         DiscordAuditLogBanEntry? auditBanEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogBanEntry>(
                                 args.Guild, AuditLogActionType.Ban, (x) => x.Target.Id == args.Member.Id);
@@ -59,22 +58,21 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
         DiscordMember? memberResponsible = await _discordResolver.ResolveGuildMember(args.Guild, auditBanEntry.UserResponsible.Id);
 
-        if (memberResponsible == null)
+        if (memberResponsible is null)
         {
             return;
         }
 
-        string responsibleName = memberResponsible.GetNicknameOrDisplayName();
+        string responsibleName = memberResponsible.DisplayName;
 
-        _discordLogger.LogActivityMessage($"**{memberName}** was banned by **{responsibleName}**. Reason: {auditBanEntry.Reason}. [{memberIdentifier}]");
+        _discordLogger.LogActivityMessage($"**{memberName}** was banned by **{responsibleName}**. Reason: {auditBanEntry.Reason}.");
     }
 
     public async Task Handle(GuildBanRemovedNotification notification, CancellationToken cancellationToken)
     {
         GuildBanRemoveEventArgs args = notification.EventArgs;
 
-        string memberName = args.Member.GetNicknameOrDisplayName();
-        string memberIdentifier = args.Member.GetDetailedMemberIdentifier();
+        string memberName = args.Member.GetDetailedMemberIdentifier();
 
         DiscordAuditLogBanEntry? auditUnbanEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogBanEntry>(
                                 args.Guild, AuditLogActionType.Unban, (x) => x.Target.Id == args.Member.Id);
@@ -86,14 +84,14 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
         DiscordMember? memberResponsible = await _discordResolver.ResolveGuildMember(args.Guild, auditUnbanEntry.UserResponsible.Id);
 
-        if (memberResponsible == null)
+        if (memberResponsible is null)
         {
             return;
         }
 
-        string responsibleName = memberResponsible.GetNicknameOrDisplayName();
+        string responsibleName = memberResponsible.DisplayName;
 
-        _discordLogger.LogActivityMessage($"**{memberName}** was unbanned by **{responsibleName}**. [{memberIdentifier}]");
+        _discordLogger.LogActivityMessage($"**{memberName}** was unbanned by **{responsibleName}**.");
     }
 
     public async Task Handle(MessageDeletedNotification notification, CancellationToken cancellationToken)
@@ -143,22 +141,20 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
         DiscordMember? memberResponsible = await _discordResolver.ResolveGuildMember(guild, auditMessageDeleteEntry.UserResponsible.Id);
 
-        string responsibleName = memberResponsible?.GetNicknameOrDisplayName() ?? "Unknown mod";
+        string responsibleName = memberResponsible?.DisplayName ?? "Unknown mod";
 
-        string authorName = authorAsMember?.GetNicknameOrDisplayName() ?? "Unknown user";
-        string authorMention = authorAsMember?.Mention ?? "Unknown user";
+        string authorName = authorAsMember?.GetDetailedMemberIdentifier() ?? "Unknown user";
 
-        _discordLogger.LogActivityMessage(
-            $"Message written by **{authorName}** in **{channel.Name}** was removed by **{responsibleName}**.");
+        string logMessage = $"Message written by **{authorName}** in **{channel.Name}** was removed by **{responsibleName}**.";
 
-        string extendedMessage = $"Message written by **{authorMention}** in **{channel.Name}** was removed by **{responsibleName}**.";
+        _discordLogger.LogActivityMessage(logMessage);
 
         if (!string.IsNullOrWhiteSpace(message.Content))
         {
-            extendedMessage += $" Original message:{Environment.NewLine}> {message.Content}";
+            logMessage += $" Original message:{Environment.NewLine}> {message.Content}";
         }
 
-        _discordLogger.LogExtendedActivityMessage(extendedMessage);
+        _discordLogger.LogExtendedActivityMessage(logMessage);
     }
 
     // TODO handle bulk deletion of messages belonging to different authors
@@ -173,9 +169,9 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
         var messages = (await Task.WhenAll(args.Messages.Select(ResolveMessage))).ToList();
 
-        DiscordUser? author = args.Messages.Where(m => m?.Author != null).Select(m => m.Author).FirstOrDefault();
+        DiscordUser? author = args.Messages.Where(m => m?.Author is not null).Select(m => m.Author).FirstOrDefault();
 
-        if (author == null)
+        if (author is null)
         {
             _discordErrorLogger.LogWarning($"{nameof(MessageBulkDeletedNotification)}", $"Could not find any message authors");
 
@@ -184,7 +180,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
             return;
         }
 
-        string authorName = author.GetFullUsername();
+        string authorName = author.GetDetailedUserIdentifier();
 
         var auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogMessageEntry>(
                                         args.Guild,
@@ -200,7 +196,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
         DiscordMember? memberResponsible = await _discordResolver.ResolveGuildMember(args.Guild, auditMessageDeleteEntry.UserResponsible.Id);
 
-        string responsibleName = memberResponsible?.GetNicknameOrDisplayName() ?? "Unknown mod";
+        string responsibleName = memberResponsible?.DisplayName ?? "Unknown mod";
 
         _discordLogger.LogActivityMessage($"{messages.Count} messages written by **{authorName}** were removed by **{responsibleName}**.");
 
@@ -227,11 +223,9 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
         DiscordMember member = args.Member;
 
-        string memberName = member.GetNicknameOrDisplayName();
-        string memberFullIdentifier = $"{member.Mention} [{member.GetDetailedMemberIdentifier()}]";
+        string memberIdentifier = member.GetDetailedMemberIdentifier();
 
-        _discordLogger.LogActivityMessage($"**{memberName}** joined the server");
-        _discordLogger.LogExtendedActivityMessage($"{memberFullIdentifier} joined the server");
+        _discordLogger.LogActivityMessage($"**{memberIdentifier}** joined the server");
 
         await _userLogService.CreateUserLog(member.Id, DateTime.UtcNow, UserLogType.JoinedServer);
         await _userLogService.CreateUserLog(member.Id, member.GetFullUsername(), UserLogType.UsernameChange);
@@ -245,8 +239,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         DiscordMember member = args.Member;
         DiscordGuild guild = args.Guild;
 
-        string memberName = member.GetNicknameOrDisplayName();
-        string memberFullIdentifier = $"**{member.GetNicknameOrDisplayName()}** [{member.GetDetailedMemberIdentifier()}]";
+        string memberFullIdentifier = member.GetDetailedMemberIdentifier();
 
         // It's possible that the audit log entry might not be available right away.
         // If that turns out to be the case, consider wrapping this call into some sort of exeponential backoff retry.
@@ -263,22 +256,20 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
             var kickReason = auditKickEntry.Reason.NullOrWhiteSpaceTo("*No reason provided*");
 
-            if (memberResponsible == null)
+            if (memberResponsible is null)
             {
                 return;
             }
 
-            string responsibleName = memberResponsible.GetNicknameOrDisplayName();
+            string responsibleName = memberResponsible.DisplayName;
 
-            _discordLogger.LogActivityMessage($"**{memberName}** was kicked by **{responsibleName}**. Reason: {kickReason}.");
-            _discordLogger.LogExtendedActivityMessage($"{memberFullIdentifier} was kicked by **{responsibleName}**. Reason: {kickReason}.");
+            _discordLogger.LogActivityMessage($"**{memberFullIdentifier}** was kicked by **{responsibleName}**. Reason: {kickReason}.");
 
             await _userLogService.CreateUserLog(member.Id, DateTime.UtcNow, UserLogType.LeftServer, memberResponsible.Id);
         }
         else
         {
-            _discordLogger.LogActivityMessage($"**{memberName}** left the server");
-            _discordLogger.LogExtendedActivityMessage($"{memberFullIdentifier} left the server");
+            _discordLogger.LogActivityMessage($"**{memberFullIdentifier}** left the server");
 
             await _userLogService.CreateUserLog(member.Id, DateTime.UtcNow, UserLogType.LeftServer);
         }
@@ -428,18 +419,18 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         DiscordRole? removedRole = args.RolesBefore.ExceptBy(args.RolesAfter.Select(r => r.Id), x => x.Id).FirstOrDefault();
 
         string memberMention = args.Member.Mention;
-        string memberNickname = args.Member.GetNicknameOrDisplayName();
+        string memberDisplayName = args.Member.DisplayName;
 
-        if (addedRole != null)
+        if (addedRole is not null)
         {
-            _discordLogger.LogActivityMessage($"Added role **{addedRole.Name}** to **{memberNickname}**");
+            _discordLogger.LogActivityMessage($"Added role **{addedRole.Name}** to **{memberDisplayName}**");
             _discordLogger.LogExtendedActivityMessage($"Role change for {memberMention}: Added {addedRole.Name}.");
             return true;
         }
 
-        if (removedRole != null)
+        if (removedRole is not null)
         {
-            _discordLogger.LogActivityMessage($"Removed role **{removedRole.Name}** from **{memberNickname}**");
+            _discordLogger.LogActivityMessage($"Removed role **{removedRole.Name}** from **{memberDisplayName}**");
             _discordLogger.LogExtendedActivityMessage($"Role change for {memberMention}: Removed {removedRole.Name}.");
             return true;
         }
@@ -449,7 +440,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
     private async Task<AppDiscordMessage?> ResolveMessage(DiscordMessage deletedMessage)
     {
-        if (deletedMessage == null)
+        if (deletedMessage is null)
         {
             return null;
         }

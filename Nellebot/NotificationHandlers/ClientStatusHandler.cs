@@ -1,16 +1,17 @@
-﻿using MediatR;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.Common.Extensions;
 using Nellebot.Services;
 using Nellebot.Services.Loggers;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Nellebot.NotificationHandlers;
+
 public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotification>,
-                                    INotificationHandler<ClientReadyOrResumedNotification>,
+                                    INotificationHandler<SessionCreatedOrResumedNotification>,
                                     INotificationHandler<ClientDisconnected>
 {
     // POC: Make better
@@ -44,7 +45,7 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
         return _botSettingsService.SetLastHeartbeat(notification.EventArgs.Timestamp);
     }
 
-    public async Task Handle(ClientReadyOrResumedNotification notification, CancellationToken cancellationToken)
+    public async Task Handle(SessionCreatedOrResumedNotification notification, CancellationToken cancellationToken)
     {
         var lastHeartbeat = await _botSettingsService.GetLastHeartbeat() ?? DateTimeOffset.UtcNow;
 
