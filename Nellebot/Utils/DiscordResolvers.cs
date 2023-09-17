@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.Entities;
+using DSharpPlus.Entities.AuditLogs;
 using Nellebot.Services.Loggers;
 
 namespace Nellebot.Utils
@@ -155,33 +156,31 @@ namespace Nellebot.Utils
         public async Task<T?> ResolveAuditLogEntry<T>(DiscordGuild guild, AuditLogActionType logType, Func<T, bool> predicate)
             where T : DiscordAuditLogEntry
         {
-            var entry = (await guild.GetAuditLogsAsync(limit: 50, byMember: null!, actionType: logType))
-                .Cast<T>()
-                .FirstOrDefault(predicate);
-
-            if (entry == null)
+            await foreach (var entry in guild.GetAuditLogsAsync(limit: 50, byMember: null!, actionType: logType))
             {
-                _discordErrorLogger.LogError("Missing audit entry", $"Missing audit entry of type {logType}");
-                return null;
+                if (entry is T tEntry && predicate(tEntry))
+                {
+                    return tEntry;
+                }
             }
 
-            return entry;
+            return null;
         }
 
         public async Task<TryResolveResult<T>> TryResolveAuditLogEntry<T>(DiscordGuild guild, AuditLogActionType logType, Func<T, bool> predicate)
             where T : DiscordAuditLogEntry
         {
-            var entry = (await guild.GetAuditLogsAsync(limit: 50, byMember: null!, actionType: logType))
-                .Where(x => x.CreationTimestamp > DateTimeOffset.UtcNow.AddMinutes(-1))
-                .Cast<T>()
-                .FirstOrDefault(predicate);
-
-            if (entry == null)
+            await foreach (var entry in guild.GetAuditLogsAsync(limit: 50, byMember: null!, actionType: logType))
             {
-                return TryResolveResult<T>.FromError("Audit log entry not found");
+                if (entry.CreationTimestamp < DateTimeOffset.UtcNow.AddMinutes(-1)) continue;
+
+                if (entry is T tEntry && predicate(tEntry))
+                {
+                    return TryResolveResult<T>.FromValue(tEntry);
+                }
             }
 
-            return TryResolveResult<T>.FromValue(entry);
+            return TryResolveResult<T>.FromError("Audit log entry not found");
         }
     }
 }

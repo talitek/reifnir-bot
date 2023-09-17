@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
+using DSharpPlus.Entities.AuditLogs;
 using DSharpPlus.EventArgs;
 using MediatR;
 using Microsoft.Extensions.Options;
