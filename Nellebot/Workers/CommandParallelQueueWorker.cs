@@ -11,10 +11,10 @@ namespace Nellebot.Workers;
 public class CommandParallelQueueWorker : BackgroundService
 {
     private readonly ILogger<CommandParallelQueueWorker> _logger;
-    private readonly CommandQueueChannel _channel;
+    private readonly CommandParallelQueueChannel _channel;
     private readonly IMediator _mediator;
 
-    public CommandParallelQueueWorker(ILogger<CommandParallelQueueWorker> logger, CommandQueueChannel channel, IMediator mediator)
+    public CommandParallelQueueWorker(ILogger<CommandParallelQueueWorker> logger, CommandParallelQueueChannel channel, IMediator mediator)
     {
         _logger = logger;
         _channel = channel;

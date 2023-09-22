@@ -39,7 +39,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
 
         var member = await _resolver.ResolveGuildMember(ctx.User.Id);
 
-        if (member == null)
+        if (member is null)
         {
             var isDmFromNonGuildMember = channel.IsPrivate;
 
