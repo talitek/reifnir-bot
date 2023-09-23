@@ -4,7 +4,9 @@ using DSharpPlus;
 using DSharpPlus.Entities;
 using MediatR;
 using Microsoft.Extensions.Options;
+using Nellebot.Common.Extensions;
 using Nellebot.Helpers;
+using Nellebot.Utils;
 
 namespace Nellebot.NotificationHandlers;
 
@@ -27,6 +29,9 @@ public class SuggestionHandler : INotificationHandler<MessageCreatedNotification
         await message.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.ArrowDown));
         await message.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.ArrowUpDown));
 
-        await message.CreateThreadAsync("Suggestion discussion", AutoArchiveDuration.Week, "Automated thread for suggestion discussion");
+        const string threadPrefix = "Discussion for: ";
+        var threadTitle = $"{threadPrefix}{message.Content.GetFirstLine(DiscordConstants.MaxThreadTitleLength - threadPrefix.Length)}";
+
+        await message.CreateThreadAsync(threadTitle, AutoArchiveDuration.Week, "Automated thread for suggestion discussion");
     }
 }
