@@ -61,7 +61,7 @@ public class ModmailTicketRepository
         var existingTicket = (await _dbContext.ModmailTickets.FindAsync(new object[] { ticket.Id }, cancellationToken))
             ?? throw new Exception($"Could not find ticket with id {ticket.Id}");
 
-        existingTicket.LastActivity = ticket.LastActivity;
+        existingTicket.LastActivity = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
