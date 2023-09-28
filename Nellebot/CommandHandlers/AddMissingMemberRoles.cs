@@ -28,7 +28,7 @@ public class AddMissingMembeRolesHandler : IRequestHandler<AddMissingMemberRoles
         var ctx = request.Ctx;
 
         var memberRoleId = _options.MemberRoleId;
-        var requiredRoleIds = _options.RequiredRoleIds;
+        var memberRoleIds = _options.MemberRoleIds;
 
         var memberRole = ctx.Guild.Roles[_options.MemberRoleId];
 
@@ -37,7 +37,7 @@ public class AddMissingMembeRolesHandler : IRequestHandler<AddMissingMemberRoles
 
         var memberRoleCandidates = ctx.Guild.Members
                                     .Where(m => !m.Value.Roles.Any(r => r.Id == memberRoleId))
-                                    .Where(m => m.Value.Roles.Any(r => requiredRoleIds.Contains(r.Id)))
+                                    .Where(m => m.Value.Roles.Any(r => memberRoleIds.Contains(r.Id)))
                                     .Select(r => r.Value)
                                     .ToList();
 

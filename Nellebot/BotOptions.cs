@@ -49,7 +49,7 @@ namespace Nellebot
 
         public ulong MemberRoleId { get; init; }
 
-        public ulong[] RequiredRoleIds { get; init; } = Array.Empty<ulong>();
+        public ulong[] MemberRoleIds { get; init; } = Array.Empty<ulong>();
 
         /// <summary>
         /// Gets a value indicating whether feature flag for populating message refs on Ready event.

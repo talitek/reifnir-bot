@@ -22,7 +22,7 @@ namespace Nellebot.NotificationHandlers
 
             if (!memberRolesChanged) return;
 
-            var requiredRoleIds = _options.RequiredRoleIds;
+            var memberRoleIds = _options.MemberRoleIds;
             var memberRoleId = _options.MemberRoleId;
 
             var member = notification.EventArgs.Member;
@@ -34,7 +34,7 @@ namespace Nellebot.NotificationHandlers
             if (memberRole == null)
                 throw new ArgumentException($"Could not find role with id {memberRoleId}");
 
-            var userShouldHaveMemberRole = member.Roles.Any(r => requiredRoleIds.Contains(r.Id));
+            var userShouldHaveMemberRole = member.Roles.Any(r => memberRoleIds.Contains(r.Id));
             var userHasMemberRole = member.Roles.Any(r => r.Id == memberRoleId);
 
             if (userShouldHaveMemberRole && !userHasMemberRole)
