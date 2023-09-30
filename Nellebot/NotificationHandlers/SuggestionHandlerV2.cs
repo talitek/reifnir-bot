@@ -23,11 +23,16 @@ public class SuggestionHandlerV2 : INotificationHandler<MessageCreatedNotificati
     {
         var suggestionsForumChannelId = _options.SuggestionsChannelId2;
 
-        var channelParentId = notification.EventArgs.Channel?.Parent.Id;
+        var channel = notification.EventArgs.Channel;
+        var message = notification.EventArgs.Message;
+
+        var channelParentId = channel?.Parent.Id;
 
         if (channelParentId == null || channelParentId != suggestionsForumChannelId) return;
 
-        var message = notification.EventArgs.Message;
+        var isOriginalForumPost = message.Id == channel!.Id;
+
+        if (!isOriginalForumPost) return;
 
         await message.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.ArrowUp));
         await message.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.ArrowDown));
