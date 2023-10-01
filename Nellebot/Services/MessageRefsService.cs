@@ -56,7 +56,17 @@ public class MessageRefsService
                     continue;
                 }
 
-                var messagesAfter = await channel.GetMessagesAfterAsync(lastHeartbeatSnowflake, messageBatchSize);
+                IReadOnlyList<DiscordMessage>? messagesAfter = null;
+
+                try
+                {
+                    messagesAfter = await channel.GetMessagesAfterAsync(lastHeartbeatSnowflake, messageBatchSize);
+                }
+                catch (NullReferenceException)
+                {
+                    _discordErrorLogger.LogWarning("PopulateMessageRefs", "channel.GetMessagesAfterAsync() threw a null reffy");
+                    continue;
+                }
 
                 if (messagesAfter == null)
                 {
