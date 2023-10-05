@@ -62,8 +62,9 @@ public class MessageRefsService
                 {
                     messagesAfter = await channel.GetMessagesAfterAsync(lastHeartbeatSnowflake, messageBatchSize);
                 }
-                catch (NullReferenceException)
+                catch (NullReferenceException ex)
                 {
+                    _logger.LogError(ex, "NullReferenceException in PopulateMessageRefs");
                     _discordErrorLogger.LogWarning("PopulateMessageRefs", "channel.GetMessagesAfterAsync() threw a null reffy");
                     continue;
                 }
