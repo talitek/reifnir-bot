@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
+using DSharpPlus.Exceptions;
 using Microsoft.Extensions.Logging;
 using Nellebot.Data.Repositories;
 using Nellebot.Services.Loggers;
@@ -89,7 +90,7 @@ public class MessageRefsService
             }
             catch (Exception ex)
             {
-                if (ex.Message.Trim() == DiscordConstants.UnauthorizedErrorMessage)
+                if (ex is UnauthorizedException)
                 {
                     continue;
                 }
@@ -108,12 +109,12 @@ public class MessageRefsService
     {
         var createdMessages = new List<DiscordMessage>();
 
-        IEnumerable<DiscordChannel> channels = guild.Channels.Values;
+        var channels = guild.Channels.Values.Where(c => c.Type == DSharpPlus.ChannelType.Text).ToList();
 
         const int messageBatchSize = 100;
         const int messageBatches = 10;
 
-        foreach (DiscordChannel? channel in channels)
+        foreach (var channel in channels)
         {
             try
             {
@@ -150,7 +151,7 @@ public class MessageRefsService
             }
             catch (Exception ex)
             {
-                if (ex.Message == DiscordConstants.UnauthorizedErrorMessage)
+                if (ex is UnauthorizedException)
                 {
                     continue;
                 }

@@ -11,8 +11,6 @@ public class DiscordConstants
     public const int ErrorEmbedColor = 14431557; // #dc3545
     public const int WarningEmbedColor = 16612884; // #fd7e14
 
-    public const string UnauthorizedErrorMessage = "Unauthorized: 403. Json Message: Missing Access";
-
     public const char NewLineChar = '\n';
     public const string SlashCommandPrefix = "/";
 
