@@ -65,7 +65,7 @@ public class MessageRefsService
                 }
                 catch (NullReferenceException ex)
                 {
-                    _logger.LogError(ex, "NullReferenceException in PopulateMessageRefs");
+                    _logger.LogError(ex, "NullReferenceException in PopulateMessageRefs. Channel: {ChannelToString}", channel.ToString());
                     _discordErrorLogger.LogWarning("PopulateMessageRefs", "channel.GetMessagesAfterAsync() threw a null reffy");
                     continue;
                 }
