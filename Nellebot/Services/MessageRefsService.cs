@@ -57,35 +57,34 @@ public class MessageRefsService
                     continue;
                 }
 
-                IReadOnlyList<DiscordMessage>? messagesAfter = null;
-
                 try
                 {
-                    messagesAfter = await channel.GetMessagesAfterAsync(lastHeartbeatSnowflake, messageBatchSize);
+                    await foreach (var message in channel.GetMessagesAfterAsync(lastHeartbeatSnowflake, messageBatchSize))
+                    {
+                        if (message is null)
+                        {
+                            _discordErrorLogger.LogWarning("PopulateMessageRefsInit", "Message was null");
+                            continue;
+                        }
+
+                        if (message.Author.IsCurrent)
+                        {
+                            continue;
+                        }
+
+                        bool created = await _messageRefRepo.CreateMessageRefIfNotExists(message.Id, message.Channel.Id, message.Author.Id);
+
+                        if (created)
+                        {
+                            messageRefCreatedCount++;
+                        }
+                    }
                 }
                 catch (NullReferenceException ex)
                 {
-                    _logger.LogError(ex, "NullReferenceException in PopulateMessageRefs. Channel: {ChannelToString}", channel.ToString());
-                    _discordErrorLogger.LogWarning("PopulateMessageRefs", "channel.GetMessagesAfterAsync() threw a null reffy");
+                    _logger.LogError(ex, "NullReferenceException in PopulateMessageRefs. LastHeartbeatSnowflake: {LastHeartbeatSnowflake}. Channel: {ChannelToString}", lastHeartbeatSnowflake, channel.ToString());
+                    _discordErrorLogger.LogWarning("PopulateMessageRefs", $"NullReferenceException in PopulateMessageRefs. LastHeartbeatSnowflake: {lastHeartbeatSnowflake}. Channel: {channel}");
                     continue;
-                }
-
-                if (messagesAfter == null)
-                {
-                    _discordErrorLogger.LogWarning("PopulateMessageRefs", "GetMessagesAfterAsync returned null");
-                    continue;
-                }
-
-                var messageByAuthor = messagesAfter.Where(m => m.Author != null && !m.Author.IsCurrent).ToList();
-
-                foreach (var message in messageByAuthor)
-                {
-                    bool created = await _messageRefRepo.CreateMessageRefIfNotExists(message.Id, message.Channel.Id, message.Author.Id);
-
-                    if (created)
-                    {
-                        messageRefCreatedCount++;
-                    }
                 }
             }
             catch (Exception ex)
@@ -111,33 +110,34 @@ public class MessageRefsService
 
         var channels = guild.Channels.Values.Where(c => c.Type == DSharpPlus.ChannelType.Text).ToList();
 
-        const int messageBatchSize = 100;
-        const int messageBatches = 10;
+        const int messageBatchSize = 1000;
 
         foreach (var channel in channels)
         {
             try
             {
-                ulong? lastMessageSnowflake = channel.LastMessageId;
+                var lastMessageSnowflake = channel.LastMessageId;
 
                 if (lastMessageSnowflake == null)
                 {
                     continue;
                 }
 
-                for (int i = 0; i < messageBatches; i++)
+                try
                 {
-                    var messages = (await channel.GetMessagesBeforeAsync((ulong)lastMessageSnowflake, messageBatchSize))
-                                    .Where(m => !m.Author.IsCurrent)
-                                    .ToList();
-
-                    if (messages.Count == 0)
+                    await foreach (var message in channel.GetMessagesBeforeAsync((ulong)lastMessageSnowflake, messageBatchSize))
                     {
-                        break;
-                    }
+                        if (message is null)
+                        {
+                            _discordErrorLogger.LogWarning("PopulateMessageRefsInit", "Message was null");
+                            continue;
+                        }
 
-                    foreach (DiscordMessage? message in messages)
-                    {
+                        if (message.Author.IsCurrent)
+                        {
+                            continue;
+                        }
+
                         bool created = await _messageRefRepo.CreateMessageRefIfNotExists(message.Id, message.Channel.Id, message.Author.Id);
 
                         if (created)
@@ -145,8 +145,12 @@ public class MessageRefsService
                             createdMessages.Add(message);
                         }
                     }
-
-                    lastMessageSnowflake = messages.Min(m => m.Id);
+                }
+                catch (NullReferenceException ex)
+                {
+                    _logger.LogError(ex, "NullReferenceException in PopulateMessageRefs. LastMessageSnowflake: {LastMessageSnowflake}. Channel: {ChannelToString}", lastMessageSnowflake, channel.ToString());
+                    _discordErrorLogger.LogWarning("PopulateMessageRefs", $"NullReferenceException in PopulateMessageRefs. LastMessageSnowflake: {lastMessageSnowflake}. Channel: {channel}");
+                    continue;
                 }
             }
             catch (Exception ex)
@@ -160,7 +164,7 @@ public class MessageRefsService
 
                 _discordErrorLogger.LogError(ex, errorMessage);
 
-                _logger.LogError(ex, errorMessage);
+                _logger.LogError(ex, "{errorMessage}", errorMessage);
             }
         }
 

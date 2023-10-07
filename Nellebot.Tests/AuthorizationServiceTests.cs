@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using NSubstitute;
 using Nellebot.Common.AppDiscordModels;
 using Nellebot.Services;
+using NSubstitute;
 
 namespace Nellebot.Tests
 {

@@ -69,7 +69,11 @@ public class AdminModule : BaseCommandModule
     {
         DiscordChannel channel = ctx.Guild.GetChannel(channelId);
 
-        IReadOnlyList<DiscordMessage> messagesToDelete = await channel.GetMessagesAfterAsync(messageId, 1000);
+        var messagesToDelete = new List<DiscordMessage>();
+        await foreach (var m in channel.GetMessagesAfterAsync(messageId, 1000))
+        {
+            messagesToDelete.Add(m);
+        }
 
         await channel.DeleteMessagesAsync(messagesToDelete);
 
