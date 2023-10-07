@@ -63,7 +63,7 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
 
         if (_options.AutoPopulateMessagesOnReadyEnabled)
         {
-            var createdCount = await _messageRefsService.PopulateMessageRefs(lastHeartbeat);
+            var createdCount = await _messageRefsService.PopulateMessageRefs(lastHeartbeat, notification.EventSource);
 
             if (createdCount > 0)
             {

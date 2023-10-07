@@ -26,7 +26,7 @@ public class MessageRefsService
         _messageRefRepo = messageRefRepo;
     }
 
-    public async Task<int> PopulateMessageRefs(DateTimeOffset lastHeartbeat)
+    public async Task<int> PopulateMessageRefs(DateTimeOffset lastHeartbeat, string eventSource)
     {
         var guild = _discordResolver.ResolveGuild();
 
@@ -63,7 +63,7 @@ public class MessageRefsService
                     {
                         if (message is null)
                         {
-                            _discordErrorLogger.LogWarning("PopulateMessageRefsInit", "Message was null");
+                            _discordErrorLogger.LogWarning($"PopulateMessageRefsInit ({eventSource})", "Message was null");
                             continue;
                         }
 
@@ -82,8 +82,8 @@ public class MessageRefsService
                 }
                 catch (NullReferenceException ex)
                 {
-                    _logger.LogError(ex, "NullReferenceException in PopulateMessageRefs. LastHeartbeatSnowflake: {LastHeartbeatSnowflake}. Channel: {ChannelToString}", lastHeartbeatSnowflake, channel.ToString());
-                    _discordErrorLogger.LogWarning("PopulateMessageRefs", $"NullReferenceException in PopulateMessageRefs. LastHeartbeatSnowflake: {lastHeartbeatSnowflake}. Channel: {channel}");
+                    _logger.LogError(ex, "NullReferenceException in PopulateMessageRefs. LastHeartbeatSnowflake: {LastHeartbeatSnowflake}. EventSource: {EventSource}", lastHeartbeatSnowflake, eventSource);
+                    _discordErrorLogger.LogWarning("PopulateMessageRefs", $"NullReferenceException in PopulateMessageRefs. LastHeartbeatSnowflake: {lastHeartbeatSnowflake}. EventSource: {eventSource}");
                     continue;
                 }
             }
@@ -148,8 +148,8 @@ public class MessageRefsService
                 }
                 catch (NullReferenceException ex)
                 {
-                    _logger.LogError(ex, "NullReferenceException in PopulateMessageRefs. LastMessageSnowflake: {LastMessageSnowflake}. Channel: {ChannelToString}", lastMessageSnowflake, channel.ToString());
-                    _discordErrorLogger.LogWarning("PopulateMessageRefs", $"NullReferenceException in PopulateMessageRefs. LastMessageSnowflake: {lastMessageSnowflake}. Channel: {channel}");
+                    _logger.LogError(ex, "NullReferenceException in PopulateMessageRefs. LastMessageSnowflake: {LastMessageSnowflake}.", lastMessageSnowflake);
+                    _discordErrorLogger.LogWarning("PopulateMessageRefs", $"NullReferenceException in PopulateMessageRefs. LastMessageSnowflake: {lastMessageSnowflake}.");
                     continue;
                 }
             }

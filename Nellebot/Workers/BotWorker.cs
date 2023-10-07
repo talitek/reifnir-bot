@@ -130,8 +130,9 @@ public class BotWorker : IHostedService
         _client.SocketOpened += OnClientConnected;
         _client.SocketClosed += OnClientDisconnected;
         _client.SessionCreated += OnSessionCreated;
-        _client.Heartbeated += OnClientHeartbeat;
         _client.SessionResumed += OnSessionResumed;
+        _client.Heartbeated += OnClientHeartbeat;
+        _client.GuildDownloadCompleted += OnGuildDownloadCompleted;
     }
 
     private Task OnClientHeartbeat(DiscordClient sender, HeartbeatEventArgs e)
@@ -153,8 +154,6 @@ public class BotWorker : IHostedService
 
     private async Task OnSessionCreated(DiscordClient sender, SessionReadyEventArgs e)
     {
-        await _eventQueue.Writer.WriteAsync(new SessionCreatedOrResumedNotification());
-
         try
         {
             var commandPrefix = _options.CommandPrefix;
@@ -173,6 +172,12 @@ public class BotWorker : IHostedService
     {
         _logger.LogInformation("Bot resumed");
 
-        return _eventQueue.Writer.WriteAsync(new SessionCreatedOrResumedNotification()).AsTask();
+        return _eventQueue.Writer.WriteAsync(new SessionCreatedOrResumedNotification(nameof(OnSessionResumed))).AsTask();
     }
+
+    private Task OnGuildDownloadCompleted(DiscordClient sender, GuildDownloadCompletedEventArgs args)
+    {
+        return _eventQueue.Writer.WriteAsync(new SessionCreatedOrResumedNotification(nameof(OnGuildDownloadCompleted))).AsTask();
+    }
+
 }
