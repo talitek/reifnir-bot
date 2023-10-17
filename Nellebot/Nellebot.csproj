@@ -6,10 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-01839" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="5.0.0-nightly-01839" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-01839" />
-    <PackageReference Include="DSharpPlus.SlashCommands" Version="5.0.0-nightly-01839" />
+    <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-01842" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="5.0.0-nightly-01842" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-01842" />
+    <PackageReference Include="DSharpPlus.SlashCommands" Version="5.0.0-nightly-01842" />
     <PackageReference Include="MediatR" Version="12.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.Abstractions" Version="7.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="7.0.12" />
