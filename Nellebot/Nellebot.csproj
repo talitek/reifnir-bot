@@ -1,22 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <UserSecretsId>dotnet-Nellebot-A35E98EA-550A-4966-AD77-530BC4395F56</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-01900" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="5.0.0-nightly-01900" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-01900" />
-    <PackageReference Include="DSharpPlus.SlashCommands" Version="5.0.0-nightly-01900" />
+    <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-01907" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="5.0.0-nightly-01907" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-01907" />
+    <PackageReference Include="DSharpPlus.SlashCommands" Version="5.0.0-nightly-01907" />
     <PackageReference Include="MediatR" Version="12.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Abstractions" Version="7.0.14" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="7.0.14" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.11" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
     <PackageReference Include="PuppeteerSharp" Version="10.1.4" />
     <PackageReference Include="Scriban" Version="5.9.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.507">

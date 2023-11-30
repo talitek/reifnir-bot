@@ -50,7 +50,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         string memberName = args.Member.GetDetailedMemberIdentifier();
 
         DiscordAuditLogBanEntry? auditBanEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogBanEntry>(
-                                args.Guild, AuditLogActionType.Ban, (x) => x.Target.Id == args.Member.Id);
+                                args.Guild, DiscordAuditLogActionType.Ban, (x) => x.Target.Id == args.Member.Id);
 
         if (auditBanEntry == null)
         {
@@ -76,7 +76,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         string memberName = args.Member.GetDetailedMemberIdentifier();
 
         DiscordAuditLogBanEntry? auditUnbanEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogBanEntry>(
-                                args.Guild, AuditLogActionType.Unban, (x) => x.Target.Id == args.Member.Id);
+                                args.Guild, DiscordAuditLogActionType.Unban, (x) => x.Target.Id == args.Member.Id);
 
         if (auditUnbanEntry == null)
         {
@@ -127,7 +127,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         // the target is supposed to be a Message but the id corresponds to a user
         var auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogMessageEntry>(
                                         guild,
-                                        AuditLogActionType.MessageDelete,
+                                        DiscordAuditLogActionType.MessageDelete,
                                         (x) => x.Target.Id == message.Author.Id);
 
         // User deleted their own message
@@ -185,7 +185,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
         var auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogMessageEntry>(
                                         args.Guild,
-                                        AuditLogActionType.MessageDelete,
+                                        DiscordAuditLogActionType.MessageDelete,
                                         (x) => x.Target.Id == author.Id);
 
         if (!auditResolveResult.Resolved)
@@ -245,7 +245,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         // It's possible that the audit log entry might not be available right away.
         // If that turns out to be the case, consider wrapping this call into some sort of exeponential backoff retry.
         TryResolveResult<DiscordAuditLogKickEntry> auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogKickEntry>(
-                                    args.Guild, AuditLogActionType.Kick, (x) => x.Target.Id == args.Member.Id);
+                                    args.Guild, DiscordAuditLogActionType.Kick, (x) => x.Target.Id == args.Member.Id);
 
         bool userWasKicked = auditResolveResult.Resolved;
 

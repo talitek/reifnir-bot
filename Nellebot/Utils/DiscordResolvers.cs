@@ -153,7 +153,7 @@ namespace Nellebot.Utils
             }
         }
 
-        public async Task<T?> ResolveAuditLogEntry<T>(DiscordGuild guild, AuditLogActionType logType, Func<T, bool> predicate)
+        public async Task<T?> ResolveAuditLogEntry<T>(DiscordGuild guild, DiscordAuditLogActionType logType, Func<T, bool> predicate)
             where T : DiscordAuditLogEntry
         {
             await foreach (var entry in guild.GetAuditLogsAsync(limit: 50, byMember: null!, actionType: logType))
@@ -167,7 +167,7 @@ namespace Nellebot.Utils
             return null;
         }
 
-        public async Task<TryResolveResult<T>> TryResolveAuditLogEntry<T>(DiscordGuild guild, AuditLogActionType logType, Func<T, bool> predicate)
+        public async Task<TryResolveResult<T>> TryResolveAuditLogEntry<T>(DiscordGuild guild, DiscordAuditLogActionType logType, Func<T, bool> predicate)
             where T : DiscordAuditLogEntry
         {
             await foreach (var entry in guild.GetAuditLogsAsync(limit: 50, byMember: null!, actionType: logType))
