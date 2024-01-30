@@ -27,9 +27,19 @@ namespace Nellebot
         public ulong AdminRoleId { get; init; }
 
         /// <summary>
+        /// Gets the most shameful discord role.
+        /// </summary>
+        public ulong SpammerRoleId { get; init; }
+
+        /// <summary>
         /// Gets discord roles with access to some admin commands.
         /// </summary>
         public ulong[] TrustedRoleIds { get; init; } = Array.Empty<ulong>();
+
+        /// <summary>
+        /// Gets channel id where Trusted roles have access to.
+        /// </summary>
+        public ulong TrustedChannelId { get; init; }
 
         public ulong ActivityLogChannelId { get; init; }
 

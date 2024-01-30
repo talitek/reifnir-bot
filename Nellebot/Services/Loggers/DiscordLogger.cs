@@ -32,6 +32,11 @@ public class DiscordLogger
         LogMessageCore(message, _options.ExtendedActivityLogChannelId);
     }
 
+    public void LogTrustedChannelMessage(string message)
+    {
+        LogMessageCore(message, _options.TrustedChannelId);
+    }
+
     private void LogMessageCore(string message, ulong channelId)
     {
         ulong guildId = _options.GuildId;

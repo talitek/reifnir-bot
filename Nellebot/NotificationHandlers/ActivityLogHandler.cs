@@ -422,10 +422,19 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         string memberMention = args.Member.Mention;
         string memberDisplayName = args.Member.DisplayName;
 
+
         if (addedRole is not null)
         {
             _discordLogger.LogActivityMessage($"Added role **{addedRole.Name}** to **{memberDisplayName}**");
             _discordLogger.LogExtendedActivityMessage($"Role change for {memberMention}: Added {addedRole.Name}.");
+
+            if (addedRole.Id == _botOptions.SpammerRoleId)
+            {
+                string memberDetailedIdentifier = args.Member.GetDetailedMemberIdentifier();
+
+                _discordLogger.LogTrustedChannelMessage($"Awoooooo! **{memberDetailedIdentifier}** is a **{addedRole.Name}**.");
+            }
+
             return true;
         }
 
