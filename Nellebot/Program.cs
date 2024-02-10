@@ -119,6 +119,7 @@ public class Program
         services.AddTransient<UserLogRepository>();
         services.AddTransient<ModmailTicketRepository>();
         services.AddTransient<OrdbokRepository>();
+        services.AddTransient<MessageTemplateRepository>();
     }
 
     private static void AddInternalServices(IServiceCollection services)

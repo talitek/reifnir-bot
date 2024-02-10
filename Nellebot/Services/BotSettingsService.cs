@@ -7,12 +7,12 @@ namespace Nellebot.Services;
 
 public class BotSettingsService
 {
-    private readonly BotSettingsRepository _botSettingsRepo;
-    private readonly SharedCache _cache;
-
     private static readonly string GreetingMessageKey = "GreetingMessage";
     private static readonly string GreetingMessageUserVariable = "$USER";
     private static readonly string LastHeartbeatKey = "LastHeartbeat";
+
+    private readonly BotSettingsRepository _botSettingsRepo;
+    private readonly SharedCache _cache;
 
     public BotSettingsService(BotSettingsRepository botSettingsRepos, SharedCache cache)
     {

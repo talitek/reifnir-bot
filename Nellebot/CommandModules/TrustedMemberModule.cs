@@ -29,9 +29,9 @@ public class TrustedMemberModule : BaseCommandModule
     }
 
     [Command("vkick")]
-    public Task ValhallKick(CommandContext ctx, DiscordMember member, [RemainingText] string reason)
+    public async Task ValhallKick(CommandContext ctx, DiscordMember member, [RemainingText] string reason)
     {
-        return _commandQueue.Writer.WriteAsync(new ValhallKickUserCommand(ctx, member, reason)).AsTask();
+        await _commandQueue.Writer.WriteAsync(new ValhallKickUserCommand(ctx, member, reason));
     }
 
     [Command("list-award-channels")]

@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Nellebot.Utils;
 
@@ -9,11 +10,11 @@ public class MessageBuffer
 {
     private readonly ConcurrentQueue<string> _messageQueue;
     private readonly int _delayMillis;
-    private readonly Action<IEnumerable<string>> _callback;
+    private readonly Func<IEnumerable<string>, Task> _callback;
     private readonly Timer _timer;
     private readonly object _lockObject;
 
-    public MessageBuffer(int delayMillis, Action<IEnumerable<string>> callback)
+    public MessageBuffer(int delayMillis, Func<IEnumerable<string>, Task> callback)
     {
         _messageQueue = new ConcurrentQueue<string>();
         _delayMillis = delayMillis;
@@ -39,7 +40,12 @@ public class MessageBuffer
                 allMessages.Add(message);
             }
 
-            _callback.Invoke(allMessages);
+            _ = InvokeCallbackAsync(allMessages);
         }
+    }
+
+    private async Task InvokeCallbackAsync(IEnumerable<string> messages)
+    {
+        await _callback.Invoke(messages).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
     }
 }

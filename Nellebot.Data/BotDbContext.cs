@@ -119,6 +119,10 @@ public class BotDbContext : DbContext
         builder.Entity<OrdbokConceptStore>()
             .Property(x => x.Concepts)
             .HasColumnType(JsonbColumnType);
+
+        builder.Entity<MessageTemplate>()
+            .Property(x => x.Message)
+            .HasMaxLength(256);
     }
 
 #pragma warning disable SA1201 // Elements should appear in the correct order
@@ -141,4 +145,6 @@ public class BotDbContext : DbContext
     public DbSet<OrdbokArticleStore> OrdbokArticlesStore { get; set; }
 
     public DbSet<OrdbokConceptStore> OrdbokConceptStore { get; set; }
+
+    public DbSet<MessageTemplate> MessageTemplates { get; set; }
 }

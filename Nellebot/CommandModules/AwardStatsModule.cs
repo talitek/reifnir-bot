@@ -17,7 +17,8 @@ namespace Nellebot.CommandModules
     [ModuleLifespan(ModuleLifespan.Transient)]
     public class AwardStatsModule : BaseCommandModule
     {
-        private const int _maxMessageLength = 50;
+        private const int MaxMessageLength = 50;
+
         private readonly DiscordResolver _discordResolver;
         private readonly AwardMessageRepository _awardMessageRepo;
         private readonly SharedCache _cache;
@@ -37,7 +38,7 @@ namespace Nellebot.CommandModules
         {
             var member = ctx.Member;
 
-            if (member == null)
+            if (member is null)
             {
                 await ctx.RespondAsync("Could not fetch user");
                 return;
@@ -51,7 +52,7 @@ namespace Nellebot.CommandModules
         {
             var member = await _discordResolver.ResolveGuildMember(ctx.Guild, user.Id);
 
-            if (member == null)
+            if (member is null)
             {
                 await ctx.RespondAsync("Could not fetch user");
                 return;
@@ -65,16 +66,19 @@ namespace Nellebot.CommandModules
             var userId = member.Id;
             var guild = ctx.Guild;
 
-            var mention = member.GetNicknameOrDisplayName();
+            var mention = member.DisplayName;
 
             var userAwardStats = await _awardMessageRepo.GetAwardStatsForUser(userId);
 
             var sb = new StringBuilder();
 
+            // Library does not support nullable reference types.
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var embedBuilder = new DiscordEmbedBuilder()
                 .WithAuthor(mention, null, member.GuildAvatarUrl ?? member.AvatarUrl)
                 .WithTitle("Cookie stats")
                 .WithColor(DiscordConstants.DefaultEmbedColor);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             if (userAwardStats.TotalAwardCount == 0)
             {
@@ -98,10 +102,10 @@ namespace Nellebot.CommandModules
 
                 var messageChannel = await _cache.LoadFromCacheAsync(
                     string.Format(SharedCacheKeys.DiscordChannel, channelId),
-                    async () => await _discordResolver.ResolveChannel(guild, channelId),
+                    async () => await _discordResolver.ResolveChannelAsync(channelId),
                     TimeSpan.FromSeconds(10));
 
-                if (messageChannel == null) continue;
+                if (messageChannel is null) continue;
 
                 var messageResolveResult = await _discordResolver.TryResolveMessage(messageChannel, awardedMessage.OriginalMessageId);
 
@@ -109,8 +113,8 @@ namespace Nellebot.CommandModules
                 {
                     var message = messageResolveResult.Value;
 
-                    var shortenedMessage = message.Content.Length > _maxMessageLength
-                        ? $"{message.Content.Substring(0, _maxMessageLength)}..."
+                    var shortenedMessage = message.Content.Length > MaxMessageLength
+                        ? $"{message.Content.Substring(0, MaxMessageLength)}..."
                         : message.Content;
 
                     if (string.IsNullOrWhiteSpace(shortenedMessage))

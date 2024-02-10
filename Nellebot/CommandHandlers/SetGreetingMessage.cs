@@ -38,7 +38,7 @@ public class SetGreetingMessageHandler : IRequestHandler<SetGreetingMessageComma
 
         var messagePreview = await _botSettingsService.GetGreetingsMessage(previewMemberMention);
 
-        var sb = new StringBuilder("Greeting mesage updated successfully. Here's a preview:");
+        var sb = new StringBuilder("Greeting message updated successfully. Here's a preview:");
         sb.AppendLine();
         sb.AppendLine();
         sb.AppendLine(messagePreview);

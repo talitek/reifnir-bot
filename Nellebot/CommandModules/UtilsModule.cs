@@ -4,7 +4,6 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Nellebot.Attributes;
-using Nellebot.Services.Loggers;
 using Nellebot.Utils;
 
 namespace Nellebot.CommandModules;
@@ -14,13 +13,9 @@ namespace Nellebot.CommandModules;
 public class UtilsModule : BaseCommandModule
 {
     private readonly DiscordResolver _discordResolver;
-    private readonly DiscordLogger _discordLogger;
-    private readonly IDiscordErrorLogger _discordErrorLogger;
 
-    public UtilsModule(DiscordResolver discordResolver, DiscordLogger discordLogger, IDiscordErrorLogger discordErrorLogger)
+    public UtilsModule(DiscordResolver discordResolver)
     {
-        _discordLogger = discordLogger;
-        _discordErrorLogger = discordErrorLogger;
         _discordResolver = discordResolver;
     }
 

@@ -26,7 +26,7 @@ namespace Nellebot.Data.Repositories
                     MessageId = messageId,
                     ChannelId = channelId,
                     UserId = userId,
-                    DateTime = DateTime.UtcNow
+                    DateTime = DateTime.UtcNow,
                 };
 
                 await _dbContext.AddAsync(messageRef);

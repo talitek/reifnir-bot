@@ -33,6 +33,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deploy", "deploy", "{CC59BD
 		deploy\nellebot.service = deploy\nellebot.service
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".config", ".config", "{A2815C0B-D2FE-4A3F-B530-14066C63F89B}"
+	ProjectSection(SolutionItems) = preProject
+		.config\dotnet-tools.json = .config\dotnet-tools.json
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -65,6 +70,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{CC59BDCF-9F25-4CD1-B796-939DFD3D69F6} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
+		{A2815C0B-D2FE-4A3F-B530-14066C63F89B} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {658B134A-CADB-4447-85A7-048070C93996}

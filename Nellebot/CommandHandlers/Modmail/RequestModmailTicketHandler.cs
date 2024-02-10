@@ -7,6 +7,7 @@ using DSharpPlus.Interactivity.Extensions;
 using MediatR;
 using Microsoft.Extensions.Options;
 using Nellebot.Common.Models.Modmail;
+using Nellebot.Common.Utils;
 using Nellebot.Data.Repositories;
 using Nellebot.Helpers;
 using Nellebot.Utils;
@@ -81,7 +82,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
 
         if (!requesterIsAnonymous)
         {
-            requesterDisplayName = member.GetNicknameOrDisplayName();
+            requesterDisplayName = member.DisplayName;
         }
         else
         {
@@ -94,7 +95,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
 
         DiscordMessage messageToRelay;
 
-        if (requestMessage != null)
+        if (requestMessage is not null)
         {
             var confirmed = await CollectRequestMessageConfirmation(requestMessage, member);
 
@@ -111,7 +112,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         {
             var collectedMessage = await CollectRequestMessage(member);
 
-            if (collectedMessage == null || collectedMessage.Content.Equals(CancelMessageToken, StringComparison.InvariantCultureIgnoreCase))
+            if (collectedMessage is null || collectedMessage.Content.Equals(CancelMessageToken, StringComparison.InvariantCultureIgnoreCase))
             {
                 await HandleCancellation(member, stub, cancellationToken);
 
@@ -187,7 +188,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
     /// <returns>Returns true if the user chooses to be anonymous.</returns>
     private static async Task<string> CollectIdentityChoice(DiscordMember member, CancellationToken cancellationToken)
     {
-        var realName = member.GetNicknameOrDisplayName();
+        var realName = member.DisplayName;
 
         var introMessageContent = $"""
             Hello and welcome to Modmail! 

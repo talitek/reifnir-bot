@@ -1,4 +1,5 @@
-﻿using DSharpPlus.EventArgs;
+﻿using System.Collections.Generic;
+using DSharpPlus.EventArgs;
 using MediatR;
 
 namespace Nellebot.NotificationHandlers;
@@ -29,3 +30,5 @@ public record ClientHeartbeatNotification(HeartbeatEventArgs EventArgs) : EventN
 public record SessionCreatedOrResumedNotification(string EventSource) : EventNotification;
 
 public record ClientDisconnected(SocketCloseEventArgs EventArgs) : EventNotification;
+
+public record BufferedMemberLeftNotification(IEnumerable<string> Usernames) : EventNotification;

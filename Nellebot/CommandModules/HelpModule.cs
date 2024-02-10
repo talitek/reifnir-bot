@@ -110,11 +110,43 @@ public class HelpModule : BaseCommandModule
         sb.AppendLine($"`   Use the token $USER to @mention the new user in the message`");
         sb.AppendLine();
 
-        sb.AppendLine($"`{command} list-award-channels`");
-        sb.AppendLine($"`   List the channels where Reifnir keeps track of cookies`");
+        var eb = EmbedBuilderHelper.BuildSimpleEmbed("Misc. admin commands", sb.ToString());
+
+        return ctx.RespondAsync(eb);
+    }
+
+    [Command("valhall")]
+    public Task HelpValhallMisc(CommandContext ctx)
+    {
+        var sb = new StringBuilder();
+
+        var commandPrefix = _options.CommandPrefix;
+
+        sb.AppendLine($"`{commandPrefix}vkick [user] [reason]`");
+        sb.AppendLine($"`   Kick a recently joined user with a fresh Discord account.`");
+        sb.AppendLine($"`   Max 24hrs server memembership, max 7 days Discord account age.`");
         sb.AppendLine();
 
-        var eb = EmbedBuilderHelper.BuildSimpleEmbed("User role commands", sb.ToString());
+        sb.AppendLine($"`{commandPrefix}list-award-channels`");
+        sb.AppendLine($"`   List the channels where Reifnir keeps track of cookies.`");
+        sb.AppendLine();
+
+        sb.AppendLine($"`{commandPrefix}goodbye-msg add [message]`");
+        sb.AppendLine($"`   Add a goodbye message template. The message must contain at least one $USER token.`");
+        sb.AppendLine($"`Usage examples:`");
+        sb.AppendLine($"`   {commandPrefix}goodbye-msg add $USER has left. Goodbye!`");
+        sb.AppendLine($"`   {commandPrefix}goodbye-msg add $USER has the building. See ya, $USER!`");
+        sb.AppendLine();
+
+        sb.AppendLine($"`{commandPrefix}goodbye-msg remove [message id]`");
+        sb.AppendLine($"`   Remove a goodbye message template by id. Non-admins can only remove own messages.`");
+        sb.AppendLine();
+
+        sb.AppendLine($"`{commandPrefix}goodbye-msg list`");
+        sb.AppendLine($"`   List all goodbye message templates.`");
+        sb.AppendLine();
+
+        var eb = EmbedBuilderHelper.BuildSimpleEmbed("Misc. valhall commands", sb.ToString());
 
         return ctx.RespondAsync(eb);
     }
