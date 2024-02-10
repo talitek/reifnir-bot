@@ -57,7 +57,7 @@ public class AddGoodbyeMessageHandler : IRequestHandler<AddGoodbyeMessageCommand
 
             var previewMemberMention = author.DisplayName;
 
-            var messagePreview = message.Replace(UserToken, previewMemberMention);
+            var messagePreview = messageTemplateWithBoldedUserToken.Replace(UserToken, previewMemberMention);
 
             var sb = new StringBuilder("Goodbye message created successfully. Here's a preview:");
             sb.AppendLine();
