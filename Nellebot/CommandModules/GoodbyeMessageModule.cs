@@ -1,15 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DSharpPlus;
+﻿using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
-using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
-using Nellebot.CommandHandlers;
 using Nellebot.CommandHandlers.MessageTemplates;
 using Nellebot.Workers;
 
@@ -22,12 +14,12 @@ namespace Nellebot.CommandModules;
 public class GoodbyeMessageModule : BaseCommandModule
 {
     private readonly CommandQueueChannel _commandQueue;
-    private readonly BotOptions _options;
+    private readonly CommandParallelQueueChannel _commandParallelQueue;
 
-    public GoodbyeMessageModule(CommandQueueChannel commandQueue, IOptions<BotOptions> options)
+    public GoodbyeMessageModule(CommandQueueChannel commandQueue, CommandParallelQueueChannel commandParallelQueue)
     {
         _commandQueue = commandQueue;
-        _options = options.Value;
+        _commandParallelQueue = commandParallelQueue;
     }
 
     [Command("add")]
@@ -45,6 +37,6 @@ public class GoodbyeMessageModule : BaseCommandModule
     [Command("list")]
     public async Task GetGoodbyeMessages(CommandContext ctx)
     {
-        await _commandQueue.Writer.WriteAsync(new GetGoodbyeMessagesCommand(ctx));
+        await _commandParallelQueue.Writer.WriteAsync(new GetGoodbyeMessagesCommand(ctx));
     }
 }

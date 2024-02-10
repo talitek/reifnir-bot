@@ -22,6 +22,7 @@ public record GetGoodbyeMessagesCommand(CommandContext Ctx) : BotCommandCommand(
 public class GetGoodbyeMessagesHandler : IRequestHandler<GetGoodbyeMessagesCommand>
 {
     private const string GoodbyeMessageTemplateType = "goodbye";
+    private const string UserToken = "$USER";
     private const int MessageTemplatesCacheDurationMinutes = 5;
     private const int MessagesPerPage = 5;
 
@@ -70,10 +71,12 @@ public class GetGoodbyeMessagesHandler : IRequestHandler<GetGoodbyeMessagesComma
             for (var j = 0; j < messagesForPage.Count; j++)
             {
                 var message = messagesForPage[j];
+                var messageTemplateWithoutBoldedUserToken = message.Message.Replace($"**{UserToken}**", UserToken);
+
                 var member = await _discordResolver.ResolveGuildMember(message.AuthorId);
 
                 sb.AppendLine($"Id: {message.Id}, Author: {member?.DisplayName ?? "Unknown"}");
-                sb.AppendLine($"```\r\n{message.Message}\r\n```");
+                sb.AppendLine($"```\r\n{messageTemplateWithoutBoldedUserToken}\r\n```");
                 sb.AppendLine();
             }
 

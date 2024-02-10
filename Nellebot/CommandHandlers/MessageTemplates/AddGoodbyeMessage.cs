@@ -49,7 +49,9 @@ public class AddGoodbyeMessageHandler : IRequestHandler<AddGoodbyeMessageCommand
             if (userTokenCount == 0)
                 throw new ArgumentException($"Message must contain at least one {UserToken} token.");
 
-            await _messageTemplateRepo.CreateMessageTemplate(message, GoodbyeMessageTemplateType, author.Id, cancellationToken);
+            var messageTemplateWithBoldedUserToken = message.Replace(UserToken, $"**{UserToken}**");
+
+            await _messageTemplateRepo.CreateMessageTemplate(messageTemplateWithBoldedUserToken, GoodbyeMessageTemplateType, author.Id, cancellationToken);
 
             _cache.FlushCache(SharedCacheKeys.GoodbyeMessages);
 
