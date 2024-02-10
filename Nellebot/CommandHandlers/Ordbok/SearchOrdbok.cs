@@ -119,7 +119,7 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
             _logger.LogError(ex, nameof(SearchOrdbokQuery));
         }
 
-        mb = mb.WithEmbed(eb.Build());
+        mb = mb.AddEmbed(eb.Build());
 
         await ctx.RespondAsync(mb);
 

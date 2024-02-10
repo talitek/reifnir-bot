@@ -57,15 +57,15 @@ namespace Nellebot.Services
 
             var messageAuthor = await _discordResolver.ResolveGuildMember(guild, message.Author.Id);
 
-            if (messageAuthor == null)
+            if (messageAuthor is null)
             {
                 _logger.LogDebug("Could not resolve message author");
                 return;
             }
 
-            var awardChannel = await _discordResolver.ResolveChannel(guild, _options.AwardChannelId);
+            var awardChannel = await _discordResolver.ResolveChannelAsync(_options.AwardChannelId);
 
-            if (awardChannel == null)
+            if (awardChannel is null)
             {
                 _logger.LogDebug("Could not resolve awards channel");
                 return;
@@ -123,15 +123,15 @@ namespace Nellebot.Services
 
             var messageAuthor = await _discordResolver.ResolveGuildMember(guild, message.Author.Id);
 
-            if (messageAuthor == null)
+            if (messageAuthor is null)
             {
                 _logger.LogDebug("Could not resolve message author");
                 return;
             }
 
-            var awardChannel = await _discordResolver.ResolveChannel(guild, _options.AwardChannelId);
+            var awardChannel = await _discordResolver.ResolveChannelAsync(_options.AwardChannelId);
 
-            if (awardChannel == null)
+            if (awardChannel is null)
             {
                 _logger.LogDebug("Could not resolve awards channel");
                 return;
@@ -163,12 +163,9 @@ namespace Nellebot.Services
         {
             var messageId = awardItem.DiscordMessageId;
 
-            var channel = awardItem.DiscordChannel!;
-            var guild = channel.Guild;
+            var awardChannel = await _discordResolver.ResolveChannelAsync(_options.AwardChannelId);
 
-            var awardChannel = await _discordResolver.ResolveChannel(guild, _options.AwardChannelId);
-
-            if (awardChannel == null)
+            if (awardChannel is null)
             {
                 _logger.LogDebug("Could not resolve awards channel");
                 return;
@@ -192,11 +189,10 @@ namespace Nellebot.Services
             var messageId = awardItem.DiscordMessageId;
 
             var channel = awardItem.DiscordChannel!;
-            var guild = channel.Guild;
 
-            var awardChannel = await _discordResolver.ResolveChannel(guild, _options.AwardChannelId);
+            var awardChannel = await _discordResolver.ResolveChannelAsync(_options.AwardChannelId);
 
-            if (awardChannel == null)
+            if (awardChannel is null)
             {
                 _logger.LogDebug("Could not resolve awards channel");
                 return;
@@ -204,7 +200,7 @@ namespace Nellebot.Services
 
             var awardMessage = await _awardMessageRepo.GetAwardMessageByAwardedMessageId(awardChannel.Id, messageId);
 
-            if (awardMessage == null)
+            if (awardMessage is null)
             {
                 _logger.LogDebug($"Message ({messageId}) does not exist in award channel");
                 return;
@@ -215,7 +211,7 @@ namespace Nellebot.Services
 
         private async Task<DiscordMessage> PostAwardedMessage(DiscordChannel awardChannel, DiscordMessage originalMessage, DiscordMember author, uint awardCount)
         {
-            var messageChannel = originalMessage.Channel;
+            var messageChannel = originalMessage.Channel ?? throw new Exception("Channel was null"); ;
 
             var embed = BuildAwardedMessageEmbed(originalMessage, author, messageChannel.Name);
 
@@ -242,7 +238,7 @@ namespace Nellebot.Services
 
         private async Task UpdateAwardedMessageEmbed(DiscordChannel awardChannel, ulong awardedMessageId, DiscordMessage originalMessage, DiscordMember author)
         {
-            var messageChannel = originalMessage.Channel;
+            var messageChannel = originalMessage.Channel ?? throw new Exception("Channel was null");
 
             var awardedMessage = await _discordResolver.ResolveMessage(awardChannel, awardedMessageId);
 
@@ -266,7 +262,7 @@ namespace Nellebot.Services
 
         private DiscordEmbed BuildAwardedMessageEmbed(DiscordMessage message, DiscordMember author, string channel)
         {
-            var authorDisplayName = author.GetNicknameOrDisplayName();
+            var authorDisplayName = author.DisplayName;
 
             var messageContentSb = new StringBuilder();
 
@@ -282,7 +278,7 @@ namespace Nellebot.Services
                 .WithAuthor(authorDisplayName, null, author.GuildAvatarUrl ?? author.AvatarUrl)
                 .WithFooter($"#{channel}")
                 .WithTimestamp(message.Id)
-                .WithColor(9648895); // #933aff 
+                .WithColor(DiscordConstants.DefaultEmbedColor);
 
             if (message.Attachments.Count > 0)
             {
@@ -297,16 +293,24 @@ namespace Nellebot.Services
                             messageContentSb.AppendLine($"`Video attachment: {attachment.FileName}`");
                             break;
                         case string s when s.StartsWith("image"):
+                            if (attachment.FileName is null)
+                            {
+                                messageContentSb.AppendLine();
+                                messageContentSb.AppendLine($"`Couldn't load image.`");
+                                break;
+                            }
+
                             if (attachment.FileName.StartsWith(SpoilerImageAttachmentPrefix))
                             {
                                 messageContentSb.AppendLine();
                                 messageContentSb.AppendLine($"`Spoiler image hidden. Use the jump link to view it.`");
                             }
-                            else if (!addedEmbedImage)
+                            else if (!addedEmbedImage && attachment.Url is not null)
                             {
                                 embedBuilder = embedBuilder.WithImageUrl(attachment.Url);
                                 addedEmbedImage = true;
                             }
+
                             break;
                         default:
                             messageContentSb.AppendLine();
@@ -322,8 +326,8 @@ namespace Nellebot.Services
 
                 if (messageEmbed != null)
                 {
-                    if (messageEmbed.Thumbnail != null)
-                        embedBuilder = embedBuilder.WithImageUrl(messageEmbed.Thumbnail.ProxyUrl.ToUri());
+                    if (messageEmbed.Thumbnail?.ProxyUrl.HasValue ?? false)
+                        embedBuilder = embedBuilder.WithImageUrl(messageEmbed.Thumbnail.ProxyUrl.Value.ToUri()!);
 
                     if (!string.IsNullOrWhiteSpace(messageEmbed.Title) && messageEmbed.Url != null)
                     {
