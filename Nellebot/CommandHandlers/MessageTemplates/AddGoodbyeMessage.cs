@@ -51,7 +51,7 @@ public class AddGoodbyeMessageHandler : IRequestHandler<AddGoodbyeMessageCommand
 
             var messageTemplateWithBoldedUserToken = message.Replace(UserToken, $"**{UserToken}**");
 
-            await _messageTemplateRepo.CreateMessageTemplate(messageTemplateWithBoldedUserToken, GoodbyeMessageTemplateType, author.Id, cancellationToken);
+            var newMessageTemplateId = await _messageTemplateRepo.CreateMessageTemplate(messageTemplateWithBoldedUserToken, GoodbyeMessageTemplateType, author.Id, cancellationToken);
 
             _cache.FlushCache(SharedCacheKeys.GoodbyeMessages);
 
@@ -59,7 +59,7 @@ public class AddGoodbyeMessageHandler : IRequestHandler<AddGoodbyeMessageCommand
 
             var messagePreview = messageTemplateWithBoldedUserToken.Replace(UserToken, previewMemberMention);
 
-            var sb = new StringBuilder("Goodbye message created successfully. Here's a preview:");
+            var sb = new StringBuilder($"Goodbye message created successfully (Id: {newMessageTemplateId}). Here's a preview:");
             sb.AppendLine();
             sb.AppendLine();
             sb.AppendLine(messagePreview);
