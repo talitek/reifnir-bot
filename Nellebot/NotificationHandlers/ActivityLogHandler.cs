@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -9,6 +10,7 @@ using DSharpPlus.EventArgs;
 using MediatR;
 using Microsoft.Extensions.Options;
 using Nellebot.Common.AppDiscordModels;
+using Nellebot.Common.Models;
 using Nellebot.Common.Models.UserLogs;
 using Nellebot.Data.Repositories;
 using Nellebot.DiscordModelMappers;
@@ -113,7 +115,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
             return;
         }
 
-        AppDiscordMessage? message = await ResolveMessage(deletedMessage);
+        AppDiscordMessage? message = await MapAndEnrichMessage(deletedMessage);
 
         if (message == null)
         {
@@ -124,25 +126,62 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
             return;
         }
 
-        // the target is supposed to be a Message but the id corresponds to a user
+        // The target is supposed to be a Message but the id corresponds to a user.
+        // And it's not even the id of the message author, but the id of the user who deleted the message.
+        // This is a bug in the Discord API or in DSharp. Probably.
+        // Therefore, try to guess by finding a recent MessageDelete audit log in the same channel.
+        // Also, subsequent deletions of messages from the same author, in the same channel do not create new audit log entries,
+        // and instead increment the count of the original entry, so use a generous max age.
+        // Thanks for coming to my TED talk.
+        const int maxAuditLogAgeMinutes = 60;
         var auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogMessageEntry>(
                                         guild,
                                         DiscordAuditLogActionType.MessageDelete,
-                                        (x) => x.Target.Id == message.Author.Id);
+                                        (x) => x.Channel.Id == message.Channel.Id,
+                                        maxAuditLogAgeMinutes);
+
+        DiscordAuditLogMessageEntry? auditMessageDeleteEntry = null;
 
         // User deleted their own message
         if (!auditResolveResult.Resolved)
         {
+            var authorNameMaybe = message.Author.GetDetailedUserIdentifier();
+
+            // Could not find any audit log entry for the author
+            var warningMessage = $"""
+                                Could not find any audit log entry for {authorNameMaybe} of type {DiscordAuditLogActionType.MessageDelete}.
+                                The user likely deleted own message.
+                                """;
+            _discordErrorLogger.LogWarning($"{nameof(MessageDeletedNotification)}", warningMessage);
+
             return;
         }
+        else
+        {
+            auditMessageDeleteEntry = auditResolveResult.Value;
 
-        DiscordAuditLogMessageEntry auditMessageDeleteEntry = auditResolveResult.Value;
+            if (auditMessageDeleteEntry?.UserResponsible is null)
+            {
+                _discordErrorLogger.LogWarning($"{nameof(MessageDeletedNotification)}", $"Could not find any responsible user for the message delete event.");
+                return;
+            }
+            else if (auditMessageDeleteEntry.UserResponsible.Id == message.Author.Id)
+            {
+                // User deleted their own message
+                return;
+            }
+        }
 
-        DiscordMember? authorAsMember = await _discordResolver.ResolveGuildMember(guild, message.Author.Id);
+        DiscordMember? memberResponsible = null;
 
-        DiscordMember? memberResponsible = await _discordResolver.ResolveGuildMember(guild, auditMessageDeleteEntry.UserResponsible.Id);
+        if (auditMessageDeleteEntry?.UserResponsible is not null)
+        {
+            memberResponsible = await _discordResolver.ResolveGuildMember(args.Guild, auditMessageDeleteEntry.UserResponsible.Id);
+        }
 
         string responsibleName = memberResponsible?.DisplayName ?? "Unknown mod";
+
+        var authorAsMember = await _discordResolver.ResolveGuildMember(guild, message.Author.Id);
 
         string authorName = authorAsMember?.GetDetailedMemberIdentifier() ?? "Unknown user";
 
@@ -158,64 +197,87 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         _discordLogger.LogExtendedActivityMessage(logMessage);
     }
 
-    // TODO handle bulk deletion of messages belonging to different authors
     public async Task Handle(MessageBulkDeletedNotification notification, CancellationToken cancellationToken)
     {
-        MessageBulkDeleteEventArgs args = notification.EventArgs;
+        var args = notification.EventArgs;
 
         if (args.Messages.Count == 0)
         {
+            _discordErrorLogger.LogWarning($"{nameof(MessageBulkDeletedNotification)}", "Notification contained no messages.");
             return;
         }
 
-        var messages = (await Task.WhenAll(args.Messages.Select(ResolveMessage))).ToList();
+        var messages = await MapAndEnrichMessages(args.Messages);
 
-        DiscordUser? author = args.Messages.Where(m => m?.Author is not null).Select(m => m.Author).FirstOrDefault();
+        var messagesByAuthor = messages.GroupBy(m => m.Author?.Id);
 
-        if (author is null)
+        foreach (var authorMessages in messagesByAuthor)
         {
-            _discordErrorLogger.LogWarning($"{nameof(MessageBulkDeletedNotification)}", $"Could not find any message authors");
+            var author = authorMessages.First().Author;
 
-            _discordLogger.LogExtendedActivityMessage($"{messages.Count} unknown messages were removed.");
+            string authorName = author.GetDetailedUserIdentifier();
 
-            return;
-        }
+            DiscordAuditLogEntry? auditEntry;
 
-        string authorName = author.GetDetailedUserIdentifier();
+            var auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogMessageEntry>(
+                                            args.Guild,
+                                            DiscordAuditLogActionType.MessageBulkDelete,
+                                            (x) => x.Target.Id == author.Id);
 
-        var auditResolveResult = await _discordResolver.TryResolveAuditLogEntry<DiscordAuditLogMessageEntry>(
-                                        args.Guild,
-                                        DiscordAuditLogActionType.MessageDelete,
-                                        (x) => x.Target.Id == author.Id);
-
-        if (!auditResolveResult.Resolved)
-        {
-            return;
-        }
-
-        DiscordAuditLogMessageEntry auditMessageDeleteEntry = auditResolveResult.Value;
-
-        DiscordMember? memberResponsible = await _discordResolver.ResolveGuildMember(args.Guild, auditMessageDeleteEntry.UserResponsible.Id);
-
-        string responsibleName = memberResponsible?.DisplayName ?? "Unknown mod";
-
-        _discordLogger.LogActivityMessage($"{messages.Count} messages written by **{authorName}** were removed by **{responsibleName}**.");
-
-        var sb = new StringBuilder();
-
-        sb.AppendLine($"{messages.Count} messages written by **{authorName}** were removed by **{responsibleName}**.");
-
-        foreach (AppDiscordMessage message in messages.Where(x => x != null).Cast<AppDiscordMessage>())
-        {
-            sb.AppendLine();
-            sb.AppendLine($"In {message.Channel.Name} at {message.CreationTimestamp}:");
-            if (!string.IsNullOrWhiteSpace(message.Content))
+            if (auditResolveResult.Resolved)
             {
-                sb.AppendLine($"> {message.Content}");
+                auditEntry = auditResolveResult.Value;
             }
-        }
+            else
+            {
+                // Could not find any audit log entry for the author
+                _discordErrorLogger.LogWarning($"{nameof(MessageBulkDeletedNotification)}", $"Could not find any audit log entry for {authorName} of type {DiscordAuditLogActionType.MessageBulkDelete}");
 
-        _discordLogger.LogExtendedActivityMessage(sb.ToString());
+                // Check if the user was banned
+                // It's possible that the audit log entry might not be available right away.
+                // If that turns out to be the case, consider wrapping this call into some sort of exeponential backoff retry.
+                var auditBanEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogBanEntry>(
+                                            args.Guild,
+                                            DiscordAuditLogActionType.Ban,
+                                            (x) => x.Target.Id == author.Id);
+
+                auditEntry = auditBanEntry;
+
+                if (auditBanEntry is null)
+                {
+                    // Could not find any audit log entry for the author
+                    _discordErrorLogger.LogWarning($"{nameof(MessageBulkDeletedNotification)}", $"Could not find any audit log entry for {authorName} of type {DiscordAuditLogActionType.Ban}");
+                }
+            }
+
+            string responsibleName = "Unknown mod";
+
+            if (auditEntry?.UserResponsible is not null)
+            {
+                var memberResponsible = await _discordResolver.ResolveGuildMember(args.Guild, auditEntry.UserResponsible.Id);
+
+                responsibleName = memberResponsible?.DisplayName ?? responsibleName;
+            }
+
+            _discordLogger.LogActivityMessage($"{messages.Count} messages written by **{authorName}** were removed by **{responsibleName}**.");
+
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"{messages.Count} messages written by **{authorName}** were removed by **{responsibleName}**.");
+
+            foreach (AppDiscordMessage message in messages.Where(x => x != null).Cast<AppDiscordMessage>())
+            {
+                sb.AppendLine();
+                sb.AppendLine($"In {message.Channel.Name} at {message.CreationTimestamp}:");
+
+                if (!string.IsNullOrWhiteSpace(message.Content))
+                {
+                    sb.AppendLine($"> {message.Content}");
+                }
+            }
+
+            _discordLogger.LogExtendedActivityMessage(sb.ToString());
+        }
     }
 
     public async Task Handle(GuildMemberAddedNotification notification, CancellationToken cancellationToken)
@@ -422,7 +484,6 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         string memberMention = args.Member.Mention;
         string memberDisplayName = args.Member.DisplayName;
 
-
         if (addedRole is not null)
         {
             _discordLogger.LogActivityMessage($"Added role **{addedRole.Name}** to **{memberDisplayName}**");
@@ -448,13 +509,8 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         return false;
     }
 
-    private async Task<AppDiscordMessage?> ResolveMessage(DiscordMessage deletedMessage)
+    private async Task<AppDiscordMessage?> MapAndEnrichMessage(DiscordMessage deletedMessage)
     {
-        if (deletedMessage is null)
-        {
-            return null;
-        }
-
         AppDiscordMessage appDiscordMessage = DiscordMessageMapper.Map(deletedMessage);
 
         bool isCompletedMessage = !string.IsNullOrWhiteSpace(appDiscordMessage.Content) && appDiscordMessage.Author != null;
@@ -464,15 +520,54 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
             return appDiscordMessage;
         }
 
-        Common.Models.MessageRef? messageRef = await _messageRefRepo.GetMessageRef(deletedMessage.Id);
+        MessageRef? messageRef = await _messageRefRepo.GetMessageRef(deletedMessage.Id);
 
         if (messageRef == null)
         {
             return null;
         }
 
-        appDiscordMessage.Author = new AppDiscordMember() { Id = messageRef.UserId };
+        var authorAsGuildMember = await _discordResolver.ResolveGuildMember(messageRef.UserId);
+
+        appDiscordMessage.Author = authorAsGuildMember is not null
+                                    ? DiscordMemberMapper.Map(authorAsGuildMember)
+                                    : AppDiscordMember.BuildStub(messageRef.UserId);
 
         return appDiscordMessage;
+    }
+
+    private async Task<List<AppDiscordMessage>> MapAndEnrichMessages(IEnumerable<DiscordMessage> deletedMessages)
+    {
+        var mappedMessages = (deletedMessages.Select(DiscordMessageMapper.Map) ?? [])
+                                .ToList();
+
+        var completeMessages = mappedMessages.Where(m => !string.IsNullOrWhiteSpace(m.Content) && m.Author != null)
+                                .ToList();
+
+        var incompleteMessages = mappedMessages.ExceptBy(completeMessages.Select(x => x.Id), m => m.Id)
+                                .ToList();
+
+        var messageRefs = (await _messageRefRepo.GetMessageRefs(incompleteMessages.Select(m => m.Id).ToArray()))
+                            .ToList();
+
+        foreach (var message in incompleteMessages)
+        {
+            var messageRef = messageRefs.FirstOrDefault(mr => mr.MessageId == message.Id);
+
+            if (messageRef == null)
+            {
+                continue;
+            }
+
+            var authorAsGuildMember = await _discordResolver.ResolveGuildMember(messageRef.UserId);
+
+            message.Author = authorAsGuildMember is not null
+                                ? DiscordMemberMapper.Map(authorAsGuildMember)
+                                : AppDiscordMember.BuildStub(messageRef.UserId);
+
+            completeMessages.Add(message);
+        }
+
+        return completeMessages;
     }
 }

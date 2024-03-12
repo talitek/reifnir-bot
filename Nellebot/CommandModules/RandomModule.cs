@@ -37,8 +37,8 @@ namespace Nellebot.CommandModules
         [Command("slap")]
         public Task Slap(CommandContext ctx, DiscordMember member)
         {
-            var slapper = ctx.Member?.GetNicknameOrDisplayName() ?? ctx.User.Username;
-            var slapee = member.GetNicknameOrDisplayName();
+            var slapper = ctx.Member?.DisplayName ?? ctx.User.Username;
+            var slapee = member.DisplayName;
 
             return ctx.RespondAsync($"{slapper} slaps {slapee} around a bit with a large trout");
         }

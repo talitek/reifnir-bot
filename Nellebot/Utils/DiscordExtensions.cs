@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
 using Nellebot.Helpers;
@@ -8,12 +7,6 @@ namespace Nellebot.Utils;
 
 public static class DiscordExtensions
 {
-    [Obsolete("Function implemented in D# library.")]
-    public static string GetNicknameOrDisplayName(this DiscordMember member)
-    {
-        return member.DisplayName;
-    }
-
     public static string GetDetailedUserIdentifier(this DiscordUser user)
     {
         return $"{user.GetFullUsername()} ({user.Id})";

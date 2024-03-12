@@ -167,12 +167,12 @@ namespace Nellebot.Utils
             return null;
         }
 
-        public async Task<TryResolveResult<T>> TryResolveAuditLogEntry<T>(DiscordGuild guild, DiscordAuditLogActionType logType, Func<T, bool> predicate)
+        public async Task<TryResolveResult<T>> TryResolveAuditLogEntry<T>(DiscordGuild guild, DiscordAuditLogActionType logType, Func<T, bool> predicate, int maxAgeMinutes = 1)
             where T : DiscordAuditLogEntry
         {
             await foreach (var entry in guild.GetAuditLogsAsync(limit: 50, byMember: null!, actionType: logType))
             {
-                if (entry.CreationTimestamp < DateTimeOffset.UtcNow.AddMinutes(-1)) continue;
+                if (entry.CreationTimestamp < DateTimeOffset.UtcNow.AddMinutes(-maxAgeMinutes)) continue;
 
                 if (entry is T tEntry && predicate(tEntry))
                 {

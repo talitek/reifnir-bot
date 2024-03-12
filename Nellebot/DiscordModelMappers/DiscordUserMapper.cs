@@ -7,10 +7,12 @@ namespace Nellebot.DiscordModelMappers
     {
         public static AppDiscordUser Map(DiscordUser discordUser)
         {
-            var appDiscordUser = new AppDiscordUser();
-
-            appDiscordUser.Id = discordUser.Id;
-            appDiscordUser.Username = discordUser.Username;
+            var appDiscordUser = new AppDiscordUser
+            {
+                Id = discordUser.Id,
+                Username = discordUser.Username,
+                Discriminator = discordUser.Discriminator,
+            };
 
             return appDiscordUser;
         }

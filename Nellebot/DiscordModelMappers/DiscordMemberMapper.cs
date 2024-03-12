@@ -1,6 +1,6 @@
-﻿using DSharpPlus.Entities;
+﻿using System.Linq;
+using DSharpPlus.Entities;
 using Nellebot.Common.AppDiscordModels;
-using System.Linq;
 
 namespace Nellebot.DiscordModelMappers
 {
@@ -10,12 +10,14 @@ namespace Nellebot.DiscordModelMappers
         {
             var appDiscordUser = DiscordUserMapper.Map(discordMember);
 
-            var appDiscordMember = new AppDiscordMember();
-            appDiscordMember.Id = appDiscordUser.Id;
-            appDiscordMember.Username = appDiscordUser.Username;
+            var appDiscordMember = new AppDiscordMember
+            {
+                Id = appDiscordUser.Id,
+                Username = appDiscordUser.Username,
 
-            appDiscordMember.Nickname = discordMember.Nickname;
-            appDiscordMember!.Roles = discordMember.Roles.Select(DiscordRoleMapper.Map);
+                DisplayName = discordMember.DisplayName,
+                Roles = discordMember.Roles.Select(DiscordRoleMapper.Map),
+            };
 
             return appDiscordMember;
         }

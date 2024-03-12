@@ -1,8 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Nellebot.Common.Models;
-using System;
-using System.Threading.Tasks;
 
 namespace Nellebot.Data.Repositories
 {
@@ -47,9 +49,14 @@ namespace Nellebot.Data.Repositories
             }
         }
 
-        public Task<MessageRef?> GetMessageRef(ulong messageId)
+        public async Task<MessageRef?> GetMessageRef(ulong messageId)
         {
-            return _dbContext.MessageRefs.FindAsync(messageId).AsTask();
+            return await _dbContext.MessageRefs.FindAsync(messageId);
+        }
+
+        public async Task<IEnumerable<MessageRef>> GetMessageRefs(ulong[] messageIds)
+        {
+            return await _dbContext.MessageRefs.Where(mr => messageIds.Contains(mr.MessageId)).ToListAsync();
         }
 
         public async Task<bool> CreateMessageRefIfNotExists(ulong messageId, ulong channelId, ulong userId)
