@@ -12,8 +12,6 @@ namespace Nellebot
 
         public string BotToken { get; init; } = null!;
 
-        public string OrdbokApiKey { get; init; } = null!;
-
         public ulong GuildId { get; init; }
 
         /// <summary>
@@ -55,13 +53,13 @@ namespace Nellebot
 
         public ulong AwardChannelId { get; init; }
 
-        public ulong[] AwardVoteGroupIds { get; init; } = Array.Empty<ulong>();
+        public ulong[] AwardVoteGroupIds { get; init; } = [];
 
         public int RequiredAwardCount { get; init; }
 
         public ulong MemberRoleId { get; init; }
 
-        public ulong[] MemberRoleIds { get; init; } = Array.Empty<ulong>();
+        public ulong[] MemberRoleIds { get; init; } = [];
 
         /// <summary>
         /// Gets a value indicating whether feature flag for populating message refs on Ready event.

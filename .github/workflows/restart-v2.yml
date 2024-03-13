@@ -1,10 +1,22 @@
-name: Restart-V2
+name: Restart
 
-on: workflow_dispatch
+on:
+  workflow_dispatch
+  
+env:
+  COMPOSE_PROJECT_NAME: nellebot
 
 jobs:
-  build:
+  restart:
     runs-on: ubuntu-latest
     steps:
-    - name: Say hello
-      run: echo "Hello, world!"
+    - name: Restart container
+      uses: appleboy/ssh-action@v1.0.3
+      with:  
+        host: ${{secrets.VPS_HOST}}
+        port: ${{secrets.VPS_PORT}}
+        username: ${{secrets.NELLEBOT_USER}}
+        key: ${{secrets.NELLEBOT_KEY}}
+        passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
+        script: docker compose -p $COMPOSE_PROJECT_NAME restart
+        envs: COMPOSE_PROJECT_NAME

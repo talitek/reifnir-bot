@@ -1,0 +1,36 @@
+version: '3.4'
+
+services:
+  nellebot:
+    build:
+      context: ..
+      dockerfile: Nellebot/Dockerfile
+    depends_on:
+      - nellebot-pgsql
+
+  nellebot-pgsql:
+    image: postgres:15.5
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: nellebot
+      POSTGRES_PASSWORD: hunter2
+      POSTGRES_DB: nellebot-dev
+    volumes:
+      - nellebot-pgdata:/var/lib/postgresql/data
+
+  nellebot-pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - "5444:80"
+    profiles:
+      - tools
+    depends_on:
+      - nellebot-pgsql
+    environment:
+      PGADMIN_DEFAULT_EMAIL: katt@bot.local
+      PGADMIN_DEFAULT_PASSWORD: hunter2
+
+volumes:
+  nellebot-pgdata:
+    
