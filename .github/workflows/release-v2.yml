@@ -16,7 +16,7 @@ env:
   HOST_GATEWAY_IP: "172.17.0.1"
   REGISTRY: ghcr.io
   REPOSITORY_OWNER: ${{ github.repository_owner }}
-  IMAGE_NAME: nellebot
+  IMAGE_NAME: reifnir
   IMAGE_TAG: ${{ inputs.imageTag }}
   COMPOSE_PROJECT_NAME: nellebot
   COMPOSE_FILE_NAME: prod-compose.yml
@@ -59,8 +59,10 @@ jobs:
         debug: ${{vars.ACTIONS_RUNNER_DEBUG}}
         script_stop: true
         script: |
-          FULL_IMAGE_NAME="$REGISTRY/$REPOSITORY_OWNER/$IMAGE_NAME:$IMAGE_TAG"
-          FULL_IMAGE_NAME_PREVIOUS="$REGISTRY/$REPOSITORY_OWNER/$IMAGE_NAME:$IMAGE_TAG-previous"
+          REPOSITORY_OWNER_LOWERCASE=$(echo $REPOSITORY_OWNER | tr '[:upper:]' '[:lower:]');
+
+          FULL_IMAGE_NAME="$REGISTRY/$REPOSITORY_OWNER_LOWERCASE/$IMAGE_NAME:$IMAGE_TAG"
+          FULL_IMAGE_NAME_PREVIOUS="$REGISTRY/$REPOSITORY_OWNER_LOWERCASE/$IMAGE_NAME:$IMAGE_TAG-previous"
 
           MIGRATIONS_CONTAINER_NAME="$COMPOSE_PROJECT_NAME-migrations"
 
