@@ -12,13 +12,14 @@ public static class DiscordExtensions
         return $"{user.GetFullUsername()} ({user.Id})";
     }
 
-    public static string GetDetailedMemberIdentifier(this DiscordMember member)
+    public static string GetDetailedMemberIdentifier(this DiscordMember member, bool useMention = false)
     {
         var memberUsername = member.Username;
         var memberDisplayName = member.DisplayName;
+        var mentionOrDisplayName = useMention ? member.Mention : memberDisplayName;
 
         var memberFormattedDisplayName = memberUsername != memberDisplayName
-                ? $"{member.DisplayName} ({member.GetFullUsername()}, {member.Id})"
+                ? $"{mentionOrDisplayName} ({member.GetFullUsername()}, {member.Id})"
                 : $"{member.GetFullUsername()} ({member.Id})";
 
         return memberFormattedDisplayName;

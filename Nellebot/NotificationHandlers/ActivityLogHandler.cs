@@ -344,20 +344,11 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
         GuildMemberUpdateEventArgs args = notification.EventArgs;
 
-        bool rolesUpdated = CheckForRolesUpdate(args);
-        if (rolesUpdated)
-        {
-            totalChanges++;
-        }
+        var roleChanges = CheckForRolesUpdate(args);
+        totalChanges += roleChanges;
 
         bool nicknameUpdated = await CheckForNicknameUpdate(args);
         if (nicknameUpdated)
-        {
-            totalChanges++;
-        }
-
-        bool guildAvatarUpdated = await CheckForGuildAvatarUpdate(args);
-        if (guildAvatarUpdated)
         {
             totalChanges++;
         }
@@ -377,7 +368,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         // Test if there actually are several changes in the same event
         if (totalChanges > 1)
         {
-            _discordLogger.LogExtendedActivityMessage($"{nameof(GuildMemberUpdatedNotification)} contained more than 1 changes");
+            _discordLogger.LogExtendedActivityMessage($"{nameof(GuildMemberUpdatedNotification)} contained {totalChanges} changes");
         }
     }
 
@@ -427,30 +418,6 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         return true;
     }
 
-    private async Task<bool> CheckForGuildAvatarUpdate(GuildMemberUpdateEventArgs args)
-    {
-        string? guildAvatarHashAfter = args.GuildAvatarHashAfter;
-        string? guildAvatarHashBefore = args.GuildAvatarHashAfter;
-
-        if (string.IsNullOrWhiteSpace(guildAvatarHashBefore) || guildAvatarHashBefore == guildAvatarHashAfter)
-        {
-            guildAvatarHashBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.GuildAvatarHashChange))?.GetValue<string>();
-        }
-
-        if (guildAvatarHashBefore == guildAvatarHashAfter)
-        {
-            return false;
-        }
-
-        string message = $"Guild avatar change for {args.Member.Mention}. {guildAvatarHashBefore ?? "*no avatar*"} => {guildAvatarHashAfter ?? "*no avatar*"}.";
-
-        _discordLogger.LogExtendedActivityMessage(message);
-
-        await _userLogService.CreateUserLog(args.Member.Id, guildAvatarHashAfter, UserLogType.GuildAvatarHashChange);
-
-        return true;
-    }
-
     private async Task<bool> CheckForNicknameUpdate(GuildMemberUpdateEventArgs args)
     {
         string? nicknameAfter = args.NicknameAfter;
@@ -476,37 +443,59 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         return true;
     }
 
-    private bool CheckForRolesUpdate(GuildMemberUpdateEventArgs args)
+    private int CheckForRolesUpdate(GuildMemberUpdateEventArgs args)
     {
-        DiscordRole? addedRole = args.RolesAfter.ExceptBy(args.RolesBefore.Select(r => r.Id), x => x.Id).FirstOrDefault();
-        DiscordRole? removedRole = args.RolesBefore.ExceptBy(args.RolesAfter.Select(r => r.Id), x => x.Id).FirstOrDefault();
+        var addedRoles = args.RolesAfter.ExceptBy(args.RolesBefore.Select(r => r.Id), x => x.Id).ToList();
+        var removedRoles = args.RolesBefore.ExceptBy(args.RolesAfter.Select(r => r.Id), x => x.Id).ToList();
 
         string memberMention = args.Member.Mention;
         string memberDisplayName = args.Member.DisplayName;
+        string memberDetailedIdentifier = args.Member.GetDetailedMemberIdentifier(true);
 
-        if (addedRole is not null)
+        var roleChangesCount = addedRoles.Count + removedRoles.Count;
+
+        var warningMessage = new StringBuilder();
+
+        if (addedRoles.Count > 0)
         {
-            _discordLogger.LogActivityMessage($"Added role **{addedRole.Name}** to **{memberDisplayName}**");
-            _discordLogger.LogExtendedActivityMessage($"Role change for {memberMention}: Added {addedRole.Name}.");
+            var addedRolesNames = string.Join(", ", addedRoles.Select(r => r.Name));
+            _discordLogger.LogActivityMessage($"Added roles to **{memberDisplayName}**: {addedRolesNames}");
 
-            if (addedRole.Id == _botOptions.SpammerRoleId)
+            foreach (var addedRole in addedRoles)
             {
-                string memberDetailedIdentifier = args.Member.GetDetailedMemberIdentifier();
 
-                _discordLogger.LogTrustedChannelMessage($"Awoooooo! **{memberDetailedIdentifier}** is a **{addedRole.Name}**.");
+                _discordLogger.LogExtendedActivityMessage($"Role change for {memberMention}: Added {addedRole.Name}.");
+
+                if (addedRole.Id == _botOptions.SpammerRoleId)
+                {
+                    warningMessage.AppendLine($"Awoooooo! **{memberDetailedIdentifier}** is a **{addedRole.Name}**.");
+                }
             }
-
-            return true;
         }
 
-        if (removedRole is not null)
+        if (removedRoles.Count > 0)
         {
-            _discordLogger.LogActivityMessage($"Removed role **{removedRole.Name}** from **{memberDisplayName}**");
-            _discordLogger.LogExtendedActivityMessage($"Role change for {memberMention}: Removed {removedRole.Name}.");
-            return true;
+            var removedRolesNames = string.Join(", ", removedRoles.Select(r => r.Name));
+            _discordLogger.LogActivityMessage($"Removed roles from **{memberDisplayName}**: {removedRolesNames}");
+
+            foreach (var removedRole in removedRoles)
+            {
+
+                _discordLogger.LogExtendedActivityMessage($"Role change for {memberMention}: Removed {removedRole.Name}.");
+            }
         }
 
-        return false;
+        if (addedRoles.Count > 2)
+        {
+            warningMessage.AppendLine($"Awoooooo! **{memberDetailedIdentifier}** added more than 2 roles in one go. Possibly bot.");
+        }
+
+        if (warningMessage.Length > 0)
+        {
+            _discordLogger.LogTrustedChannelMessage(warningMessage.ToString().TrimEnd());
+        }
+
+        return roleChangesCount;
     }
 
     private async Task<AppDiscordMessage?> MapAndEnrichMessage(DiscordMessage deletedMessage)
