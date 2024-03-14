@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   nellebot:
-    image: ghcr.io/NELLExchange/Reifnir:$IMAGE_TAG
+    image: ghcr.io/nellexchange/reifnir:$IMAGE_TAG
     restart: unless-stopped
     tty: true
     extra_hosts:
