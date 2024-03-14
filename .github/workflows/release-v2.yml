@@ -46,11 +46,10 @@ jobs:
     - name: Release
       uses: appleboy/ssh-action@v1.0.3
       env:
-        GHCR_USERNAME: ${{secrets.GHCR_USERNAME}}
-        GHCR_PASSWORD: ${{secrets.GHCR_PASSWORD}}
+        GHCR_USERNAME: ${{ github.actor }}
+        GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         DB_CONNECTION_STRING: ${{secrets.DB_CONNECTION_STRING}}
         BOT_TOKEN: ${{secrets.BOT_TOKEN}}
-        OPENAI_API_KEY: ${{secrets.OPENAI_API_KEY}}
       with:  
         host: ${{secrets.VPS_HOST}}
         port: ${{secrets.VPS_PORT}}
@@ -118,5 +117,4 @@ jobs:
           GHCR_USERNAME,
           GHCR_PASSWORD,
           BOT_TOKEN,
-          OPENAI_API_KEY,
           DB_CONNECTION_STRING
