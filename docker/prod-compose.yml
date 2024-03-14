@@ -1,0 +1,12 @@
+version: '3.4'
+
+services:
+  nellebot:
+    image: ghcr.io/nellexchange/reifnir:$IMAGE_TAG
+    restart: unless-stopped
+    tty: true
+    extra_hosts:
+      - "host.docker.internal=$HOST_GATEWAY_IP"
+    environment:
+       Nellebot__BotToken: $BOT_TOKEN
+       Nellebot__ConnectionString: $DB_CONNECTION_STRING

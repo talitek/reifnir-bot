@@ -1,0 +1,22 @@
+{
+  "profiles": {
+    "Docker Compose": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "serviceActions": {
+        "nellebot": "StartDebugging",
+        "nellebot-pgadmin": "StartWithoutDebugging",
+        "nellebot-pgsql": "DoNotStart"
+      }
+    },
+    "Compose \\W PgAdmin": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "serviceActions": {
+        "nellebot": "StartDebugging",
+        "nellebot-pgadmin": "StartWithoutDebugging",
+        "nellebot-pgsql": "StartWithoutDebugging"
+      }
+    }
+  }
+}

@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # create db backup in tmp folder
-su - postgres -c pg_dump nellebot > /tmp/nellebot.bak
+pg_dump nellebot > /tmp/nellebot.bak
 
 # create folder if it doesnt'exit
 mkdir -p $HOME/nellebot-db-backups

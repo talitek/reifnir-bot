@@ -1,0 +1,41 @@
+version: '3.4'
+
+services:
+  nellebot:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    depends_on:
+      - nellebot-pgsql
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+    env_file:
+      - path: .env.local
+        required: false
+
+  nellebot-pgsql:
+    image: postgres:15.5
+    ports:
+      - "5533:5432"
+    environment:
+      POSTGRES_USER: nellebot
+      POSTGRES_PASSWORD: hunter2
+      POSTGRES_DB: nellebot-dev
+    volumes:
+      - nellebot-pgdata:/var/lib/postgresql/data
+
+  nellebot-pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - "5544:80"
+    profiles:
+      - tools
+    depends_on:
+      - nellebot-pgsql
+    environment:
+      PGADMIN_DEFAULT_EMAIL: nelle@bot.local
+      PGADMIN_DEFAULT_PASSWORD: hunter2
+
+volumes:
+  nellebot-pgdata:
+    
