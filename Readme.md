@@ -5,41 +5,67 @@ Source code for the discord bot Reifnir, made for the Norwegian-English Language
 
 [Join NELLE discord!](https://discord.gg/2d37xPa)
 
-## Bot permissions
-
-General: Manage Roles, Change Nickname, View Channels
-
-Text permissions: Send Messages, Embed links, Attach Files, Read Message History, Add reactions
-
-(Permissions Integer: 335662144)
-
 ## Local developement
 
 ### Requirements
 
-* [.NET 5 SDK](https://dotnet.microsoft.com/download/visual-studio-sdks)
-* [Visual Studio](https://visualstudio.microsoft.com/) (or any other preferred editor + dotnet command line tool)
-* [PostgreSQL 12+](https://www.postgresql.org/)
-
-### Build from Visual Studio
-
-Build solution
-
-### Build from dotnet command line tool
-
-`dotnet build`
-
-### Connection string format
-`Server=_DB_SERVER_IP_;Database=_DB_NAME_;User Id=_DB_USER_;Password=_DB_PASSWORD_;`
+-   [.NET 8 SDK](https://dotnet.microsoft.com/download/visual-studio-sdks)
+-   [Visual Studio](https://visualstudio.microsoft.com/) (or any other preferred editor + dotnet command line tool)
+-   [PostgreSQL 15+](https://www.postgresql.org/)
 
 ### Secrets
-Connection string 
 
-`"Nellebot:ConnectionString" "CONN_STRING_GOES_HERE"​`
+Configure the bot token and connection string in user secrets:
 
-Bot token
+```
+"Nellebot:BotToken": "TOKEN_GOES_HERE"​
+"Nellebot:ConnectionString": "CONN_STRING_GOES_HERE"​
+```
 
-`"Nellebot:BotToken" "TOKEN_GOES_HERE"​`
+or as environment variables:
+
+```
+Nellebot__BotToken=TOKEN_GOES_HERE
+Nellebot__ConnectionString=CONN_STRING_GOES_HERE
+```
+
+#### Connection string format
+
+`Server=_DB_SERVER_IP_;Database=_DB_NAME_;User Id=_DB_USER_;Password=_DB_PASSWORD_;`
+
+### Run from Visual Studio or VS Code with C# Dev Kit extension
+
+Set `Nellebot` as the startup project and run the project using `Nellebot` profile.
+
+### Run from dotnet command line tool
+
+`dotnet run --project Nellebot`
+
+### Run as a Docker container in Visual Studio using Fast Mode
+
+#### Nellebot project only
+
+Set `Nellebot` as the startup project and run the project using `Docker` profile.
+
+#### Nellebot and PostgreSQL
+
+Set `docker-vs` as the startup project and run the project using `Docker Compose` profile.
+
+Optionally, use `Compose \W PgAdmin` profile to include a PgAdmin container.
+
+### Run as a Docker container from the command line
+
+#### Nellebot project only
+
+`docker build -t kattbot -f docker/Dockerfile .`
+
+`docker run -d --name kattbot kattbot`
+
+#### Nellebot and PostgreSQL
+
+`docker-compose -f docker/docker-compose.yml up`
+
+Optionally, pass the `--profile tools` flag to include a PgAdmin container.
 
 ## Credits
 
