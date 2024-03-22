@@ -105,12 +105,12 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         DiscordChannel channel = args.Channel;
         DiscordMessage deletedMessage = args.Message;
 
-        if (channel.IsPrivate)
+        if (channel.IsPrivate || channel.Id == _botOptions.ActivityLogChannelId || channel.Id == _botOptions.ExtendedActivityLogChannelId)
         {
             return;
         }
 
-        if (channel.Id == _botOptions.ActivityLogChannelId || channel.Id == _botOptions.ExtendedActivityLogChannelId)
+        if (deletedMessage.Author?.IsBot ?? false)
         {
             return;
         }
@@ -235,7 +235,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
                 // Check if the user was banned
                 // It's possible that the audit log entry might not be available right away.
-                // If that turns out to be the case, consider wrapping this call into some sort of exeponential backoff retry.
+                // If that turns out to be the case, consider wrapping this call into some sort of exponential backoff retry.
                 var auditBanEntry = await _discordResolver.ResolveAuditLogEntry<DiscordAuditLogBanEntry>(
                                             args.Guild,
                                             DiscordAuditLogActionType.Ban,
@@ -292,7 +292,6 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
         await _userLogService.CreateUserLog(member.Id, DateTime.UtcNow, UserLogType.JoinedServer);
         await _userLogService.CreateUserLog(member.Id, member.GetFullUsername(), UserLogType.UsernameChange);
-        await _userLogService.CreateUserLog(member.Id, member.AvatarHash, UserLogType.AvatarHashChange);
     }
 
     public async Task Handle(GuildMemberRemovedNotification notification, CancellationToken cancellationToken)
@@ -359,41 +358,11 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
             totalChanges++;
         }
 
-        bool avatarUpdated = await CheckForAvatarUpdate(args);
-        if (avatarUpdated)
-        {
-            totalChanges++;
-        }
-
         // Test if there actually are several changes in the same event
         if (totalChanges > 1)
         {
             _discordLogger.LogExtendedActivityMessage($"{nameof(GuildMemberUpdatedNotification)} contained {totalChanges} changes");
         }
-    }
-
-    private async Task<bool> CheckForAvatarUpdate(GuildMemberUpdateEventArgs args)
-    {
-        string? avatarAfter = args.MemberAfter.AvatarHash;
-        string? avatarBefore = args.MemberBefore?.AvatarHash;
-
-        if (string.IsNullOrWhiteSpace(avatarBefore) || avatarBefore == avatarAfter)
-        {
-            avatarBefore = (await _userLogService.GetLatestFieldForUser(args.Member.Id, UserLogType.AvatarHashChange))?.GetValue<string>();
-        }
-
-        if (avatarBefore == avatarAfter)
-        {
-            return false;
-        }
-
-        string message = $"Avatar change for {args.Member.Mention}. {avatarBefore ?? "*no avatar*"} => {avatarAfter ?? "*no avatar*"}.";
-
-        _discordLogger.LogExtendedActivityMessage(message);
-
-        await _userLogService.CreateUserLog(args.Member.Id, avatarAfter, UserLogType.AvatarHashChange);
-
-        return true;
     }
 
     private async Task<bool> CheckForUsernameUpdate(GuildMemberUpdateEventArgs args)
@@ -487,7 +456,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
         if (addedRoles.Count > 2)
         {
-            warningMessage.AppendLine($"Awoooooo! **{memberDetailedIdentifier}** added more than 2 roles in one go. Possibly bot.");
+            warningMessage.AppendLine($"Awoooooo! **{memberDetailedIdentifier}** chose more than 2 roles in one go. Possibly bot.");
         }
 
         if (warningMessage.Length > 0)
