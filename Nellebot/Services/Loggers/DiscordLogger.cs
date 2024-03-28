@@ -6,9 +6,9 @@ namespace Nellebot.Services.Loggers;
 
 public class DiscordLogger
 {
-    private readonly BotOptions _options;
     private readonly DiscordLogChannel _channel;
     private readonly ILogger<DiscordLogger> _logger;
+    private readonly BotOptions _options;
 
     public DiscordLogger(IOptions<BotOptions> options, DiscordLogChannel channel, ILogger<DiscordLogger> logger)
     {
@@ -39,15 +39,12 @@ public class DiscordLogger
 
     private void LogMessageCore(string message, ulong channelId)
     {
-        ulong guildId = _options.GuildId;
+        var guildId = _options.GuildId;
 
         var discordLogItem = new DiscordLogItem<string>(message, guildId, channelId);
 
         var sucess = _channel.Writer.TryWrite(discordLogItem);
 
-        if (!sucess)
-        {
-            _logger.LogError("Could not write to DiscordLogChannel");
-        }
+        if (!sucess) _logger.LogError("Could not write to DiscordLogChannel");
     }
 }

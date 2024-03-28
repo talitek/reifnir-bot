@@ -11,7 +11,9 @@ namespace Nellebot.CommandHandlers;
 public record AddMissingMemberRolesCommand : BotCommandCommand
 {
     public AddMissingMemberRolesCommand(CommandContext ctx)
-        : base(ctx) { }
+        : base(ctx)
+    {
+    }
 }
 
 public class AddMissingMembeRolesHandler : IRequestHandler<AddMissingMemberRolesCommand>
@@ -33,17 +35,19 @@ public class AddMissingMembeRolesHandler : IRequestHandler<AddMissingMemberRoles
         var memberRole = ctx.Guild.Roles[_options.MemberRoleId];
 
         if (memberRole == null)
+        {
             throw new ArgumentException($"Could not find role with id {memberRoleId}");
+        }
 
         var memberRoleCandidates = ctx.Guild.Members
-                                    .Where(m => !m.Value.Roles.Any(r => r.Id == memberRoleId))
-                                    .Where(m => m.Value.Roles.Any(r => memberRoleIds.Contains(r.Id)))
-                                    .Select(r => r.Value)
-                                    .ToList();
+            .Where(m => !m.Value.Roles.Any(r => r.Id == memberRoleId))
+            .Where(m => m.Value.Roles.Any(r => memberRoleIds.Contains(r.Id)))
+            .Select(r => r.Value)
+            .ToList();
 
         if (memberRoleCandidates.Count == 0)
         {
-            await ctx.RespondAsync($"Did not find any candidates for member role");
+            await ctx.RespondAsync("Did not find any candidates for member role");
             return;
         }
 
@@ -78,14 +82,20 @@ public class AddMissingMembeRolesHandler : IRequestHandler<AddMissingMemberRoles
                 }
             }
 
-            if (roleAdded) successCount++;
-            else failureCount++;
+            if (roleAdded)
+            {
+                successCount++;
+            }
+            else
+            {
+                failureCount++;
+            }
 
             totalCount++;
 
-            var currentProgress = ((double)totalCount / memberRoleCandidates.Count) * 100;
+            var currentProgress = (double)totalCount / memberRoleCandidates.Count * 100;
 
-            if ((currentProgress - progressPercentLastUpdate >= 10) || (currentProgress == 100))
+            if (currentProgress - progressPercentLastUpdate >= 10 || currentProgress == 100)
             {
                 progressPercentLastUpdate = currentProgress;
                 await ctx.Channel.SendMessageAsync($"Progress: {currentProgress:.##}%");

@@ -8,11 +8,11 @@ namespace Nellebot.Utils;
 
 public class MessageBuffer
 {
-    private readonly ConcurrentQueue<string> _messageQueue;
-    private readonly int _delayMillis;
     private readonly Func<IEnumerable<string>, Task> _callback;
-    private readonly Timer _timer;
+    private readonly int _delayMillis;
     private readonly object _lockObject;
+    private readonly ConcurrentQueue<string> _messageQueue;
+    private readonly Timer _timer;
 
     public MessageBuffer(int delayMillis, Func<IEnumerable<string>, Task> callback)
     {
@@ -35,10 +35,7 @@ public class MessageBuffer
         {
             var allMessages = new List<string>();
 
-            while (_messageQueue.TryDequeue(out var message))
-            {
-                allMessages.Add(message);
-            }
+            while (_messageQueue.TryDequeue(out var message)) allMessages.Add(message);
 
             _ = InvokeCallbackAsync(allMessages);
         }

@@ -18,7 +18,11 @@ public class MessageTemplateRepository
         _dbContext = dbContext;
     }
 
-    public async Task<string> CreateMessageTemplate(string message, string type, ulong authorId, CancellationToken cancellationToken = default)
+    public async Task<string> CreateMessageTemplate(
+        string message,
+        string type,
+        ulong authorId,
+        CancellationToken cancellationToken = default)
     {
         var newId = PseudonymGenerator.NewFriendlyId();
 
@@ -43,7 +47,9 @@ public class MessageTemplateRepository
         return await _dbContext.MessageTemplates.FindAsync(new[] { id }, cancellationToken);
     }
 
-    public async Task<IEnumerable<MessageTemplate>> GetAllMessageTemplates(string type, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<MessageTemplate>> GetAllMessageTemplates(
+        string type,
+        CancellationToken cancellationToken = default)
     {
         return await _dbContext.MessageTemplates
             .Where(x => x.Type == type)

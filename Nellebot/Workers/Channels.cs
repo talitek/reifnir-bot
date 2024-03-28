@@ -77,15 +77,6 @@ public class DiscordLogChannel : AbstractQueueChannel<BaseDiscordLogItem>
 
 public record MessageAwardItem
 {
-    public DiscordMessage DiscordMessage { get; } = null!;
-
-    public MessageAwardQueueAction Action { get; }
-
-    // Used when message is deleted. TODO refactor to different object
-    public ulong DiscordMessageId { get; }
-
-    public DiscordChannel? DiscordChannel { get; }
-
     public MessageAwardItem(DiscordMessage discordMessage, MessageAwardQueueAction action)
     {
         DiscordMessage = discordMessage;
@@ -98,6 +89,15 @@ public record MessageAwardItem
         DiscordChannel = channel;
         Action = action;
     }
+
+    public DiscordMessage DiscordMessage { get; } = null!;
+
+    public MessageAwardQueueAction Action { get; }
+
+    // Used when message is deleted. TODO refactor to different object
+    public ulong DiscordMessageId { get; }
+
+    public DiscordChannel? DiscordChannel { get; }
 }
 
 public class MessageAwardQueueChannel : AbstractQueueChannel<MessageAwardItem>

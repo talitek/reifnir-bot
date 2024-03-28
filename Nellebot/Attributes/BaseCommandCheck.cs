@@ -9,19 +9,19 @@ using Nellebot.Services.Loggers;
 namespace Nellebot.Attributes;
 
 /// <summary>
-/// Reject commands coming from DM or from other guild (if it exists).
+///     Reject commands coming from DM or from other guild (if it exists).
 /// </summary>
 public class BaseCommandCheck : CheckBaseAttribute
 {
     public override Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
     {
-        object? botOptionsObj = ctx.Services.GetService(typeof(IOptions<BotOptions>));
+        var botOptionsObj = ctx.Services.GetService(typeof(IOptions<BotOptions>));
 
         if (botOptionsObj == null)
         {
-            string error = $"Could not fetch {typeof(IOptions<BotOptions>).Name}";
+            var error = $"Could not fetch {typeof(IOptions<BotOptions>).Name}";
 
-            object? discordErrorLoggerObj = ctx.Services.GetService(typeof(IDiscordErrorLogger));
+            var discordErrorLoggerObj = ctx.Services.GetService(typeof(IDiscordErrorLogger));
 
             if (discordErrorLoggerObj == null)
             {
@@ -35,16 +35,13 @@ public class BaseCommandCheck : CheckBaseAttribute
             return Task.FromResult(false);
         }
 
-        BotOptions botOptions = ((IOptions<BotOptions>)botOptionsObj).Value;
+        var botOptions = ((IOptions<BotOptions>)botOptionsObj).Value;
 
-        ulong guildId = botOptions.GuildId;
+        var guildId = botOptions.GuildId;
 
-        DiscordChannel channel = ctx.Channel;
+        var channel = ctx.Channel;
 
-        if (IsPrivateMessageChannel(channel))
-        {
-            return Task.FromResult(false);
-        }
+        if (IsPrivateMessageChannel(channel)) return Task.FromResult(false);
 
         return !IsGuildChannel(channel, guildId) ? Task.FromResult(false) : Task.FromResult(true);
     }

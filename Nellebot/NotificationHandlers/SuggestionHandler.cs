@@ -1,12 +1,9 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using DSharpPlus;
 using DSharpPlus.Entities;
 using MediatR;
 using Microsoft.Extensions.Options;
-using Nellebot.Common.Extensions;
 using Nellebot.Helpers;
-using Nellebot.Utils;
 
 namespace Nellebot.NotificationHandlers;
 

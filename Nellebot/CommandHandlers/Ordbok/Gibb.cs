@@ -12,13 +12,15 @@ namespace Nellebot.CommandHandlers.Ordbok;
 public record GibbCommand : BotCommandCommand
 {
     public GibbCommand(CommandContext ctx)
-        : base(ctx) { }
+        : base(ctx)
+    {
+    }
 }
 
 public class GibbHandler : IRequestHandler<GibbCommand>
 {
-    private readonly OrdbokRepository _ordbokRepo;
     private readonly OrdbokHttpClient _ordbokClient;
+    private readonly OrdbokRepository _ordbokRepo;
 
     public GibbHandler(OrdbokRepository ordbokRepo, OrdbokHttpClient ordbokClient)
     {
@@ -39,8 +41,8 @@ public class GibbHandler : IRequestHandler<GibbCommand>
 
         var articleId = await _ordbokRepo.GetArticleIdAtIndex(dictionary, wordClass, random, cancellationToken);
 
-        var article = (await _ordbokClient.GetArticle(dictionary, articleId, cancellationToken))
-            ?? throw new Exception($"Couldn't fetch article id {articleId}");
+        var article = await _ordbokClient.GetArticle(dictionary, articleId, cancellationToken)
+                      ?? throw new Exception($"Couldn't fetch article id {articleId}");
 
         var message = $"Here's your article ({articleId}): {article.Lemmas.First().Value}";
 

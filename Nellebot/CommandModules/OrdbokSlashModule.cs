@@ -1,6 +1,4 @@
 ﻿using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.SlashCommands;
 using Nellebot.CommandHandlers.Ordbok;
 using Nellebot.Common.Models.Ordbok;

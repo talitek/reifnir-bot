@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using MediatR;
 using Nellebot.Common.Models.Ordbok;
-using Nellebot.Common.Models.Ordbok.Api;
 using Nellebot.Common.Models.Ordbok.Store;
 using Nellebot.Data.Repositories;
 using Nellebot.Services.Ordbok;
@@ -16,13 +15,17 @@ namespace Nellebot.CommandHandlers.Ordbok;
 public record RebuildArticleStoreCommand : BotCommandCommand
 {
     public RebuildArticleStoreCommand(CommandContext ctx)
-        : base(ctx) { }
+        : base(ctx)
+    {
+    }
 }
 
 public class RebuildArticleStoreHandler : IRequestHandler<RebuildArticleStoreCommand>
 {
-    private static readonly List<string> Dictionaries = new List<string> { OrdbokDictionaryMap.Bokmal, OrdbokDictionaryMap.Nynorsk };
-    private static readonly List<string> WordClasses = new List<string> { "NOUN", "VERB" };
+    private static readonly List<string> Dictionaries = new()
+        { OrdbokDictionaryMap.Bokmal, OrdbokDictionaryMap.Nynorsk };
+
+    private static readonly List<string> WordClasses = new() { "NOUN", "VERB" };
 
     private readonly OrdbokHttpClient _ordbokClient;
     private readonly OrdbokRepository _ordbokRepo;
@@ -50,7 +53,8 @@ public class RebuildArticleStoreHandler : IRequestHandler<RebuildArticleStoreCom
 
                 try
                 {
-                    var articles = (await _ordbokClient.GetAll(dictionary, wordClass, cancellationToken)) ?? throw new Exception("Result is null");
+                    var articles = await _ordbokClient.GetAll(dictionary, wordClass, cancellationToken) ??
+                                   throw new Exception("Result is null");
 
                     var articleStore = new OrdbokArticleStore
                     {
@@ -67,7 +71,6 @@ public class RebuildArticleStoreHandler : IRequestHandler<RebuildArticleStoreCom
                 catch (Exception ex)
                 {
                     await message.ModifyAsync($"{message.Content} Failed: {ex.Message}");
-                    continue;
                 }
             }
         }
@@ -78,7 +81,8 @@ public class RebuildArticleStoreHandler : IRequestHandler<RebuildArticleStoreCom
 
             try
             {
-                var concepts = (await _ordbokClient.GetConcepts(dictionary, cancellationToken)) ?? throw new Exception("Result is null");
+                var concepts = await _ordbokClient.GetConcepts(dictionary, cancellationToken) ??
+                               throw new Exception("Result is null");
 
                 var conceptStore = new OrdbokConceptStore
                 {
@@ -93,7 +97,6 @@ public class RebuildArticleStoreHandler : IRequestHandler<RebuildArticleStoreCom
             catch (Exception ex)
             {
                 await message.ModifyAsync($"{message.Content} Failed: {ex.Message}");
-                continue;
             }
         }
 

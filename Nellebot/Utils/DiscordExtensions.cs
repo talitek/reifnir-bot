@@ -19,8 +19,8 @@ public static class DiscordExtensions
         var mentionOrDisplayName = useMention ? member.Mention : memberDisplayName;
 
         var memberFormattedDisplayName = memberUsername != memberDisplayName
-                ? $"{mentionOrDisplayName} ({member.GetFullUsername()}, {member.Id})"
-                : $"{member.GetFullUsername()} ({member.Id})";
+            ? $"{mentionOrDisplayName} ({member.GetFullUsername()}, {member.Id})"
+            : $"{member.GetFullUsername()} ({member.Id})";
 
         return memberFormattedDisplayName;
     }

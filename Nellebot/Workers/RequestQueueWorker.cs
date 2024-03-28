@@ -4,14 +4,13 @@ using System.Threading.Tasks;
 using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Nellebot.CommandHandlers;
 
 namespace Nellebot.Workers;
 
 public class RequestQueueWorker : BackgroundService
 {
-    private readonly ILogger<RequestQueueWorker> _logger;
     private readonly RequestQueueChannel _channel;
+    private readonly ILogger<RequestQueueWorker> _logger;
     private readonly IMediator _mediator;
 
     public RequestQueueWorker(ILogger<RequestQueueWorker> logger, RequestQueueChannel channel, IMediator mediator)
@@ -25,7 +24,7 @@ public class RequestQueueWorker : BackgroundService
     {
         try
         {
-            await foreach (IRequest command in _channel.Reader.ReadAllAsync(stoppingToken))
+            await foreach (var command in _channel.Reader.ReadAllAsync(stoppingToken))
             {
                 if (command != null)
                 {

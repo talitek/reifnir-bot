@@ -2,24 +2,23 @@
 using DSharpPlus.Entities;
 using Nellebot.Common.AppDiscordModels;
 
-namespace Nellebot.DiscordModelMappers
+namespace Nellebot.DiscordModelMappers;
+
+public static class DiscordMemberMapper
 {
-    public static class DiscordMemberMapper
+    public static AppDiscordMember Map(DiscordMember discordMember)
     {
-        public static AppDiscordMember Map(DiscordMember discordMember)
+        var appDiscordUser = DiscordUserMapper.Map(discordMember);
+
+        var appDiscordMember = new AppDiscordMember
         {
-            var appDiscordUser = DiscordUserMapper.Map(discordMember);
+            Id = appDiscordUser.Id,
+            Username = appDiscordUser.Username,
 
-            var appDiscordMember = new AppDiscordMember
-            {
-                Id = appDiscordUser.Id,
-                Username = appDiscordUser.Username,
+            DisplayName = discordMember.DisplayName,
+            Roles = discordMember.Roles.Select(DiscordRoleMapper.Map),
+        };
 
-                DisplayName = discordMember.DisplayName,
-                Roles = discordMember.Roles.Select(DiscordRoleMapper.Map),
-            };
-
-            return appDiscordMember;
-        }
+        return appDiscordMember;
     }
 }

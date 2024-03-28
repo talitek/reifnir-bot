@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Nellebot.NotificationHandlers;
 
-public abstract record EventNotification() : INotification;
+public abstract record EventNotification : INotification;
 
 #pragma warning disable SA1402 // File may only contain a single type
 public record GuildMemberUpdatedNotification(GuildMemberUpdateEventArgs EventArgs) : EventNotification;

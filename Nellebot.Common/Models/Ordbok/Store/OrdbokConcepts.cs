@@ -6,5 +6,5 @@ public record OrdbokConceptStore
 {
     public string Dictionary { get; init; } = null!;
 
-    public Dictionary<string, string> Concepts { get; set; } = new Dictionary<string, string>();
+    public Dictionary<string, string> Concepts { get; set; } = new();
 }

@@ -21,36 +21,33 @@ public class DiscordErrorLogger : IDiscordErrorLogger
 
     public void LogCommandError(CommandContext ctx, string errorMessage)
     {
-        string user = $"{ctx.User.Username}#{ctx.User.Discriminator}";
-        string channelName = ctx.Channel.Name;
-        string guildName = ctx.Guild.Name;
-        string command = EscapeTicks(ctx.Message.Content);
+        var user = $"{ctx.User.Username}#{ctx.User.Discriminator}";
+        var channelName = ctx.Channel.Name;
+        var guildName = ctx.Guild.Name;
+        var command = EscapeTicks(ctx.Message.Content);
 
-        string contextMessage = $"`{command}` by `{user}` in `{channelName}`(`{guildName}`)";
-        string escapedErrorMesssage = $"`{EscapeTicks(errorMessage)}`";
+        var contextMessage = $"`{command}` by `{user}` in `{channelName}`(`{guildName}`)";
+        var escapedErrorMesssage = $"`{EscapeTicks(errorMessage)}`";
 
-        string fullErrorMessage = $"{contextMessage}{Environment.NewLine}{escapedErrorMesssage}";
+        var fullErrorMessage = $"{contextMessage}{Environment.NewLine}{escapedErrorMesssage}";
 
         LogError("Failed command", fullErrorMessage);
     }
 
     public void LogEventError(EventContext ctx, string errorMessage)
     {
-        string user = ctx.User != null ? $"{ctx.User.Username}#{ctx.User.Discriminator}" : "Unknown user";
-        string channelName = ctx.Channel?.Name ?? "Unknown channel";
-        string eventName = ctx.EventName;
-        string message = ctx.Message != null ? EscapeTicks(ctx.Message.Content) : string.Empty;
+        var user = ctx.User != null ? $"{ctx.User.Username}#{ctx.User.Discriminator}" : "Unknown user";
+        var channelName = ctx.Channel?.Name ?? "Unknown channel";
+        var eventName = ctx.EventName;
+        var message = ctx.Message != null ? EscapeTicks(ctx.Message.Content) : string.Empty;
 
-        string contextMessage = $"`{eventName}` by `{user}` in `{channelName}`";
+        var contextMessage = $"`{eventName}` by `{user}` in `{channelName}`";
 
-        if (!string.IsNullOrWhiteSpace(message))
-        {
-            contextMessage += $"{Environment.NewLine}Message: `{message}`";
-        }
+        if (!string.IsNullOrWhiteSpace(message)) contextMessage += $"{Environment.NewLine}Message: `{message}`";
 
-        string escapedErrorMesssage = $"`{EscapeTicks(errorMessage)}`";
+        var escapedErrorMesssage = $"`{EscapeTicks(errorMessage)}`";
 
-        string fullErrorMessage = $"{contextMessage}{Environment.NewLine}{escapedErrorMesssage}";
+        var fullErrorMessage = $"{contextMessage}{Environment.NewLine}{escapedErrorMesssage}";
 
         LogError("Failed event", fullErrorMessage);
     }
@@ -82,10 +79,10 @@ public class DiscordErrorLogger : IDiscordErrorLogger
 
     private void SendErrorLogChannelEmbed(string title, string message, int color)
     {
-        ulong guildId = _options.GuildId;
-        ulong errorLogChannelId = _options.ErrorLogChannelId;
+        var guildId = _options.GuildId;
+        var errorLogChannelId = _options.ErrorLogChannelId;
 
-        DiscordEmbed messageEmbed = EmbedBuilderHelper.BuildSimpleEmbed(title, message, color);
+        var messageEmbed = EmbedBuilderHelper.BuildSimpleEmbed(title, message, color);
 
         var discordLogItem = new DiscordLogItem<DiscordEmbed>(messageEmbed, guildId, errorLogChannelId);
 

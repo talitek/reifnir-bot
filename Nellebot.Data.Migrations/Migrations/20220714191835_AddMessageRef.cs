@@ -16,7 +16,7 @@ namespace Nellebot.Data.Migrations.Migrations
                     MessageId = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
                     ChannelId = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
                     UserId = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
-                    DateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    DateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                 },
                 constraints: table =>
                 {

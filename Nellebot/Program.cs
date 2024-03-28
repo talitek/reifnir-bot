@@ -73,12 +73,13 @@ public class Program
 
     private static void AddDiscordClient(HostBuilderContext hostContext, IServiceCollection services)
     {
-        services.AddSingleton((_) =>
+        services.AddSingleton(_ =>
         {
             var defaultLogLevel = hostContext.Configuration.GetValue<string>("Logging:LogLevel:Default") ?? "Warning";
-            var botToken = hostContext.Configuration.GetValue<string>("Nellebot:BotToken") ?? throw new Exception("Bot token not found");
+            var botToken = hostContext.Configuration.GetValue<string>("Nellebot:BotToken") ??
+                           throw new Exception("Bot token not found");
 
-            LogLevel logLevel = Enum.Parse<LogLevel>(defaultLogLevel);
+            var logLevel = Enum.Parse<LogLevel>(defaultLogLevel);
 
             var socketConfig = new DiscordConfiguration
             {
@@ -97,17 +98,21 @@ public class Program
     private static void AddDbContext(HostBuilderContext hostContext, IServiceCollection services)
     {
         services.AddDbContext<BotDbContext>(
-            builder =>
-            {
-                var dbConnString = hostContext.Configuration.GetValue<string>("Nellebot:ConnectionString");
-                var logLevel = hostContext.Configuration.GetValue<string>("Logging:LogLevel:Default");
+                                            builder =>
+                                            {
+                                                var dbConnString =
+                                                    hostContext.Configuration
+                                                        .GetValue<string>("Nellebot:ConnectionString");
+                                                var logLevel =
+                                                    hostContext.Configuration
+                                                        .GetValue<string>("Logging:LogLevel:Default");
 
-                builder.EnableSensitiveDataLogging(logLevel == "Debug");
+                                                builder.EnableSensitiveDataLogging(logLevel == "Debug");
 
-                builder.UseNpgsql(dbConnString);
-            },
-            ServiceLifetime.Transient,
-            ServiceLifetime.Singleton);
+                                                builder.UseNpgsql(dbConnString);
+                                            },
+                                            ServiceLifetime.Transient,
+                                            ServiceLifetime.Singleton);
     }
 
     private static void AddRepositories(IServiceCollection services)
@@ -150,12 +155,13 @@ public class Program
     {
         const int channelSize = 1024;
 
-        services.AddSingleton((_) => new RequestQueueChannel(Channel.CreateBounded<IRequest>(channelSize)));
-        services.AddSingleton((_) => new CommandQueueChannel(Channel.CreateBounded<ICommand>(channelSize)));
-        services.AddSingleton((_) => new CommandParallelQueueChannel(Channel.CreateBounded<ICommand>(channelSize)));
-        services.AddSingleton((_) => new EventQueueChannel(Channel.CreateBounded<INotification>(channelSize)));
-        services.AddSingleton((_) => new DiscordLogChannel(Channel.CreateBounded<BaseDiscordLogItem>(channelSize)));
-        services.AddSingleton((_) => new MessageAwardQueueChannel(Channel.CreateBounded<MessageAwardItem>(channelSize)));
+        services.AddSingleton(_ => new RequestQueueChannel(Channel.CreateBounded<IRequest>(channelSize)));
+        services.AddSingleton(_ => new CommandQueueChannel(Channel.CreateBounded<ICommand>(channelSize)));
+        services.AddSingleton(_ => new CommandParallelQueueChannel(Channel.CreateBounded<ICommand>(channelSize)));
+        services.AddSingleton(_ => new EventQueueChannel(Channel.CreateBounded<INotification>(channelSize)));
+        services.AddSingleton(_ => new DiscordLogChannel(Channel.CreateBounded<BaseDiscordLogItem>(channelSize)));
+        services.AddSingleton(_ =>
+                                  new MessageAwardQueueChannel(Channel.CreateBounded<MessageAwardItem>(channelSize)));
     }
 
     private static void AddWorkers(IServiceCollection services)

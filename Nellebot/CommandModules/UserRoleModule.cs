@@ -18,9 +18,9 @@ namespace Nellebot.CommandModules;
 [ModuleLifespan(ModuleLifespan.Transient)]
 public class UserRoleModule : BaseCommandModule
 {
+    private readonly DiscordResolver _discordResolver;
     private readonly BotOptions _options;
     private readonly UserRoleService _userRoleService;
-    private readonly DiscordResolver _discordResolver;
 
     public UserRoleModule(
         IOptions<BotOptions> options,
@@ -48,9 +48,14 @@ public class UserRoleModule : BaseCommandModule
         foreach (var roleGroup in roleGroups)
         {
             if (roleGroup.Key != null)
-                sb.AppendLine($"{roleGroup.Key.Name} group (group id: {roleGroup.Key.Id} {(roleGroup.Key.MutuallyExclusive ? ", mutually exclusive" : string.Empty)})");
+            {
+                sb.AppendLine(
+                              $"{roleGroup.Key.Name} group (group id: {roleGroup.Key.Id} {(roleGroup.Key.MutuallyExclusive ? ", mutually exclusive" : string.Empty)})");
+            }
             else
-                sb.AppendLine($"Ungrouped");
+            {
+                sb.AppendLine("Ungrouped");
+            }
 
             foreach (var userRole in roleGroup.ToList())
             {
@@ -333,8 +338,8 @@ public class UserRoleModule : BaseCommandModule
 
         var result = await _userRoleService.SyncRoles(guildRoles);
 
-        uint updatedCount = result.UpdatedCount;
-        uint deletedCount = result.DeletedCount;
+        var updatedCount = result.UpdatedCount;
+        var deletedCount = result.DeletedCount;
 
         if (updatedCount == 0 && deletedCount == 0)
         {
@@ -345,10 +350,14 @@ public class UserRoleModule : BaseCommandModule
         var sb = new StringBuilder();
 
         if (result.UpdatedCount > 0)
+        {
             sb.AppendLine($"Updated {updatedCount} user {(updatedCount == 1 ? "role" : "roles")}");
+        }
 
         if (result.DeletedCount > 0)
+        {
             sb.AppendLine($"Deleted {deletedCount} user {(deletedCount == 1 ? "role" : "roles")}");
+        }
 
         await ctx.RespondAsync(sb.ToString());
     }

@@ -10,14 +10,14 @@ namespace Nellebot.Workers;
 
 public class MessageAwardQueueWorker : BackgroundService
 {
+    private readonly MessageAwardQueueChannel _channel;
     private readonly ILogger<MessageAwardQueueWorker> _logger;
     private readonly IServiceProvider _serviceProvider;
-    private readonly MessageAwardQueueChannel _channel;
 
     public MessageAwardQueueWorker(
-            ILogger<MessageAwardQueueWorker> logger,
-            IServiceProvider serviceProvider,
-            MessageAwardQueueChannel channel)
+        ILogger<MessageAwardQueueWorker> logger,
+        IServiceProvider serviceProvider,
+        MessageAwardQueueChannel channel)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
@@ -28,16 +28,16 @@ public class MessageAwardQueueWorker : BackgroundService
     {
         try
         {
-            await foreach (MessageAwardItem queueItem in _channel.Reader.ReadAllAsync(stoppingToken))
+            await foreach (var queueItem in _channel.Reader.ReadAllAsync(stoppingToken))
             {
                 if (queueItem != null)
                 {
                     _logger.LogDebug("Dequeued command. {RemainingMessageCount} left in queue", _channel.Reader.Count);
 
                     // TODO rewrite to CQRS commands
-                    using IServiceScope scope = _serviceProvider.CreateScope();
+                    using var scope = _serviceProvider.CreateScope();
 
-                    AwardMessageService awardMessageService = scope.ServiceProvider.GetRequiredService<AwardMessageService>();
+                    var awardMessageService = scope.ServiceProvider.GetRequiredService<AwardMessageService>();
 
                     switch (queueItem.Action)
                     {

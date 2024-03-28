@@ -7,7 +7,6 @@ using DSharpPlus.CommandsNext;
 using MediatR;
 using Nellebot.Data.Repositories;
 using Nellebot.Infrastructure;
-using Nellebot.Services;
 
 namespace Nellebot.CommandHandlers.MessageTemplates;
 
@@ -20,9 +19,9 @@ public class AddGoodbyeMessageHandler : IRequestHandler<AddGoodbyeMessageCommand
     private const int MaxUserTokensPerMessage = 3;
     private const string GoodbyeMessageTemplateType = "goodbye";
     private static readonly Regex UserTokenRegex = new(@"\$USER");
+    private readonly SharedCache _cache;
 
     private readonly MessageTemplateRepository _messageTemplateRepo;
-    private readonly SharedCache _cache;
 
     public AddGoodbyeMessageHandler(MessageTemplateRepository messageTemplateRepo, SharedCache cache)
     {
@@ -39,19 +38,29 @@ public class AddGoodbyeMessageHandler : IRequestHandler<AddGoodbyeMessageCommand
         try
         {
             if (message.Length > MaxMessageLength)
+            {
                 throw new ArgumentException($"Message too long (unlike your pp). Max {MaxMessageLength} characters.");
+            }
 
             var userTokenCount = UserTokenRegex.Matches(message).Count;
 
             if (userTokenCount > MaxUserTokensPerMessage)
+            {
                 throw new ArgumentException($"Too many {UserToken} tokens. Max {MaxUserTokensPerMessage} per message.");
+            }
 
             if (userTokenCount == 0)
+            {
                 throw new ArgumentException($"Message must contain at least one {UserToken} token.");
+            }
 
             var messageTemplateWithBoldedUserToken = message.Replace(UserToken, $"**{UserToken}**");
 
-            var newMessageTemplateId = await _messageTemplateRepo.CreateMessageTemplate(messageTemplateWithBoldedUserToken, GoodbyeMessageTemplateType, author.Id, cancellationToken);
+            var newMessageTemplateId = await _messageTemplateRepo.CreateMessageTemplate(
+                 messageTemplateWithBoldedUserToken,
+                 GoodbyeMessageTemplateType,
+                 author.Id,
+                 cancellationToken);
 
             _cache.FlushCache(SharedCacheKeys.GoodbyeMessages);
 
@@ -59,7 +68,8 @@ public class AddGoodbyeMessageHandler : IRequestHandler<AddGoodbyeMessageCommand
 
             var messagePreview = messageTemplateWithBoldedUserToken.Replace(UserToken, previewMemberMention);
 
-            var sb = new StringBuilder($"Goodbye message created successfully (Id: {newMessageTemplateId}). Here's a preview:");
+            var sb = new StringBuilder(
+                                       $"Goodbye message created successfully (Id: {newMessageTemplateId}). Here's a preview:");
             sb.AppendLine();
             sb.AppendLine();
             sb.AppendLine(messagePreview);

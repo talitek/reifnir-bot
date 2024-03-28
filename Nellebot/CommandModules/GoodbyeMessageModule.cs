@@ -13,8 +13,8 @@ namespace Nellebot.CommandModules;
 [ModuleLifespan(ModuleLifespan.Transient)]
 public class GoodbyeMessageModule : BaseCommandModule
 {
-    private readonly CommandQueueChannel _commandQueue;
     private readonly CommandParallelQueueChannel _commandParallelQueue;
+    private readonly CommandQueueChannel _commandQueue;
 
     public GoodbyeMessageModule(CommandQueueChannel commandQueue, CommandParallelQueueChannel commandParallelQueue)
     {

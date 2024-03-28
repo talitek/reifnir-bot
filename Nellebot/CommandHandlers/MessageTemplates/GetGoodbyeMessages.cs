@@ -25,12 +25,15 @@ public class GetGoodbyeMessagesHandler : IRequestHandler<GetGoodbyeMessagesComma
     private const string UserToken = "$USER";
     private const int MessageTemplatesCacheDurationMinutes = 5;
     private const int MessagesPerPage = 5;
-
-    private readonly MessageTemplateRepository _messageTemplateRepo;
     private readonly SharedCache _cache;
     private readonly DiscordResolver _discordResolver;
 
-    public GetGoodbyeMessagesHandler(MessageTemplateRepository messageTemplateRepo, SharedCache cache, DiscordResolver discordResolver)
+    private readonly MessageTemplateRepository _messageTemplateRepo;
+
+    public GetGoodbyeMessagesHandler(
+        MessageTemplateRepository messageTemplateRepo,
+        SharedCache cache,
+        DiscordResolver discordResolver)
     {
         _messageTemplateRepo = messageTemplateRepo;
         _cache = cache;
@@ -42,12 +45,15 @@ public class GetGoodbyeMessagesHandler : IRequestHandler<GetGoodbyeMessagesComma
         var ctx = request.Ctx;
         var author = ctx.Member ?? throw new Exception("Member was null");
 
-        var goodbyeMessages = ((await _cache.LoadFromCacheAsync(
-                        SharedCacheKeys.GoodbyeMessages,
-                        async () => await _messageTemplateRepo.GetAllMessageTemplates(GoodbyeMessageTemplateType),
-                        TimeSpan.FromMinutes(MessageTemplatesCacheDurationMinutes)))
-                            ?? Enumerable.Empty<MessageTemplate>())
-                                .ToList();
+        var goodbyeMessages = (await _cache.LoadFromCacheAsync(
+                                                               SharedCacheKeys.GoodbyeMessages,
+                                                               async () =>
+                                                                   await _messageTemplateRepo
+                                                                       .GetAllMessageTemplates(GoodbyeMessageTemplateType),
+                                                               TimeSpan
+                                                                   .FromMinutes(MessageTemplatesCacheDurationMinutes))
+                               ?? Enumerable.Empty<MessageTemplate>())
+            .ToList();
 
         if (goodbyeMessages.Count == 0)
         {
@@ -62,9 +68,9 @@ public class GetGoodbyeMessagesHandler : IRequestHandler<GetGoodbyeMessagesComma
         for (var i = 0; i < pageCount; i++)
         {
             var messagesForPage = goodbyeMessages
-                                    .Skip(i * MessagesPerPage)
-                                    .Take(MessagesPerPage)
-                                    .ToList();
+                .Skip(i * MessagesPerPage)
+                .Take(MessagesPerPage)
+                .ToList();
 
             var sb = new StringBuilder();
 
@@ -86,9 +92,14 @@ public class GetGoodbyeMessagesHandler : IRequestHandler<GetGoodbyeMessagesComma
                 .WithColor(DiscordConstants.DefaultEmbedColor)
                 .WithDescription(pageContent);
 
-            pages.Add(new Page(content: string.Empty, pageEb));
+            pages.Add(new Page(string.Empty, pageEb));
         }
 
-        await ctx.Channel.SendPaginatedMessageAsync(author, pages, PaginationBehaviour.WrapAround, ButtonPaginationBehavior.Disable, cancellationToken);
+        await ctx.Channel.SendPaginatedMessageAsync(
+                                                    author,
+                                                    pages,
+                                                    PaginationBehaviour.WrapAround,
+                                                    ButtonPaginationBehavior.Disable,
+                                                    cancellationToken);
     }
 }

@@ -3,6 +3,7 @@ using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using Nellebot.CommandHandlers.Modmail;
 using Nellebot.Workers;
+using BaseContext = Nellebot.CommandHandlers.BaseContext;
 
 namespace Nellebot.CommandModules;
 
@@ -26,7 +27,7 @@ public class ModmailModule : ApplicationCommandModule
 
         await ctx.CreateResponseAsync(responseBuilder);
 
-        var command = new RequestModmailTicketCommand(CommandHandlers.BaseContext.FromInteractionContext(ctx));
+        var command = new RequestModmailTicketCommand(BaseContext.FromInteractionContext(ctx));
 
         await _channel.Writer.WriteAsync(command);
     }

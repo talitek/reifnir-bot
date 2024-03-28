@@ -2,6 +2,7 @@
 using DSharpPlus.SlashCommands;
 
 namespace Nellebot.CommandModules;
+
 public class GlobalSlashModule : ApplicationCommandModule
 {
     [SlashCommand("oi", "Oi!")]

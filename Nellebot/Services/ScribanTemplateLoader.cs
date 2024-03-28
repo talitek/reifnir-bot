@@ -28,10 +28,7 @@ public class ScribanTemplateLoader
     {
         var extension = type == ScribanTemplateType.Text ? "sbntxt" : "sbnhtml";
 
-        if (_templateCache.ContainsKey(templateName))
-        {
-            return _templateCache[templateName];
-        }
+        if (_templateCache.ContainsKey(templateName)) return _templateCache[templateName];
 
         var templateString = await File.ReadAllTextAsync($"Resources/ScribanTemplates/{templateName}.{extension}");
 

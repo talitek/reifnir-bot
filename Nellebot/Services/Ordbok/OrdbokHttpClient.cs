@@ -24,7 +24,10 @@ public class OrdbokHttpClient
         _client.DefaultRequestHeaders.Add("Accept", "application/json");
     }
 
-    public async Task<OrdbokSearchResponse?> Search(string dictionary, string query, CancellationToken cancellationToken = default)
+    public async Task<OrdbokSearchResponse?> Search(
+        string dictionary,
+        string query,
+        CancellationToken cancellationToken = default)
     {
         var requestUri = $"api/articles?w={query}&dict={dictionary}&scope=ei";
 
@@ -34,12 +37,16 @@ public class OrdbokHttpClient
 
         var jsonStream = await response.Content.ReadAsStreamAsync(cancellationToken);
 
-        var searchResponse = await JsonSerializer.DeserializeAsync<OrdbokSearchResponse>(jsonStream, options: null, cancellationToken);
+        var searchResponse =
+            await JsonSerializer.DeserializeAsync<OrdbokSearchResponse>(jsonStream, options: null, cancellationToken);
 
         return searchResponse;
     }
 
-    public async Task<OrdbokSearchResponse?> GetAll(string dictionary, string wordClass, CancellationToken cancellationToken = default)
+    public async Task<OrdbokSearchResponse?> GetAll(
+        string dictionary,
+        string wordClass,
+        CancellationToken cancellationToken = default)
     {
         var requestUri = $"api/articles?w=*&wc={wordClass}&dict={dictionary}&scope=f";
 
@@ -49,12 +56,16 @@ public class OrdbokHttpClient
 
         var jsonStream = await response.Content.ReadAsStreamAsync(cancellationToken);
 
-        var searchResponse = await JsonSerializer.DeserializeAsync<OrdbokSearchResponse>(jsonStream, options: null, cancellationToken);
+        var searchResponse =
+            await JsonSerializer.DeserializeAsync<OrdbokSearchResponse>(jsonStream, options: null, cancellationToken);
 
         return searchResponse;
     }
 
-    public async Task<Article?> GetArticle(string dictionary, int articleId, CancellationToken cancellationToken = default)
+    public async Task<Article?> GetArticle(
+        string dictionary,
+        int articleId,
+        CancellationToken cancellationToken = default)
     {
         var requestUri = $"{dictionary}/article/{articleId}.json";
 
@@ -69,26 +80,36 @@ public class OrdbokHttpClient
         return article;
     }
 
-    public async Task<List<Article?>> GetArticles(string dictionary, List<int> articleIds, CancellationToken cancellationToken = default)
+    public async Task<List<Article?>> GetArticles(
+        string dictionary,
+        List<int> articleIds,
+        CancellationToken cancellationToken = default)
     {
         var tasks = articleIds.Take(MaxArticles).Select(id => GetArticle(dictionary, id, cancellationToken));
 
         var result = await Task.WhenAll(tasks);
 
         if (result == null)
+        {
             return Enumerable.Empty<Article?>().ToList();
+        }
 
         return result.ToList();
     }
 
-    public async Task<List<Article?>> GetArticlesV2(string dictionary, int[] articleIds, CancellationToken cancellationToken = default)
+    public async Task<List<Article?>> GetArticlesV2(
+        string dictionary,
+        int[] articleIds,
+        CancellationToken cancellationToken = default)
     {
         var tasks = articleIds.Take(MaxArticlesV2).Select(id => GetArticle(dictionary, id, cancellationToken));
 
         var result = await Task.WhenAll(tasks);
 
         if (result == null)
+        {
             return Enumerable.Empty<Article?>().ToList();
+        }
 
         return result.ToList();
     }
@@ -103,7 +124,8 @@ public class OrdbokHttpClient
 
         var jsonStream = await response.Content.ReadAsStreamAsync(cancellationToken);
 
-        var article = await JsonSerializer.DeserializeAsync<OrdbokConcepts>(jsonStream, options: null, cancellationToken);
+        var article =
+            await JsonSerializer.DeserializeAsync<OrdbokConcepts>(jsonStream, options: null, cancellationToken);
 
         return article;
     }

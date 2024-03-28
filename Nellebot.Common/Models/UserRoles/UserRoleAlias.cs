@@ -1,17 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Nellebot.Common.Models.UserRoles
+namespace Nellebot.Common.Models.UserRoles;
+
+public class UserRoleAlias
 {
-    public class UserRoleAlias
-    {
-        public Guid Id { get; set; }
-        public Guid UserRoleId { get; set; }
-        public UserRole UserRole { get; set; } = null!;
-        public string Alias { get; set; } = null!;
-    }
+    public Guid Id { get; set; }
+
+    public Guid UserRoleId { get; set; }
+
+    public UserRole UserRole { get; set; } = null!;
+
+    public string Alias { get; set; } = null!;
 }

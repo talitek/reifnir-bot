@@ -39,7 +39,7 @@ public class PrepModule : BaseCommandModule
 
     private string GetRandomPrep()
     {
-        var preps = new string[] { "På", "For", "Av", "Til", "Om", "I", "Mot" };
+        var preps = new[] { "På", "For", "Av", "Til", "Om", "I", "Mot" };
 
         var prepIdx = new Random().Next(0, preps.Length);
 
@@ -48,7 +48,7 @@ public class PrepModule : BaseCommandModule
 
     private string GetRandomScale()
     {
-        var scaleLimit = new string[] { "Helvete", "Kva faen", "Kjempebra", "Uff a meg" };
+        var scaleLimit = new[] { "Helvete", "Kva faen", "Kjempebra", "Uff a meg" };
 
         var scaleLimitIdx = new Random().Next(0, scaleLimit.Length);
 

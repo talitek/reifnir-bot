@@ -3,7 +3,7 @@
 namespace Nellebot.Data;
 
 /// <summary>
-/// A mock implementation of <see cref="IDataProtector"/> that does not protect or unprotect data.
+///     A mock implementation of <see cref="IDataProtector" /> that does not protect or unprotect data.
 /// </summary>
 internal class MockProtector : IDataProtector
 {

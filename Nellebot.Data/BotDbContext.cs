@@ -17,14 +17,11 @@ public class BotDbContext : DbContext
 
 #if DEBUG
     public BotDbContext(DbContextOptions options)
-    : base(options)
+        : base(options)
     {
         var insideLINQPad = AppDomain.CurrentDomain.FriendlyName.StartsWith("LINQPad");
 
-        if (!insideLINQPad)
-        {
-            throw new Exception("This constructor should only be used in LINQPad");
-        }
+        if (!insideLINQPad) throw new Exception("This constructor should only be used in LINQPad");
 
         _dataProtectionProvider = new MockProtector();
     }
@@ -92,15 +89,17 @@ public class BotDbContext : DbContext
         builder.Entity<UserLog>()
             .Property(x => x.ValueType)
             .HasConversion(
-                convertToProviderExpression: x => x.FullName ?? typeof(object).FullName!,
-                convertFromProviderExpression: x => Type.GetType(x) ?? typeof(object));
+                           x => x.FullName ?? typeof(object).FullName!,
+                           x => Type.GetType(x) ?? typeof(object));
 
         builder.Entity<ModmailTicket>()
-            .OwnsOne(x => x.TicketPost, x =>
-            {
-                x.Property(x => x.ChannelThreadId).HasColumnName("ChannelThreadId");
-                x.Property(x => x.MessageId).HasColumnName("MessageId");
-            });
+            .OwnsOne(
+                     x => x.TicketPost,
+                     x =>
+                     {
+                         x.Property(x => x.ChannelThreadId).HasColumnName("ChannelThreadId");
+                         x.Property(x => x.MessageId).HasColumnName("MessageId");
+                     });
 
         builder.Entity<ModmailTicket>()
             .Property(x => x.RequesterId)
@@ -124,7 +123,6 @@ public class BotDbContext : DbContext
             .Property(x => x.Message)
             .HasMaxLength(256);
     }
-
 #pragma warning disable SA1201 // Elements should appear in the correct order
     public DbSet<UserRole> UserRoles { get; set; }
 

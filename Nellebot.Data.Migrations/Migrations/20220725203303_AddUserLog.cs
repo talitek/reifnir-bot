@@ -20,7 +20,7 @@ namespace Nellebot.Data.Migrations.Migrations
                     Value = table.Column<string>(type: "text", nullable: true),
                     ValueType = table.Column<string>(type: "text", nullable: false),
                     ResponsibleUserId = table.Column<decimal>(type: "numeric(20,0)", nullable: true),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                 },
                 constraints: table =>
                 {

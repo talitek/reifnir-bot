@@ -22,15 +22,21 @@ public class ValhallKickUserHandler : IRequestHandler<ValhallKickUserCommand>
         var targetMember = request.Member;
 
         if (ctx.Member?.Id == targetMember.Id)
+        {
             return ctx.RespondAsync("Hmm");
+        }
 
         var accountAge = DateTimeOffset.UtcNow - targetMember.CreationTimestamp;
         var guildAge = DateTimeOffset.UtcNow - targetMember.JoinedAt;
 
         if (accountAge.TotalDays >= MaxAccountAgeForKickInDays || guildAge.TotalDays >= MaxGuildAgeForKickInDays)
-            return ctx.RespondAsync("At this juncture in the temporal continuum, the window of opportunity for rectifying or influencing the current circumstances has lamentably and irrevocably elapsed, rendering any further attempts to alter the outcome both futile and inconsequential.");
+        {
+            return ctx.RespondAsync(
+                                    "At this juncture in the temporal continuum, the window of opportunity for rectifying or influencing the current circumstances has lamentably and irrevocably elapsed, rendering any further attempts to alter the outcome both futile and inconsequential.");
+        }
 
-        var kickReason = $"Kicked on behalf of {currentMember.DisplayName}. Reason: {request.Reason.NullOrWhiteSpaceTo("/shrug")}";
+        var kickReason =
+            $"Kicked on behalf of {currentMember.DisplayName}. Reason: {request.Reason.NullOrWhiteSpaceTo("/shrug")}";
 
         return targetMember.RemoveAsync(kickReason);
     }

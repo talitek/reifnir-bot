@@ -1,42 +1,41 @@
-﻿using Nellebot.Common.Models.UserRoles;
-using Nellebot.Data.Repositories;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Nellebot.Common.Models.UserRoles;
+using Nellebot.Data.Repositories;
 
-namespace Nellebot.Services
+namespace Nellebot.Services;
+
+public class RoleService
 {
-    public class RoleService
+    private readonly IUserRoleRepository _userRoleRepo;
+
+    public RoleService(IUserRoleRepository userRoleRepo)
     {
-        private readonly IUserRoleRepository _userRoleRepo;
+        _userRoleRepo = userRoleRepo;
+    }
 
-        public RoleService(IUserRoleRepository userRoleRepo)
+    public async Task<UserRole> GetUserRoleByNameOrAlias(string roleName)
+    {
+        if (string.IsNullOrWhiteSpace(roleName))
         {
-            _userRoleRepo = userRoleRepo;
+            throw new ArgumentException("Role name cannot be empty");
         }
 
-        public async Task<UserRole> GetUserRoleByNameOrAlias(string roleName)
-        {
-            if (string.IsNullOrWhiteSpace(roleName))
-                throw new ArgumentException("Role name cannot be empty");
+        var role = await _userRoleRepo.GetRoleByNameOrAlias(roleName.Trim().ToLower());
 
-            var role = await _userRoleRepo.GetRoleByNameOrAlias(roleName.Trim().ToLower());
+        return role;
+    }
 
-            return role;
-        }
+    public async Task<List<UserRole>> GetUserRolesByGroup(uint groupNumber)
+    {
+        var roles = await _userRoleRepo.GetRolesByGroup(groupNumber);
 
-        public async Task<List<UserRole>> GetUserRolesByGroup(uint groupNumber)
-        {
-            var roles = await _userRoleRepo.GetRolesByGroup(groupNumber);
+        return roles;
+    }
 
-            return roles;
-        }
-
-        public async Task<IEnumerable<UserRole>> GetRoleList()
-        {
-            return await _userRoleRepo.GetRoleList();
-        }
+    public async Task<IEnumerable<UserRole>> GetRoleList()
+    {
+        return await _userRoleRepo.GetRoleList();
     }
 }

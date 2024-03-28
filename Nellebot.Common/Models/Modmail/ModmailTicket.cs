@@ -6,11 +6,11 @@ public record ModmailTicket
 {
     public Guid Id { get; set; }
 
-    required public ulong RequesterId { get; set; }
+    public required ulong RequesterId { get; set; }
 
-    required public string RequesterDisplayName { get; set; }
+    public required string RequesterDisplayName { get; set; }
 
-    required public bool IsAnonymous { get; set; }
+    public required bool IsAnonymous { get; set; }
 
     public DateTime LastActivity { get; set; } = DateTime.UtcNow;
 

@@ -9,8 +9,8 @@ namespace Nellebot.CommandHandlers.Modmail;
 
 public class CloseInactiveModmailTicketHandler : IRequestHandler<CloseInactiveModmailTicketCommand>
 {
-    private readonly DiscordResolver _resolver;
     private readonly ModmailTicketRepository _modmailTicketRepo;
+    private readonly DiscordResolver _resolver;
 
     public CloseInactiveModmailTicketHandler(DiscordResolver resolver, ModmailTicketRepository modmailTicketRepo)
     {
@@ -23,10 +23,10 @@ public class CloseInactiveModmailTicketHandler : IRequestHandler<CloseInactiveMo
         var ticket = request.Ticket;
 
         var ticketPost = ticket.TicketPost
-            ?? throw new Exception("The ticket does not have a post channelId");
+                         ?? throw new Exception("The ticket does not have a post channelId");
 
         var threadChannel = _resolver.ResolveThread(ticketPost.ChannelThreadId)
-            ?? throw new Exception("Could not resolve thread channel");
+                            ?? throw new Exception("Could not resolve thread channel");
 
         await _modmailTicketRepo.CloseTicket(ticket, cancellationToken);
 

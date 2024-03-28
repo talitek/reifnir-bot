@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
-namespace Nellebot.Common.AppDiscordModels
+namespace Nellebot.Common.AppDiscordModels;
+
+public class AppDiscordApplication
 {
-    public class AppDiscordApplication
-    {
-        public IEnumerable<AppDiscordUser> Owners { get; set; } = null!;
-    }
+    public IEnumerable<AppDiscordUser> Owners { get; set; } = null!;
 }

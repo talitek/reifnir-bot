@@ -19,7 +19,7 @@ namespace Nellebot.Data.Migrations.Migrations
                     Message = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     Type = table.Column<string>(type: "text", nullable: false),
                     AuthorId = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
-                    DateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    DateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                 },
                 constraints: table =>
                 {

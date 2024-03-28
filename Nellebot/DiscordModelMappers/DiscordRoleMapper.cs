@@ -1,23 +1,17 @@
 ﻿using DSharpPlus.Entities;
 using Nellebot.Common.AppDiscordModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Nellebot.DiscordModelMappers
+namespace Nellebot.DiscordModelMappers;
+
+public static class DiscordRoleMapper
 {
-    public static class DiscordRoleMapper
+    public static AppDiscordRole Map(DiscordRole discordRole)
     {
-        public static AppDiscordRole Map(DiscordRole discordRole)
-        {
-            var appDiscordRole = new AppDiscordRole();
+        var appDiscordRole = new AppDiscordRole();
 
-            appDiscordRole.Id = discordRole.Id;
-            appDiscordRole.Name = discordRole.Name;
+        appDiscordRole.Id = discordRole.Id;
+        appDiscordRole.Name = discordRole.Name;
 
-            return appDiscordRole;
-        }
+        return appDiscordRole;
     }
 }

@@ -14,7 +14,7 @@ public class BaseContext
 
     public static BaseContext FromInteractionContext(InteractionContext ctx)
     {
-        var newCtx = new BaseContext()
+        var newCtx = new BaseContext
         {
             Channel = ctx.Channel,
             Guild = ctx.Guild,

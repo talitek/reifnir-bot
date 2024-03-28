@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Options;
 using Nellebot.Common.Models.UserLogs;
 using Nellebot.Data.Repositories;
 using Nellebot.Infrastructure;
@@ -9,8 +8,8 @@ namespace Nellebot.Services;
 
 public class UserLogService
 {
-    private readonly UserLogRepository _userLogRepo;
     private readonly SharedCache _cache;
+    private readonly UserLogRepository _userLogRepo;
 
     public UserLogService(UserLogRepository userLogRepo, SharedCache cache)
     {
@@ -23,9 +22,9 @@ public class UserLogService
         var cacheKey = string.Format(SharedCacheKeys.UserLog, userId, logType);
 
         var userLog = _cache.LoadFromCacheAsync(
-            cacheKey,
-            () => _userLogRepo.GetLatestFieldForUser(userId, logType),
-            TimeSpan.FromMinutes(5));
+                                                cacheKey,
+                                                () => _userLogRepo.GetLatestFieldForUser(userId, logType),
+                                                TimeSpan.FromMinutes(5));
 
         return userLog;
     }

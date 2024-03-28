@@ -8,5 +8,5 @@ public enum UserLogType
     AvatarHashChange = 3,
     GuildAvatarHashChange = 4,
     JoinedServer = 5,
-    LeftServer = 6
+    LeftServer = 6,
 }
