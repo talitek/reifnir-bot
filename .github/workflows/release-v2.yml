@@ -29,6 +29,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        sparse-checkout: |
+          docker/${{ env.COMPOSE_FILE_NAME }}
+        sparse-checkout-cone-mode: false
   
     - name: Upload compose.yml
       uses: appleboy/scp-action@v0.1.7
