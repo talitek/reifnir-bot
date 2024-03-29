@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nellebot.Infrastructure;
@@ -32,9 +33,9 @@ public class EventQueueWorker : BackgroundService
     {
         try
         {
-            await foreach (var notification in _channel.Reader.ReadAllAsync(stoppingToken))
+            await foreach (INotification notification in _channel.Reader.ReadAllAsync(stoppingToken))
             {
-                var @event = notification;
+                INotification? @event = notification;
 
                 if (@event == null) continue;
 
@@ -46,7 +47,7 @@ public class EventQueueWorker : BackgroundService
                 }
                 catch (AggregateException ex)
                 {
-                    foreach (var innerEx in ex.InnerExceptions)
+                    foreach (Exception innerEx in ex.InnerExceptions)
                     {
                         if (@event is not null and EventNotification eventNotification)
                         {

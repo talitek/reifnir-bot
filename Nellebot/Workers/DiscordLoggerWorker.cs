@@ -32,11 +32,11 @@ public class DiscordLoggerWorker : BackgroundService
     {
         try
         {
-            await foreach (var logItem in _channel.Reader.ReadAllAsync(stoppingToken))
+            await foreach (BaseDiscordLogItem? logItem in _channel.Reader.ReadAllAsync(stoppingToken))
             {
                 if (logItem == null) continue;
 
-                var logChannel = await ResolverLogChannel(logItem.DiscordGuildId, logItem.DiscordChannelId);
+                DiscordChannel? logChannel = await ResolverLogChannel(logItem.DiscordGuildId, logItem.DiscordChannelId);
 
                 if (logChannel != null)
                 {
@@ -61,8 +61,8 @@ public class DiscordLoggerWorker : BackgroundService
                 }
 
                 _logger.LogDebug(
-                                 "Dequeued (parallel) command. {RemainingMessageCount} left in queue",
-                                 _channel.Reader.Count);
+                    "Dequeued (parallel) command. {RemainingMessageCount} left in queue",
+                    _channel.Reader.Count);
             }
         }
         catch (TaskCanceledException)
@@ -81,12 +81,12 @@ public class DiscordLoggerWorker : BackgroundService
         {
             _logger.LogError(exception, "{Error}", exception.Message);
 
-            var errorLogChannel = await ResolverLogChannel(discordGuildId, _options.ErrorLogChannelId);
+            DiscordChannel errorLogChannel = await ResolverLogChannel(discordGuildId, _options.ErrorLogChannelId);
 
             ArgumentNullException.ThrowIfNull(errorLogChannel);
 
             await errorLogChannel.SendMessageAsync(
-                                                   $"Failed to log original error message. Reason: {exception.Message}");
+                $"Failed to log original error message. Reason: {exception.Message}");
         }
         catch (Exception ex)
         {
@@ -99,11 +99,11 @@ public class DiscordLoggerWorker : BackgroundService
     // to have a duplicate method than dealing with circular dependency
     private async Task<DiscordChannel> ResolverLogChannel(ulong guildId, ulong channelId)
     {
-        _client.Guilds.TryGetValue(guildId, out var discordGuild);
+        _client.Guilds.TryGetValue(guildId, out DiscordGuild? discordGuild);
 
         if (discordGuild == null) discordGuild = await _client.GetGuildAsync(guildId);
 
-        discordGuild.Channels.TryGetValue(channelId, out var discordChannel);
+        discordGuild.Channels.TryGetValue(channelId, out DiscordChannel? discordChannel);
 
         if (discordChannel == null) discordChannel = discordGuild.GetChannel(channelId);
 

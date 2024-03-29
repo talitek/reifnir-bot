@@ -18,7 +18,7 @@ public class UserLogRepository
 
     public async Task<UserLog?> GetLatestFieldForUser(ulong userId, UserLogType logType)
     {
-        var result = await _dbContext.UserLogs
+        UserLog? result = await _dbContext.UserLogs
             .Where(u => u.UserId == userId && u.LogType == logType)
             .OrderByDescending(u => u.Timestamp)
             .FirstOrDefaultAsync();
@@ -27,7 +27,7 @@ public class UserLogRepository
 
     public async Task<List<UserLog>> GetLatestFieldsForUser(ulong userId)
     {
-        var result = (await _dbContext.UserLogs
+        List<UserLog> result = (await _dbContext.UserLogs
                 .Where(u => u.UserId == userId)
                 .GroupBy(u => u.LogType)
                 .Select(g => g.OrderByDescending(g => g.Timestamp).FirstOrDefault())
@@ -41,9 +41,9 @@ public class UserLogRepository
 
     public async Task CreateUserLog<T>(ulong userId, T value, UserLogType logType, ulong? responsibleUserId = null)
     {
-        var typeForField = UserLogTypesMap.TypeDictionary[logType];
+        Type typeForField = UserLogTypesMap.TypeDictionary[logType];
 
-        var userLog = new UserLog
+        UserLog userLog = new UserLog
         {
             LogType = logType,
             ResponsibleUserId = responsibleUserId,

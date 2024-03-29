@@ -39,11 +39,11 @@ public class DiscordLogger
 
     private void LogMessageCore(string message, ulong channelId)
     {
-        var guildId = _options.GuildId;
+        ulong guildId = _options.GuildId;
 
         var discordLogItem = new DiscordLogItem<string>(message, guildId, channelId);
 
-        var sucess = _channel.Writer.TryWrite(discordLogItem);
+        bool sucess = _channel.Writer.TryWrite(discordLogItem);
 
         if (!sucess) _logger.LogError("Could not write to DiscordLogChannel");
     }

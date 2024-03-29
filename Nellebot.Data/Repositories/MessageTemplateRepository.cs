@@ -24,7 +24,7 @@ public class MessageTemplateRepository
         ulong authorId,
         CancellationToken cancellationToken = default)
     {
-        var newId = PseudonymGenerator.NewFriendlyId();
+        string newId = PseudonymGenerator.NewFriendlyId();
 
         var messageTemplate = new MessageTemplate
         {
@@ -59,7 +59,7 @@ public class MessageTemplateRepository
 
     public async Task DeleteMessageTemplate(string id, CancellationToken cancellationToken = default)
     {
-        var messageTemplate = await _dbContext.MessageTemplates.FindAsync(new[] { id }, cancellationToken);
+        MessageTemplate? messageTemplate = await _dbContext.MessageTemplates.FindAsync(new[] { id }, cancellationToken);
 
         if (messageTemplate == null) return;
 

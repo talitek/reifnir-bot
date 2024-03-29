@@ -29,15 +29,16 @@ public class BotSettingsService
 
     public async Task<string?> GetGreetingsMessage(string userMention)
     {
-        var messageTemplate = await _cache.LoadFromCacheAsync(
-                                                              SharedCacheKeys.GreetingMessage,
-                                                              () => _botSettingsRepo.GetBotSetting(SharedCacheKeys
-                                                                       .GreetingMessage),
-                                                              TimeSpan.FromMinutes(5));
+        string? messageTemplate = await _cache.LoadFromCacheAsync(
+            SharedCacheKeys.GreetingMessage,
+            () => _botSettingsRepo.GetBotSetting(
+                SharedCacheKeys
+                    .GreetingMessage),
+            TimeSpan.FromMinutes(5));
 
         if (messageTemplate == null) return null;
 
-        var message = messageTemplate.Replace(GreetingMessageUserVariable, userMention);
+        string message = messageTemplate.Replace(GreetingMessageUserVariable, userMention);
 
         return message;
     }
@@ -49,11 +50,11 @@ public class BotSettingsService
 
     public async Task<DateTimeOffset?> GetLastHeartbeat()
     {
-        var lastHeartBeatStringValue = await _botSettingsRepo.GetBotSetting(LastHeartbeatKey);
+        string? lastHeartBeatStringValue = await _botSettingsRepo.GetBotSetting(LastHeartbeatKey);
 
         if (lastHeartBeatStringValue == null) return null;
 
-        var parsed = long.TryParse(lastHeartBeatStringValue, out var lastHeartBeatTicks);
+        bool parsed = long.TryParse(lastHeartBeatStringValue, out long lastHeartBeatTicks);
 
         if (!parsed) return null;
 

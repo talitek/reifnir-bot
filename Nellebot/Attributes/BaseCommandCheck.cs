@@ -15,13 +15,13 @@ public class BaseCommandCheck : CheckBaseAttribute
 {
     public override Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
     {
-        var botOptionsObj = ctx.Services.GetService(typeof(IOptions<BotOptions>));
+        object? botOptionsObj = ctx.Services.GetService(typeof(IOptions<BotOptions>));
 
         if (botOptionsObj == null)
         {
             var error = $"Could not fetch {typeof(IOptions<BotOptions>).Name}";
 
-            var discordErrorLoggerObj = ctx.Services.GetService(typeof(IDiscordErrorLogger));
+            object? discordErrorLoggerObj = ctx.Services.GetService(typeof(IDiscordErrorLogger));
 
             if (discordErrorLoggerObj == null)
             {
@@ -35,11 +35,11 @@ public class BaseCommandCheck : CheckBaseAttribute
             return Task.FromResult(false);
         }
 
-        var botOptions = ((IOptions<BotOptions>)botOptionsObj).Value;
+        BotOptions botOptions = ((IOptions<BotOptions>)botOptionsObj).Value;
 
-        var guildId = botOptions.GuildId;
+        ulong guildId = botOptions.GuildId;
 
-        var channel = ctx.Channel;
+        DiscordChannel channel = ctx.Channel;
 
         if (IsPrivateMessageChannel(channel)) return Task.FromResult(false);
 

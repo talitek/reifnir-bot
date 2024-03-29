@@ -17,22 +17,22 @@ public class ScribanTemplateLoader
 
     public async Task<string> LoadTemplate(string templateName, ScribanTemplateType type)
     {
-        var extension = type == ScribanTemplateType.Text ? "sbntxt" : "sbnhtml";
+        string extension = type == ScribanTemplateType.Text ? "sbntxt" : "sbnhtml";
 
-        var templateString = await File.ReadAllTextAsync($"Resources/ScribanTemplates/{templateName}.{extension}");
+        string templateString = await File.ReadAllTextAsync($"Resources/ScribanTemplates/{templateName}.{extension}");
 
         return templateString;
     }
 
     public async Task<Template> LoadTemplateV2(string templateName, ScribanTemplateType type)
     {
-        var extension = type == ScribanTemplateType.Text ? "sbntxt" : "sbnhtml";
+        string extension = type == ScribanTemplateType.Text ? "sbntxt" : "sbnhtml";
 
         if (_templateCache.ContainsKey(templateName)) return _templateCache[templateName];
 
-        var templateString = await File.ReadAllTextAsync($"Resources/ScribanTemplates/{templateName}.{extension}");
+        string templateString = await File.ReadAllTextAsync($"Resources/ScribanTemplates/{templateName}.{extension}");
 
-        var template = Template.Parse(templateString);
+        Template? template = Template.Parse(templateString);
 
 #if !DEBUG
         _templateCache.Add(templateName, template);

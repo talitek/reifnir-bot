@@ -22,7 +22,7 @@ public class UtilsModule : BaseCommandModule
     [Command("role-id")]
     public async Task GetRoleId(CommandContext ctx, string roleName)
     {
-        var resolveResult = _discordResolver.TryResolveRoleByName(ctx.Guild, roleName);
+        TryResolveResult<DiscordRole> resolveResult = _discordResolver.TryResolveRoleByName(ctx.Guild, roleName);
 
         if (!resolveResult.Resolved)
         {
@@ -36,7 +36,7 @@ public class UtilsModule : BaseCommandModule
     [Command("emoji-code")]
     public async Task GetEmojiCode(CommandContext ctx, DiscordEmoji emoji)
     {
-        var isUnicodeEmoji = emoji.Id == 0;
+        bool isUnicodeEmoji = emoji.Id == 0;
 
         if (!isUnicodeEmoji)
         {
@@ -46,7 +46,7 @@ public class UtilsModule : BaseCommandModule
 
         var unicodeEncoding = new UnicodeEncoding(true, false);
 
-        var bytes = unicodeEncoding.GetBytes(emoji.Name);
+        byte[] bytes = unicodeEncoding.GetBytes(emoji.Name);
 
         var sb = new StringBuilder();
         for (var i = 0; i < bytes.Length; i++) sb.AppendFormat("{0:X2}", bytes[i]);

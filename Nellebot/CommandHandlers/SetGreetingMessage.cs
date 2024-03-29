@@ -29,14 +29,14 @@ public class SetGreetingMessageHandler : IRequestHandler<SetGreetingMessageComma
 
     public async Task Handle(SetGreetingMessageCommand request, CancellationToken cancellationToken)
     {
-        var ctx = request.Ctx;
-        var message = request.GreetingMessage;
+        CommandContext ctx = request.Ctx;
+        string message = request.GreetingMessage;
 
         await _botSettingsService.SetGreetingMessage(message);
 
-        var previewMemberMention = ctx.Member?.Mention ?? string.Empty;
+        string previewMemberMention = ctx.Member?.Mention ?? string.Empty;
 
-        var messagePreview = await _botSettingsService.GetGreetingsMessage(previewMemberMention);
+        string? messagePreview = await _botSettingsService.GetGreetingsMessage(previewMemberMention);
 
         var sb = new StringBuilder("Greeting message updated successfully. Here's a preview:");
         sb.AppendLine();

@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
 using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
 using Nellebot.Utils;
@@ -14,8 +15,7 @@ public class HelpModule : BaseCommandModule
 {
     private readonly BotOptions _options;
 
-    public HelpModule(
-        IOptions<BotOptions> options)
+    public HelpModule(IOptions<BotOptions> options)
     {
         _options = options.Value;
     }
@@ -25,19 +25,19 @@ public class HelpModule : BaseCommandModule
     {
         var sb = new StringBuilder();
 
-        var commandPrefix = _options.CommandPrefix;
+        string commandPrefix = _options.CommandPrefix;
         const string slashPrefix = DiscordConstants.SlashCommandPrefix;
 
         sb.AppendLine($"On NELLE, you can manage your roles using the `{slashPrefix}roles` command.");
         sb.AppendLine(
-                      $"Alternatively, you can use the `{slashPrefix}role` command followed by the `name` of the role. For example: `{slashPrefix}role beginner`");
+            $"Alternatively, you can use the `{slashPrefix}role` command followed by the `name` of the role. For example: `{slashPrefix}role beginner`");
         sb.AppendLine("Use the same command to unassign a role from yourself.");
         sb.AppendLine("A complete overview of the server roles can be found in #roles channel.");
 
         sb.AppendLine();
         sb.AppendLine("If you have any problems, you can always ask the moderators for help.");
         sb.AppendLine(
-                      $"You can privately message the moderator team either by using the `{slashPrefix}modmail` command");
+            $"You can privately message the moderator team either by using the `{slashPrefix}modmail` command");
         sb.AppendLine("or by sending me a DM. I will then pass your message on to the moderators.");
 
         sb.AppendLine();
@@ -57,9 +57,9 @@ public class HelpModule : BaseCommandModule
 
         sb.AppendLine();
         sb.AppendLine(
-                      "Reifnir source code: [github.com/NELLE-reifnir-bot/reifnir-bot](https://github.com/NELLE-reifnir-bot/reifnir-bot)");
+            "Reifnir source code: [github.com/NELLE-reifnir-bot/reifnir-bot](https://github.com/NELLE-reifnir-bot/reifnir-bot)");
 
-        var eb = EmbedBuilderHelper.BuildSimpleEmbed("Help", sb.ToString());
+        DiscordEmbed eb = EmbedBuilderHelper.BuildSimpleEmbed("Help", sb.ToString());
 
         return ctx.RespondAsync(eb);
     }
@@ -92,7 +92,7 @@ public class HelpModule : BaseCommandModule
         sb.AppendLine("`group-number   .. User role group number (positive whole number)`");
         sb.AppendLine("`group-name     .. User role group name`");
 
-        var eb = EmbedBuilderHelper.BuildSimpleEmbed("User role commands", sb.ToString());
+        DiscordEmbed eb = EmbedBuilderHelper.BuildSimpleEmbed("User role commands", sb.ToString());
 
         return ctx.RespondAsync(eb);
     }
@@ -113,7 +113,7 @@ public class HelpModule : BaseCommandModule
         sb.AppendLine("`   Use the token $USER to @mention the new user in the message`");
         sb.AppendLine();
 
-        var eb = EmbedBuilderHelper.BuildSimpleEmbed("Misc. admin commands", sb.ToString());
+        DiscordEmbed eb = EmbedBuilderHelper.BuildSimpleEmbed("Misc. admin commands", sb.ToString());
 
         return ctx.RespondAsync(eb);
     }
@@ -123,7 +123,7 @@ public class HelpModule : BaseCommandModule
     {
         var sb = new StringBuilder();
 
-        var commandPrefix = _options.CommandPrefix;
+        string commandPrefix = _options.CommandPrefix;
 
         sb.AppendLine($"`{commandPrefix}vkick [user] [reason]`");
         sb.AppendLine("`   Kick a recently joined user with a fresh Discord account.`");
@@ -149,7 +149,7 @@ public class HelpModule : BaseCommandModule
         sb.AppendLine("`   List all goodbye message templates.`");
         sb.AppendLine();
 
-        var eb = EmbedBuilderHelper.BuildSimpleEmbed("Misc. valhall commands", sb.ToString());
+        DiscordEmbed eb = EmbedBuilderHelper.BuildSimpleEmbed("Misc. valhall commands", sb.ToString());
 
         return ctx.RespondAsync(eb);
     }

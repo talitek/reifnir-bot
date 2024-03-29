@@ -1,7 +1,9 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
+using DSharpPlus.Entities;
 using MediatR;
 using Nellebot.Services;
 
@@ -11,8 +13,7 @@ public record PopulateMessagesCommand : BotCommandCommand
 {
     public PopulateMessagesCommand(CommandContext ctx)
         : base(ctx)
-    {
-    }
+    { }
 }
 
 public class PopulateMessagesHandler : IRequestHandler<PopulateMessagesCommand>
@@ -26,10 +27,10 @@ public class PopulateMessagesHandler : IRequestHandler<PopulateMessagesCommand>
 
     public async Task Handle(PopulateMessagesCommand request, CancellationToken cancellationToken)
     {
-        var guild = request.Ctx.Guild;
-        var channel = request.Ctx.Channel;
+        DiscordGuild guild = request.Ctx.Guild;
+        DiscordChannel channel = request.Ctx.Channel;
 
-        var createdMessages = await _messageRefsService.PopulateMessageRefsInit(guild);
+        IList<DiscordMessage> createdMessages = await _messageRefsService.PopulateMessageRefsInit(guild);
 
         if (createdMessages.Count == 0)
         {
@@ -37,9 +38,10 @@ public class PopulateMessagesHandler : IRequestHandler<PopulateMessagesCommand>
             return;
         }
 
-        var messagesInChannel = createdMessages.GroupBy(x => x.Channel.Name).ToList();
+        List<IGrouping<string, DiscordMessage>> messagesInChannel =
+            createdMessages.GroupBy(x => x.Channel.Name).ToList();
 
-        foreach (var messageGroup in messagesInChannel)
+        foreach (IGrouping<string, DiscordMessage> messageGroup in messagesInChannel)
         {
             await channel.SendMessageAsync($"Populated {messageGroup.Count()} message refs in {messageGroup.Key}");
         }

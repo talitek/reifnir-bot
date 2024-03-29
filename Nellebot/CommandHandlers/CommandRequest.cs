@@ -5,12 +5,10 @@ using MediatR;
 namespace Nellebot.CommandHandlers;
 
 public interface ICommand : IRequest
-{
-}
+{ }
 
 public interface IQuery : IRequest
-{
-}
+{ }
 
 public record BaseCommand : ICommand
 {

@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using DSharpPlus.Entities;
 using MediatR;
 using Microsoft.Extensions.Options;
 
@@ -18,26 +19,26 @@ public class MemberRoleIntegrityHandler : INotificationHandler<GuildMemberUpdate
 
     public async Task Handle(GuildMemberUpdatedNotification notification, CancellationToken cancellationToken)
     {
-        var memberRolesChanged = notification.EventArgs.RolesBefore.Count != notification.EventArgs.RolesAfter.Count;
+        bool memberRolesChanged = notification.EventArgs.RolesBefore.Count != notification.EventArgs.RolesAfter.Count;
 
         if (!memberRolesChanged) return;
 
-        var memberRoleIds = _options.MemberRoleIds;
-        var memberRoleId = _options.MemberRoleId;
+        ulong[] memberRoleIds = _options.MemberRoleIds;
+        ulong memberRoleId = _options.MemberRoleId;
 
-        var member = notification.EventArgs.Member;
+        DiscordMember? member = notification.EventArgs.Member;
 
         if (member is null) throw new Exception(nameof(member));
 
-        var memberRole = notification.EventArgs.Guild.Roles[memberRoleId];
+        DiscordRole? memberRole = notification.EventArgs.Guild.Roles[memberRoleId];
 
         if (memberRole is null)
         {
             throw new ArgumentException($"Could not find role with id {memberRoleId}");
         }
 
-        var userShouldHaveMemberRole = member.Roles.Any(r => memberRoleIds.Contains(r.Id));
-        var userHasMemberRole = member.Roles.Any(r => r.Id == memberRoleId);
+        bool userShouldHaveMemberRole = member.Roles.Any(r => memberRoleIds.Contains(r.Id));
+        bool userHasMemberRole = member.Roles.Any(r => r.Id == memberRoleId);
 
         if (userShouldHaveMemberRole && !userHasMemberRole)
         {

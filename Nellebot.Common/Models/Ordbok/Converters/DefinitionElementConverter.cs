@@ -12,7 +12,7 @@ public class DefinitionElementConverter : JsonConverter<DefinitionElement>
         Type typeToConvert,
         JsonSerializerOptions options)
     {
-        var typeDiscriminator = TypeElementConverterHelper.GetTypeDiscriminator(ref reader);
+        string typeDiscriminator = TypeElementConverterHelper.GetTypeDiscriminator(ref reader);
 
         DefinitionElement? result;
 

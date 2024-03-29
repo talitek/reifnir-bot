@@ -21,7 +21,7 @@ public class ModmailModule : ApplicationCommandModule
     {
         var messageContent = "I'll just slip into your DMs";
 
-        var responseBuilder = new DiscordInteractionResponseBuilder()
+        DiscordInteractionResponseBuilder responseBuilder = new DiscordInteractionResponseBuilder()
             .WithContent(messageContent)
             .AsEphemeral();
 

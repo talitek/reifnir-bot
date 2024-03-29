@@ -8,7 +8,7 @@ public static class DiscordMemberMapper
 {
     public static AppDiscordMember Map(DiscordMember discordMember)
     {
-        var appDiscordUser = DiscordUserMapper.Map(discordMember);
+        AppDiscordUser appDiscordUser = DiscordUserMapper.Map(discordMember);
 
         var appDiscordMember = new AppDiscordMember
         {

@@ -32,88 +32,92 @@ public class Program
     private static IHostBuilder CreateHostBuilder(string[] args)
     {
         return Host.CreateDefaultBuilder(args)
-            .ConfigureServices((hostContext, services) =>
-            {
-                services.Configure<BotOptions>(hostContext.Configuration.GetSection(BotOptions.OptionsKey));
-
-                services.AddDataProtection()
-                    .SetApplicationName(nameof(Nellebot))
-                    .SetDefaultKeyLifetime(TimeSpan.FromDays(180));
-
-                services.AddHttpClient<OrdbokHttpClient>();
-
-                services.AddMediatR(cfg =>
+            .ConfigureServices(
+                (hostContext, services) =>
                 {
-                    cfg.RegisterServicesFromAssemblyContaining<Program>();
-                    cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(CommandRequestPipelineBehaviour<,>));
-                });
-                services.AddTransient<NotificationPublisher>();
+                    services.Configure<BotOptions>(hostContext.Configuration.GetSection(BotOptions.OptionsKey));
 
-                services.AddSingleton<SharedCache>();
-                services.AddSingleton<ILocalizationService, LocalizationService>();
-                services.AddSingleton<PuppeteerFactory>();
+                    services.AddDataProtection()
+                        .SetApplicationName(nameof(Nellebot))
+                        .SetDefaultKeyLifetime(TimeSpan.FromDays(180));
 
-                services.AddSingleton<GoodbyeMessageBuffer>();
+                    services.AddHttpClient<OrdbokHttpClient>();
 
-                AddWorkers(services);
+                    services.AddMediatR(
+                        cfg =>
+                        {
+                            cfg.RegisterServicesFromAssemblyContaining<Program>();
+                            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(CommandRequestPipelineBehaviour<,>));
+                        });
+                    services.AddTransient<NotificationPublisher>();
 
-                AddChannels(services);
+                    services.AddSingleton<SharedCache>();
+                    services.AddSingleton<ILocalizationService, LocalizationService>();
+                    services.AddSingleton<PuppeteerFactory>();
 
-                AddBotEventHandlers(services);
+                    services.AddSingleton<GoodbyeMessageBuffer>();
 
-                AddInternalServices(services);
+                    AddWorkers(services);
 
-                AddRepositories(services);
+                    AddChannels(services);
 
-                AddDbContext(hostContext, services);
+                    AddBotEventHandlers(services);
 
-                AddDiscordClient(hostContext, services);
-            })
+                    AddInternalServices(services);
+
+                    AddRepositories(services);
+
+                    AddDbContext(hostContext, services);
+
+                    AddDiscordClient(hostContext, services);
+                })
             .UseSystemd();
     }
 
     private static void AddDiscordClient(HostBuilderContext hostContext, IServiceCollection services)
     {
-        services.AddSingleton(_ =>
-        {
-            var defaultLogLevel = hostContext.Configuration.GetValue<string>("Logging:LogLevel:Default") ?? "Warning";
-            var botToken = hostContext.Configuration.GetValue<string>("Nellebot:BotToken") ??
-                           throw new Exception("Bot token not found");
-
-            var logLevel = Enum.Parse<LogLevel>(defaultLogLevel);
-
-            var socketConfig = new DiscordConfiguration
+        services.AddSingleton(
+            _ =>
             {
-                MinimumLogLevel = logLevel,
-                TokenType = TokenType.Bot,
-                Token = botToken,
-                Intents = DiscordIntents.All,
-            };
+                string defaultLogLevel =
+                    hostContext.Configuration.GetValue<string>("Logging:LogLevel:Default") ?? "Warning";
+                string botToken = hostContext.Configuration.GetValue<string>("Nellebot:BotToken") ??
+                                  throw new Exception("Bot token not found");
 
-            var client = new DiscordClient(socketConfig);
+                var logLevel = Enum.Parse<LogLevel>(defaultLogLevel);
 
-            return client;
-        });
+                var socketConfig = new DiscordConfiguration
+                {
+                    MinimumLogLevel = logLevel,
+                    TokenType = TokenType.Bot,
+                    Token = botToken,
+                    Intents = DiscordIntents.All,
+                };
+
+                var client = new DiscordClient(socketConfig);
+
+                return client;
+            });
     }
 
     private static void AddDbContext(HostBuilderContext hostContext, IServiceCollection services)
     {
         services.AddDbContext<BotDbContext>(
-                                            builder =>
-                                            {
-                                                var dbConnString =
-                                                    hostContext.Configuration
-                                                        .GetValue<string>("Nellebot:ConnectionString");
-                                                var logLevel =
-                                                    hostContext.Configuration
-                                                        .GetValue<string>("Logging:LogLevel:Default");
+            builder =>
+            {
+                var dbConnString =
+                    hostContext.Configuration
+                        .GetValue<string>("Nellebot:ConnectionString");
+                var logLevel =
+                    hostContext.Configuration
+                        .GetValue<string>("Logging:LogLevel:Default");
 
-                                                builder.EnableSensitiveDataLogging(logLevel == "Debug");
+                builder.EnableSensitiveDataLogging(logLevel == "Debug");
 
-                                                builder.UseNpgsql(dbConnString);
-                                            },
-                                            ServiceLifetime.Transient,
-                                            ServiceLifetime.Singleton);
+                builder.UseNpgsql(dbConnString);
+            },
+            ServiceLifetime.Transient,
+            ServiceLifetime.Singleton);
     }
 
     private static void AddRepositories(IServiceCollection services)

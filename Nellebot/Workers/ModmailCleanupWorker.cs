@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.CommandHandlers.Modmail;
+using Nellebot.Common.Models.Modmail;
 using Nellebot.Data.Repositories;
 
 namespace Nellebot.Workers;
@@ -35,13 +37,13 @@ public class ModmailCleanupWorker : BackgroundService
     {
         try
         {
-            var cleanupInterval = TimeSpan.FromHours(_options.ModmailTicketInactiveThresholdInHours);
+            TimeSpan cleanupInterval = TimeSpan.FromHours(_options.ModmailTicketInactiveThresholdInHours);
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                var expiredTickets = await _modmailTicketRepo.GetOpenExpiredTickets(cleanupInterval);
+                List<ModmailTicket> expiredTickets = await _modmailTicketRepo.GetOpenExpiredTickets(cleanupInterval);
 
-                foreach (var ticket in expiredTickets)
+                foreach (ModmailTicket ticket in expiredTickets)
                 {
                     await _mediator.Send(new CloseInactiveModmailTicketCommand(ticket), stoppingToken);
                 }

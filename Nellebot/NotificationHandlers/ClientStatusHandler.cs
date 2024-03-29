@@ -61,9 +61,9 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
 
     public async Task Handle(SessionCreatedOrResumedNotification notification, CancellationToken cancellationToken)
     {
-        var lastHeartbeat = await _botSettingsService.GetLastHeartbeat() ?? DateTimeOffset.UtcNow;
+        DateTimeOffset lastHeartbeat = await _botSettingsService.GetLastHeartbeat() ?? DateTimeOffset.UtcNow;
 
-        var timeSinceLastHeartbeat = DateTimeOffset.UtcNow - lastHeartbeat;
+        TimeSpan timeSinceLastHeartbeat = DateTimeOffset.UtcNow - lastHeartbeat;
 
         if (timeSinceLastHeartbeat.TotalMinutes > 1)
         {
@@ -77,7 +77,7 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
 
         if (_options.AutoPopulateMessagesOnReadyEnabled)
         {
-            var createdCount = await _messageRefsService.PopulateMessageRefs(lastHeartbeat, notification.EventSource);
+            int createdCount = await _messageRefsService.PopulateMessageRefs(lastHeartbeat, notification.EventSource);
 
             if (createdCount > 0)
             {

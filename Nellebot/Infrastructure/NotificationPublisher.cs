@@ -31,7 +31,7 @@ public class NotificationPublisher
     {
         var exceptions = new List<Exception>();
 
-        foreach (var handler in handlers)
+        foreach (NotificationHandlerExecutor handler in handlers)
         {
             try
             {

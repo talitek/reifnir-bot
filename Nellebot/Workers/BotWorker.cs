@@ -72,14 +72,15 @@ public class BotWorker : IHostedService
 
     private void RegisterClassicCommands()
     {
-        var commandPrefix = _options.CommandPrefix;
+        string commandPrefix = _options.CommandPrefix;
 
-        var commands = _client.UseCommandsNext(new CommandsNextConfiguration
-        {
-            StringPrefixes = new[] { commandPrefix },
-            Services = _serviceProvider,
-            EnableDefaultHelp = false,
-        });
+        CommandsNextExtension commands = _client.UseCommandsNext(
+            new CommandsNextConfiguration
+            {
+                StringPrefixes = new[] { commandPrefix },
+                Services = _serviceProvider,
+                EnableDefaultHelp = false,
+            });
 
         commands.RegisterCommands(Assembly.GetExecutingAssembly());
 
@@ -88,7 +89,8 @@ public class BotWorker : IHostedService
 
     private void RegisterSlashCommands()
     {
-        var slashCommands = _client.UseSlashCommands(new SlashCommandsConfiguration { Services = _serviceProvider });
+        SlashCommandsExtension slashCommands =
+            _client.UseSlashCommands(new SlashCommandsConfiguration { Services = _serviceProvider });
 
         slashCommands.RegisterCommands<GlobalSlashModule>();
         slashCommands.RegisterCommands<RoleModule>(_options.GuildId);
@@ -98,10 +100,11 @@ public class BotWorker : IHostedService
 
     private void ConfigureInteractivity()
     {
-        _client.UseInteractivity(new InteractivityConfiguration
-        {
-            PaginationBehaviour = PaginationBehaviour.Ignore,
-        });
+        _client.UseInteractivity(
+            new InteractivityConfiguration
+            {
+                PaginationBehaviour = PaginationBehaviour.Ignore,
+            });
     }
 
     private void RegisterMessageHandlers()
@@ -165,7 +168,7 @@ public class BotWorker : IHostedService
     {
         try
         {
-            var commandPrefix = _options.CommandPrefix;
+            string commandPrefix = _options.CommandPrefix;
 
             var activity = new DiscordActivity($"\"{commandPrefix}help\" for help", ActivityType.Playing);
 

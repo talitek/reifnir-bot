@@ -15,25 +15,25 @@ public class AuthorizationService
 
     public bool IsOwnerOrAdmin(AppDiscordMember member, AppDiscordApplication discordApplication)
     {
-        var currentMember = member;
+        AppDiscordMember currentMember = member;
 
-        var isBotOwner = discordApplication.Owners.Any(x => x.Id == currentMember.Id);
+        bool isBotOwner = discordApplication.Owners.Any(x => x.Id == currentMember.Id);
 
         if (isBotOwner)
         {
             return true;
         }
 
-        var coOwnerUserId = _options.CoOwnerUserId;
+        ulong coOwnerUserId = _options.CoOwnerUserId;
 
         if (member.Id == coOwnerUserId)
         {
             return true;
         }
 
-        var adminRoleId = _options.AdminRoleId;
+        ulong adminRoleId = _options.AdminRoleId;
 
-        var currentUserIsAdmin = currentMember.Roles.Select(r => r.Id).Contains(adminRoleId);
+        bool currentUserIsAdmin = currentMember.Roles.Select(r => r.Id).Contains(adminRoleId);
 
         return currentUserIsAdmin;
     }
@@ -45,9 +45,9 @@ public class AuthorizationService
             return true;
         }
 
-        var trustedRoleIds = _options.TrustedRoleIds;
+        ulong[] trustedRoleIds = _options.TrustedRoleIds;
 
-        var currentUserIsTrusted = appMember.Roles.Select(r => r.Id).Intersect(trustedRoleIds).Any();
+        bool currentUserIsTrusted = appMember.Roles.Select(r => r.Id).Intersect(trustedRoleIds).Any();
 
         return currentUserIsTrusted;
     }

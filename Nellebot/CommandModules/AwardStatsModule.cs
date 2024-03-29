@@ -5,6 +5,7 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Nellebot.Attributes;
+using Nellebot.Common.Models;
 using Nellebot.Data.Repositories;
 using Nellebot.Infrastructure;
 using Nellebot.Utils;
@@ -35,7 +36,7 @@ public class AwardStatsModule : BaseCommandModule
     [Command("me")]
     public async Task GetUserAwardStatsSelf(CommandContext ctx)
     {
-        var member = ctx.Member;
+        DiscordMember? member = ctx.Member;
 
         if (member is null)
         {
@@ -49,7 +50,7 @@ public class AwardStatsModule : BaseCommandModule
     [GroupCommand]
     public async Task GetUserAwardStatsOtherUser(CommandContext ctx, DiscordUser user)
     {
-        var member = await _discordResolver.ResolveGuildMember(ctx.Guild, user.Id);
+        DiscordMember? member = await _discordResolver.ResolveGuildMember(ctx.Guild, user.Id);
 
         if (member is null)
         {
@@ -62,18 +63,18 @@ public class AwardStatsModule : BaseCommandModule
 
     private async Task GetUserAwardStats(CommandContext ctx, DiscordMember member)
     {
-        var userId = member.Id;
-        var guild = ctx.Guild;
+        ulong userId = member.Id;
+        DiscordGuild guild = ctx.Guild;
 
-        var mention = member.DisplayName;
+        string mention = member.DisplayName;
 
-        var userAwardStats = await _awardMessageRepo.GetAwardStatsForUser(userId);
+        UserAwardStats userAwardStats = await _awardMessageRepo.GetAwardStatsForUser(userId);
 
         var sb = new StringBuilder();
 
         // Library does not support nullable reference types.
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-        var embedBuilder = new DiscordEmbedBuilder()
+        DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder()
             .WithAuthor(mention, null, member.GuildAvatarUrl ?? member.AvatarUrl)
             .WithTitle("Cookie stats")
             .WithColor(DiscordConstants.DefaultEmbedColor);
@@ -93,31 +94,31 @@ public class AwardStatsModule : BaseCommandModule
 
         sb.AppendLine();
         sb.AppendLine("Top messages");
-        foreach (var awardedMessage in userAwardStats.TopAwardedMessages)
+        foreach (AwardMessage awardedMessage in userAwardStats.TopAwardedMessages)
         {
             sb.Append($"{DiscordEmoji.FromUnicode(EmojiMap.Cookie).Name} **{awardedMessage.AwardCount}** ");
 
-            var channelId = awardedMessage.OriginalChannelId;
+            ulong channelId = awardedMessage.OriginalChannelId;
 
-            var messageChannel = await _cache.LoadFromCacheAsync(
-                                                                 string.Format(
-                                                                               SharedCacheKeys.DiscordChannel,
-                                                                               channelId),
-                                                                 async () =>
-                                                                     await _discordResolver
-                                                                         .ResolveChannelAsync(channelId),
-                                                                 TimeSpan.FromSeconds(10));
+            DiscordChannel? messageChannel = await _cache.LoadFromCacheAsync(
+                string.Format(
+                    SharedCacheKeys.DiscordChannel,
+                    channelId),
+                async () =>
+                    await _discordResolver
+                        .ResolveChannelAsync(channelId),
+                TimeSpan.FromSeconds(10));
 
             if (messageChannel is null) continue;
 
-            var messageResolveResult =
+            TryResolveResult<DiscordMessage> messageResolveResult =
                 await _discordResolver.TryResolveMessage(messageChannel, awardedMessage.OriginalMessageId);
 
             if (messageResolveResult.Resolved)
             {
-                var message = messageResolveResult.Value;
+                DiscordMessage message = messageResolveResult.Value;
 
-                var shortenedMessage = message.Content.Length > MaxMessageLength
+                string shortenedMessage = message.Content.Length > MaxMessageLength
                     ? $"{message.Content.Substring(0, MaxMessageLength)}..."
                     : message.Content;
 

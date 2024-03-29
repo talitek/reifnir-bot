@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using MediatR;
+using Nellebot.Common.Models.Ordbok.Api;
 using Nellebot.Data.Repositories;
 using Nellebot.Services.Ordbok;
 
@@ -13,8 +14,7 @@ public record GibbCommand : BotCommandCommand
 {
     public GibbCommand(CommandContext ctx)
         : base(ctx)
-    {
-    }
+    { }
 }
 
 public class GibbHandler : IRequestHandler<GibbCommand>
@@ -33,16 +33,16 @@ public class GibbHandler : IRequestHandler<GibbCommand>
         const string dictionary = "bm";
         const string wordClass = "NOUN";
 
-        var ctx = request.Ctx;
+        CommandContext ctx = request.Ctx;
 
-        var articleCount = await _ordbokRepo.GetArticleCount(dictionary, wordClass, cancellationToken);
+        int articleCount = await _ordbokRepo.GetArticleCount(dictionary, wordClass, cancellationToken);
 
-        var random = new Random().Next(articleCount);
+        int random = new Random().Next(articleCount);
 
-        var articleId = await _ordbokRepo.GetArticleIdAtIndex(dictionary, wordClass, random, cancellationToken);
+        int articleId = await _ordbokRepo.GetArticleIdAtIndex(dictionary, wordClass, random, cancellationToken);
 
-        var article = await _ordbokClient.GetArticle(dictionary, articleId, cancellationToken)
-                      ?? throw new Exception($"Couldn't fetch article id {articleId}");
+        Article article = await _ordbokClient.GetArticle(dictionary, articleId, cancellationToken)
+                          ?? throw new Exception($"Couldn't fetch article id {articleId}");
 
         var message = $"Here's your article ({articleId}): {article.Lemmas.First().Value}";
 

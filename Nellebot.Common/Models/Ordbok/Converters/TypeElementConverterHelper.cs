@@ -9,7 +9,7 @@ public static class TypeElementConverterHelper
 
     public static string GetTypeDiscriminator(ref Utf8JsonReader reader)
     {
-        var readerClone = reader;
+        Utf8JsonReader readerClone = reader;
 
         if (readerClone.TokenType != JsonTokenType.StartObject) throw new JsonException();
 
@@ -18,7 +18,7 @@ public static class TypeElementConverterHelper
 
         var traversedPropertyCount = 0;
 
-        var propertyName = readerClone.GetString();
+        string? propertyName = readerClone.GetString();
 
         while (propertyName != TypePropertyName && traversedPropertyCount < MaxPropertiesToTraverse)
         {
@@ -34,7 +34,7 @@ public static class TypeElementConverterHelper
         readerClone.Read();
         if (readerClone.TokenType != JsonTokenType.String) throw new JsonException();
 
-        var typeDiscriminator = readerClone.GetString();
+        string? typeDiscriminator = readerClone.GetString();
         if (typeDiscriminator == null) throw new JsonException("Missing typeDiscriminator");
 
         return typeDiscriminator;

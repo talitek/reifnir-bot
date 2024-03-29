@@ -2,7 +2,10 @@
 using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
+using DSharpPlus.Entities;
 using MediatR;
+using Nellebot.Common.AppDiscordModels;
+using Nellebot.Common.Models;
 using Nellebot.Data.Repositories;
 using Nellebot.DiscordModelMappers;
 using Nellebot.Infrastructure;
@@ -30,22 +33,22 @@ public class DeleteGoodbyeMessageHandler : IRequestHandler<DeleteGoodbyeMessageC
 
     public async Task Handle(DeleteGoodbyeMessageCommand request, CancellationToken cancellationToken)
     {
-        var ctx = request.Ctx;
-        var id = request.Id;
-        var author = ctx.Member ?? throw new Exception("Member was null");
+        CommandContext ctx = request.Ctx;
+        string id = request.Id;
+        DiscordMember author = ctx.Member ?? throw new Exception("Member was null");
 
-        var messageTemplate = await _messageTemplateRepo.GetMessageTemplate(id, cancellationToken);
+        MessageTemplate? messageTemplate = await _messageTemplateRepo.GetMessageTemplate(id, cancellationToken);
 
         if (messageTemplate == null)
         {
             throw new ArgumentException(
-                                        $"I couldn't find a goodbye message with id {id}, although I'm sure it's your fault.");
+                $"I couldn't find a goodbye message with id {id}, although I'm sure it's your fault.");
         }
 
-        var appMember = DiscordMemberMapper.Map(ctx.Member);
-        var appApplication = DiscordApplicationMapper.Map(ctx.Client.CurrentApplication);
+        AppDiscordMember appMember = DiscordMemberMapper.Map(ctx.Member);
+        AppDiscordApplication appApplication = DiscordApplicationMapper.Map(ctx.Client.CurrentApplication);
 
-        var isOwnerOrAdmin = _authService.IsOwnerOrAdmin(appMember, appApplication);
+        bool isOwnerOrAdmin = _authService.IsOwnerOrAdmin(appMember, appApplication);
 
         if (!isOwnerOrAdmin && messageTemplate.AuthorId != author.Id)
         {

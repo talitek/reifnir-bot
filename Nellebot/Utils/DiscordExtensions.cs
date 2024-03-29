@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
 
@@ -13,11 +14,11 @@ public static class DiscordExtensions
 
     public static string GetDetailedMemberIdentifier(this DiscordMember member, bool useMention = false)
     {
-        var memberUsername = member.Username;
-        var memberDisplayName = member.DisplayName;
-        var mentionOrDisplayName = useMention ? member.Mention : memberDisplayName;
+        string memberUsername = member.Username;
+        string memberDisplayName = member.DisplayName;
+        string mentionOrDisplayName = useMention ? member.Mention : memberDisplayName;
 
-        var memberFormattedDisplayName = memberUsername != memberDisplayName
+        string memberFormattedDisplayName = memberUsername != memberDisplayName
             ? $"{mentionOrDisplayName} ({member.GetFullUsername()}, {member.Id})"
             : $"{member.GetFullUsername()} ({member.Id})";
 
@@ -46,9 +47,9 @@ public static class DiscordExtensions
 
     public static string GetQuotedContent(this DiscordMessage message)
     {
-        var lines = message.Content.Split(DiscordConstants.NewLineChar).ToList();
+        List<string> lines = message.Content.Split(DiscordConstants.NewLineChar).ToList();
 
-        var quotedLines = lines.Select(line => $"> {line}");
+        IEnumerable<string> quotedLines = lines.Select(line => $"> {line}");
 
         return string.Join(DiscordConstants.NewLineChar, quotedLines);
     }

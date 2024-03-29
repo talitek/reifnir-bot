@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Nellebot.Common.Models.Ordbok.Store;
 using Nellebot.Data.Repositories;
 
 namespace Nellebot.Services;
@@ -33,12 +34,12 @@ public class LocalizationService : ILocalizationService
 
     public string GetString(string key, LocalizationResource resource, string dictionaryName)
     {
-        var lazyDictionary = GetResourceDictionary(resource, dictionaryName);
+        Lazy<ValueTask<Dictionary<string, string>>> lazyDictionary = GetResourceDictionary(resource, dictionaryName);
 
         // TODO rewrite to async
-        var dictionary = lazyDictionary.Value.GetAwaiter().GetResult();
+        Dictionary<string, string> dictionary = lazyDictionary.Value.GetAwaiter().GetResult();
 
-        if (dictionary.TryGetValue(key, out var value) && value != null)
+        if (dictionary.TryGetValue(key, out string? value) && value != null)
         {
             return value;
         }
@@ -66,23 +67,25 @@ public class LocalizationService : ILocalizationService
 
     private async ValueTask<Dictionary<string, string>> LoadDictionary(string dictionaryName, string locale)
     {
-        var concepts = await _ordbokRepo.GetConceptStore(dictionaryName)
-                       ?? throw new Exception($"Could not load dictionary resource for {dictionaryName}");
+        OrdbokConceptStore concepts = await _ordbokRepo.GetConceptStore(dictionaryName)
+                                      ?? throw new Exception(
+                                          $"Could not load dictionary resource for {dictionaryName}");
 
-        var result = concepts.Concepts;
+        Dictionary<string, string> result = concepts.Concepts;
 
-        var fileContent = await File.ReadAllTextAsync($"Resources/Localization/Ordbok_{locale}.json", Encoding.UTF8);
+        string fileContent = await File.ReadAllTextAsync($"Resources/Localization/Ordbok_{locale}.json", Encoding.UTF8);
 
         var serializerOptions = new JsonSerializerOptions
         {
             AllowTrailingCommas = true,
         };
 
-        var conceptsExtra = JsonSerializer.Deserialize<Dictionary<string, string>>(fileContent, serializerOptions)
-                            ?? throw new Exception($"Could not load dictionary resource for {locale}");
+        Dictionary<string, string> conceptsExtra =
+            JsonSerializer.Deserialize<Dictionary<string, string>>(fileContent, serializerOptions)
+            ?? throw new Exception($"Could not load dictionary resource for {locale}");
 
         // append extra concepts to result dictionary if they are not already present
-        foreach (var (key, value) in conceptsExtra)
+        foreach ((string key, string value) in conceptsExtra)
         {
             if (!result.ContainsKey(key))
             {

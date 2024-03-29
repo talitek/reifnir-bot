@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
+using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.CommandsNext.Exceptions;
+using DSharpPlus.Entities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
@@ -33,10 +35,10 @@ public class CommandEventHandler
 
     private Task OnCommandExecuted(CommandsNextExtension sender, CommandExecutionEventArgs e)
     {
-        var message = e.Context.Message;
+        DiscordMessage message = e.Context.Message;
 
-        var messageContent = message.Content;
-        var username = message.Author.Username;
+        string messageContent = message.Content;
+        string username = message.Author.Username;
 
         _logger.LogDebug($"Command: {username} -> {messageContent}");
 
@@ -50,11 +52,11 @@ public class CommandEventHandler
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
     private async Task OnCommandErrored(CommandsNextExtension sender, CommandErrorEventArgs e)
     {
-        var ctx = e.Context;
-        var message = ctx.Message;
-        var exception = e.Exception;
+        CommandContext ctx = e.Context;
+        DiscordMessage message = ctx.Message;
+        Exception exception = e.Exception;
 
-        var commandPrefix = _options.CommandPrefix;
+        string commandPrefix = _options.CommandPrefix;
         var commandHelpText = $"Type \"{commandPrefix}help\" to get some help.";
 
         var errorMessage = string.Empty;
@@ -68,18 +70,18 @@ public class CommandEventHandler
             "No matching subcommands were found, and this group is not executable.";
         const string unknownOverloadErrorString = "Could not find a suitable overload for the command.";
 
-        var isChecksFailedException = exception is ChecksFailedException;
+        bool isChecksFailedException = exception is ChecksFailedException;
 
-        var isUnknownCommandException = exception is CommandNotFoundException;
-        var isUnknownSubcommandException = exception.Message == unknownSubcommandErrorString;
-        var isUnknownOverloadException = exception.Message == unknownOverloadErrorString;
+        bool isUnknownCommandException = exception is CommandNotFoundException;
+        bool isUnknownSubcommandException = exception.Message == unknownSubcommandErrorString;
+        bool isUnknownOverloadException = exception.Message == unknownOverloadErrorString;
 
-        var isCommandConfigException = exception is DuplicateCommandException
-                                       || exception is DuplicateOverloadException
-                                       || exception is InvalidOverloadException;
+        bool isCommandConfigException = exception is DuplicateCommandException
+                                        || exception is DuplicateOverloadException
+                                        || exception is InvalidOverloadException;
 
         // TODO: If this isn't enough, create a custom exception class for validation errors
-        var isPossiblyValidationException = exception is ArgumentException;
+        bool isPossiblyValidationException = exception is ArgumentException;
 
         if (isUnknownCommandException)
         {
@@ -106,7 +108,7 @@ public class CommandEventHandler
         {
             var checksFailedException = (ChecksFailedException)exception;
 
-            var failedCheck = checksFailedException.FailedChecks[0];
+            CheckBaseAttribute failedCheck = checksFailedException.FailedChecks[0];
 
             if (failedCheck is BaseCommandCheck)
             {
@@ -137,7 +139,7 @@ public class CommandEventHandler
         }
 
         // Log any unhandled exception
-        var shouldLogDiscordError =
+        bool shouldLogDiscordError =
             !isUnknownCommandException
             && !isUnknownSubcommandException
             && !isCommandConfigException

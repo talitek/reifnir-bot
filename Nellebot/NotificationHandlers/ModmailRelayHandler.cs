@@ -2,10 +2,12 @@
 using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using MediatR;
 using Microsoft.Extensions.Options;
 using Nellebot.CommandHandlers;
 using Nellebot.CommandHandlers.Modmail;
+using Nellebot.Common.Models.Modmail;
 using Nellebot.Data.Repositories;
 using Nellebot.Utils;
 using Nellebot.Workers;
@@ -33,11 +35,11 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
 
     public Task Handle(MessageCreatedNotification notification, CancellationToken cancellationToken)
     {
-        var args = notification.EventArgs;
+        MessageCreateEventArgs args = notification.EventArgs;
 
-        var channel = args.Channel;
-        var user = args.Author;
-        var message = args.Message;
+        DiscordChannel channel = args.Channel;
+        DiscordUser user = args.Author;
+        DiscordMessage message = args.Message;
 
         if (user.IsBot) return Task.CompletedTask;
 
@@ -65,7 +67,8 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
             return;
         }
 
-        var userTicketInPool = await _modmailTicketRepo.GetActiveTicketByRequesterId(user.Id, cancellationToken);
+        ModmailTicket? userTicketInPool =
+            await _modmailTicketRepo.GetActiveTicketByRequesterId(user.Id, cancellationToken);
 
         if (userTicketInPool == null)
         {
@@ -103,7 +106,8 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
         DiscordMessage message,
         CancellationToken cancellationToken)
     {
-        var channelTicketInPool = await _modmailTicketRepo.GetTicketByChannelId(channel.Id, cancellationToken);
+        ModmailTicket? channelTicketInPool =
+            await _modmailTicketRepo.GetTicketByChannelId(channel.Id, cancellationToken);
 
         if (channelTicketInPool == null)
         {

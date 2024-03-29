@@ -54,7 +54,7 @@ public class UserRoleServiceTests
 
         _sut = BuildSutWithMocks();
 
-        var act = async () => await _sut.DeleteRole(discordRole);
+        Func<Task> act = async () => await _sut.DeleteRole(discordRole);
 
         act.Should()
             .ThrowAsync<ArgumentException>()
@@ -86,7 +86,7 @@ public class UserRoleServiceTests
     public void AddRoleAlias_WithEmptyName_ThrowsException(string inputAlias)
     {
         var discordRole = new AppDiscordRole();
-        var alias = inputAlias;
+        string alias = inputAlias;
 
         _sut = BuildSutWithMocks();
 
@@ -151,7 +151,7 @@ public class UserRoleServiceTests
 
         _sut = BuildSutWithMocks();
 
-        var act = async () => await _sut.RemoveRoleAlias(discordRole, alias);
+        Func<Task> act = async () => await _sut.RemoveRoleAlias(discordRole, alias);
 
         act.Should()
             .ThrowAsync<ArgumentException>()
@@ -175,7 +175,7 @@ public class UserRoleServiceTests
 
         _sut = BuildSutWithMocks();
 
-        var act = async () => await _sut.RemoveRoleAlias(discordRole, alias);
+        Func<Task> act = async () => await _sut.RemoveRoleAlias(discordRole, alias);
 
         act.Should()
             .ThrowAsync<ArgumentException>()
@@ -194,7 +194,7 @@ public class UserRoleServiceTests
 
         _sut = BuildSutWithMocks();
 
-        var act = async () => await _sut.SetRoleGroup(discordRole, groupNumber);
+        Func<Task> act = async () => await _sut.SetRoleGroup(discordRole, groupNumber);
 
         act.Should()
             .ThrowAsync<ArgumentException>()
@@ -212,7 +212,7 @@ public class UserRoleServiceTests
 
         _sut = BuildSutWithMocks();
 
-        var act = async () => await _sut.UnsetRoleGroup(discordRole);
+        Func<Task> act = async () => await _sut.UnsetRoleGroup(discordRole);
 
         act.Should()
             .ThrowAsync<ArgumentException>()

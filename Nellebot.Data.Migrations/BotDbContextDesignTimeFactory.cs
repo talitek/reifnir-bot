@@ -18,28 +18,26 @@ public class BotDbContextDesignTimeFactory : IDesignTimeDbContextFactory<BotDbCo
             .SetApplicationName(nameof(Nellebot))
             .SetDefaultKeyLifetime(TimeSpan.FromDays(180));
 
-        var provider = services.BuildServiceProvider();
+        ServiceProvider provider = services.BuildServiceProvider();
 
-        var dataProtector = provider.GetDataProtectionProvider();
+        IDataProtectionProvider dataProtector = provider.GetDataProtectionProvider();
 
-        var config = new ConfigurationBuilder()
-            .SetBasePath(Path.Combine(
-                                      Directory.GetCurrentDirectory(),
-                                      $"../{typeof(BotDbContextDesignTimeFactory).Namespace}"))
+        IConfigurationRoot config = new ConfigurationBuilder()
+            .SetBasePath(
+                Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    $"../{typeof(BotDbContextDesignTimeFactory).Namespace}"))
             .AddJsonFile("appsettings.json", false)
             .AddUserSecrets(typeof(BotDbContextDesignTimeFactory).Assembly)
             .Build();
 
         var builder = new DbContextOptionsBuilder<BotDbContext>();
 
-        var dbConnString = config["Nellebot:ConnectionString"];
+        string? dbConnString = config["Nellebot:ConnectionString"];
 
         builder.UseNpgsql(
-                          dbConnString,
-                          options =>
-                          {
-                              options.MigrationsAssembly(typeof(BotDbContextDesignTimeFactory).Assembly.FullName);
-                          });
+            dbConnString,
+            options => { options.MigrationsAssembly(typeof(BotDbContextDesignTimeFactory).Assembly.FullName); });
 
         return new BotDbContext(builder.Options, dataProtector);
     }

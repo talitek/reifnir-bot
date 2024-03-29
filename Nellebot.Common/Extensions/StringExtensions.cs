@@ -11,7 +11,7 @@ public static class StringExtensions
     {
         if (string.IsNullOrEmpty(input)) return string.Empty;
 
-        var firstLine = input.Split('\n')[0];
+        string firstLine = input.Split('\n')[0];
 
         return firstLine.Length > maxLength ? $"{firstLine[..(maxLength - 3)]}..." : firstLine;
     }

@@ -33,16 +33,16 @@ public class OrdbokContentParser : IOrdbokContentParser
 
     public string GetEtymologyLanguageContent(Api.EtymologyLanguage etymologyLanguage, string dictionary)
     {
-        var contentString = etymologyLanguage.Content;
+        string contentString = etymologyLanguage.Content;
 
         var replacementValues = new List<string>();
 
-        foreach (var item in etymologyLanguage.EtymologyLanguageElements)
+        foreach (Api.EtymologyLanguageElement item in etymologyLanguage.EtymologyLanguageElements)
         {
             switch (item)
             {
                 case Api.EtymologyLanguageIdElement idElement:
-                    var localizedIdElement =
+                    string localizedIdElement =
                         _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
                     replacementValues.Add(localizedIdElement);
                     break;
@@ -52,23 +52,23 @@ public class OrdbokContentParser : IOrdbokContentParser
             }
         }
 
-        var finalContentString = ReplaceContentVariables(contentString, replacementValues);
+        string finalContentString = ReplaceContentVariables(contentString, replacementValues);
 
         return finalContentString;
     }
 
     public string GetEtymologyLittContent(Api.EtymologyLitt etymologyLitt, string dictionary)
     {
-        var contentString = etymologyLitt.Content;
+        string contentString = etymologyLitt.Content;
 
         var replacementValues = new List<string>();
 
-        foreach (var item in etymologyLitt.EtymologyLittElements)
+        foreach (Api.EtymologyLittElement item in etymologyLitt.EtymologyLittElements)
         {
             switch (item)
             {
                 case Api.EtymologyLittIdElement idElement:
-                    var localizedIdElement =
+                    string localizedIdElement =
                         _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
                     replacementValues.Add(localizedIdElement);
                     break;
@@ -78,37 +78,37 @@ public class OrdbokContentParser : IOrdbokContentParser
             }
         }
 
-        var finalContentString = ReplaceContentVariables(contentString, replacementValues);
+        string finalContentString = ReplaceContentVariables(contentString, replacementValues);
 
         return finalContentString;
     }
 
     public string GetEtymologyReferenceContent(Api.EtymologyReference reference, string dictionary)
     {
-        var contentString = reference.Content;
+        string contentString = reference.Content;
 
         var replacementValues = new List<string>();
 
-        foreach (var item in reference.EtymologyReferenceElements)
+        foreach (Api.EtymologyReferenceElement item in reference.EtymologyReferenceElements)
         {
             switch (item)
             {
                 case Api.EtymologyReferenceIdElement idElement:
-                    var localizedElementId =
+                    string localizedElementId =
                         _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
 
                     replacementValues.Add(localizedElementId);
                     break;
                 case Api.EtymologyReferenceArticleRef articleRef:
-                    var firstLemma = articleRef.Lemmas.FirstOrDefault();
+                    Api.SimpleLemma? firstLemma = articleRef.Lemmas.FirstOrDefault();
                     if (firstLemma != null)
                     {
-                        var value = firstLemma.Value;
-                        var hgNo = firstLemma.HgNo.ToRomanNumeral();
+                        string value = firstLemma.Value;
+                        string hgNo = firstLemma.HgNo.ToRomanNumeral();
 
-                        var showHgNo = !string.IsNullOrWhiteSpace(hgNo);
+                        bool showHgNo = !string.IsNullOrWhiteSpace(hgNo);
 
-                        var displayValue = showHgNo ? $"{value} ({hgNo})" : value;
+                        string displayValue = showHgNo ? $"{value} ({hgNo})" : value;
 
                         replacementValues.Add(displayValue);
                     }
@@ -117,23 +117,23 @@ public class OrdbokContentParser : IOrdbokContentParser
             }
         }
 
-        var finalContentString = ReplaceContentVariables(contentString, replacementValues);
+        string finalContentString = ReplaceContentVariables(contentString, replacementValues);
 
         return finalContentString;
     }
 
     public string GetExplanationContent(Api.Explanation explanation, string dictionary, bool detailed)
     {
-        var contentString = explanation.Content;
+        string contentString = explanation.Content;
 
         var replacementValues = new List<string>();
 
-        foreach (var item in explanation.ExplanationItems)
+        foreach (Api.ExplanationItem item in explanation.ExplanationItems)
         {
             switch (item)
             {
                 case Api.ExplanationIdItem idElement:
-                    var localizedElementId =
+                    string localizedElementId =
                         _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
                     replacementValues.Add(localizedElementId);
                     break;
@@ -141,16 +141,16 @@ public class OrdbokContentParser : IOrdbokContentParser
                     replacementValues.Add(textElement.Text);
                     break;
                 case Api.ExplanationArticleRefItem articleRef:
-                    var firstLemma = articleRef.Lemmas.FirstOrDefault();
+                    Api.SimpleLemma? firstLemma = articleRef.Lemmas.FirstOrDefault();
 
                     if (firstLemma == null) break;
 
-                    var displayValue = firstLemma.Value;
+                    string displayValue = firstLemma.Value;
 
                     if (detailed)
                     {
-                        var hgNo = firstLemma.HgNo.ToRomanNumeral();
-                        var definitionOrder = articleRef.DefinitionOrder;
+                        string hgNo = firstLemma.HgNo.ToRomanNumeral();
+                        int definitionOrder = articleRef.DefinitionOrder;
 
                         var pValues = new List<string>();
 
@@ -173,23 +173,23 @@ public class OrdbokContentParser : IOrdbokContentParser
             }
         }
 
-        var finalContentString = ReplaceContentVariables(contentString, replacementValues);
+        string finalContentString = ReplaceContentVariables(contentString, replacementValues);
 
         return finalContentString;
     }
 
     public string GetExampleContent(Api.Example example, string dictionary)
     {
-        var contentString = example.Quote.Content;
+        string contentString = example.Quote.Content;
 
         var replacementValues = new List<string>();
 
-        foreach (var item in example.Quote.QuoteItems)
+        foreach (Api.QuoteItem item in example.Quote.QuoteItems)
         {
             switch (item)
             {
                 case Api.QuoteIdItem idElement:
-                    var localizedIdItem =
+                    string localizedIdItem =
                         _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
                     replacementValues.Add(localizedIdItem);
                     break;
@@ -199,14 +199,14 @@ public class OrdbokContentParser : IOrdbokContentParser
             }
         }
 
-        var finalContentString = ReplaceContentVariables(contentString, replacementValues);
+        string finalContentString = ReplaceContentVariables(contentString, replacementValues);
 
         return finalContentString;
     }
 
     private static string ReplaceContentVariables(string contentString, List<string> values)
     {
-        var contentHasVariables = values.Any();
+        bool contentHasVariables = values.Any();
 
         if (!contentHasVariables)
         {

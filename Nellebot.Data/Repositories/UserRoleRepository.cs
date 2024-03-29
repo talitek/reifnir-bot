@@ -33,7 +33,7 @@ public class UserRoleRepository : IUserRoleRepository
 
     public async Task<UserRole> UpdateRole(Guid id, string name)
     {
-        var role = await _dbContext.UserRoles.SingleOrDefaultAsync(r => r.Id == id);
+        UserRole? role = await _dbContext.UserRoles.SingleOrDefaultAsync(r => r.Id == id);
 
         if (role == null)
         {
@@ -49,7 +49,7 @@ public class UserRoleRepository : IUserRoleRepository
 
     public async Task DeleteRole(Guid id)
     {
-        var role = await _dbContext.UserRoles.SingleOrDefaultAsync(r => r.Id == id);
+        UserRole? role = await _dbContext.UserRoles.SingleOrDefaultAsync(r => r.Id == id);
 
         if (role == null)
         {
@@ -71,7 +71,7 @@ public class UserRoleRepository : IUserRoleRepository
 
     public async Task<IEnumerable<UserRole>> GetRoleList()
     {
-        var roles = await _dbContext.UserRoles
+        List<UserRole> roles = await _dbContext.UserRoles
             .Include(x => x.UserRoleAliases)
             .Include(x => x.Group)
             .OrderBy(x => x.Name)
@@ -102,7 +102,7 @@ public class UserRoleRepository : IUserRoleRepository
 
     public async Task DeleteRoleAlias(Guid userRoleId, string alias)
     {
-        var roleAlias = await _dbContext.UserRoleAliases.SingleOrDefaultAsync(ra => ra.Alias == alias);
+        UserRoleAlias? roleAlias = await _dbContext.UserRoleAliases.SingleOrDefaultAsync(ra => ra.Alias == alias);
 
         if (roleAlias == null)
         {
@@ -116,7 +116,7 @@ public class UserRoleRepository : IUserRoleRepository
 
     public async Task<UserRole> UpdateRoleGroup(Guid id, uint? groupId)
     {
-        var role = await _dbContext.UserRoles.FindAsync(id);
+        UserRole? role = await _dbContext.UserRoles.FindAsync(id);
 
         if (role == null)
         {
@@ -130,7 +130,7 @@ public class UserRoleRepository : IUserRoleRepository
             return role;
         }
 
-        var roleGroup = await _dbContext.UserRoleGroups.FindAsync(groupId);
+        UserRoleGroup? roleGroup = await _dbContext.UserRoleGroups.FindAsync(groupId);
 
         // If role group doesn't exist, create it
         if (roleGroup == null)
@@ -153,7 +153,7 @@ public class UserRoleRepository : IUserRoleRepository
 
     public async Task<UserRole?> GetRoleByNameOrAlias(string roleName)
     {
-        var role = await _dbContext.UserRoles.FirstOrDefaultAsync(x => x.Name.ToLower() == roleName);
+        UserRole? role = await _dbContext.UserRoles.FirstOrDefaultAsync(x => x.Name.ToLower() == roleName);
 
         role ??= await _dbContext.UserRoles
             .Include(x => x.UserRoleAliases)
@@ -173,7 +173,7 @@ public class UserRoleRepository : IUserRoleRepository
 
     public async Task<UserRoleGroup> UpdateRoleGroupName(uint groupId, string name)
     {
-        var roleGroup = await _dbContext.UserRoleGroups.FindAsync(groupId);
+        UserRoleGroup? roleGroup = await _dbContext.UserRoleGroups.FindAsync(groupId);
 
         if (roleGroup == null)
         {
@@ -189,7 +189,7 @@ public class UserRoleRepository : IUserRoleRepository
 
     public async Task<UserRoleGroup> UpdateRoleGroupMutext(uint groupId, bool mutuallyExclusive)
     {
-        var roleGroup = await _dbContext.UserRoleGroups.FindAsync(groupId);
+        UserRoleGroup? roleGroup = await _dbContext.UserRoleGroups.FindAsync(groupId);
 
         if (roleGroup == null)
         {
@@ -205,7 +205,7 @@ public class UserRoleRepository : IUserRoleRepository
 
     public async Task DeleteRoleGroup(uint groupId)
     {
-        var roleGroup = await _dbContext.UserRoleGroups.FindAsync(groupId);
+        UserRoleGroup? roleGroup = await _dbContext.UserRoleGroups.FindAsync(groupId);
 
         if (roleGroup == null)
         {

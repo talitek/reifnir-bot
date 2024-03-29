@@ -83,17 +83,17 @@ public class OrdbokModelMapper
 
         if (lemmas == null || !lemmas.Any()) return vmResult;
 
-        var paradigms = lemmas.First().Paradigms;
+        List<Api.Paradigm>? paradigms = lemmas.First().Paradigms;
 
         if (paradigms == null || !paradigms.Any()) return vmResult;
 
-        var inflectionGroup = paradigms.First().InflectionGroup;
+        string inflectionGroup = paradigms.First().InflectionGroup;
 
         inflectionGroup = inflectionGroup.Split("_")[0].ToLower(); // make noun_regular to noun, det_simple to det, etc.
 
         string? inflectionClass = null;
 
-        var uniqueLevel1Tags = paradigms.Where(x => x.Tags.Length > 1).Select(x => x.Tags[1]).Distinct().ToArray();
+        string[] uniqueLevel1Tags = paradigms.Where(x => x.Tags.Length > 1).Select(x => x.Tags[1]).Distinct().ToArray();
 
         if (uniqueLevel1Tags.Length > 0)
         {
@@ -122,26 +122,26 @@ public class OrdbokModelMapper
         var vmResult = new List<Vm.Definition>();
 
         // TODO go recursive if a new nested level is discovered
-        foreach (var definitionElement in definitionElements)
+        foreach (Api.DefinitionElement definitionElement in definitionElements)
         {
             // Top level element is always a Definition (hopefully)
             var definition = (Api.Definition)definitionElement;
 
-            var childrenAreDefinitions = definition.DefinitionElements.All(de => de is Api.Definition);
+            bool childrenAreDefinitions = definition.DefinitionElements.All(de => de is Api.Definition);
 
             if (childrenAreDefinitions)
             {
-                var nestedDefinitions = definition.DefinitionElements.Cast<Api.Definition>().ToList();
+                List<Api.Definition> nestedDefinitions = definition.DefinitionElements.Cast<Api.Definition>().ToList();
 
-                foreach (var nestedDefinition in nestedDefinitions)
+                foreach (Api.Definition? nestedDefinition in nestedDefinitions)
                 {
-                    var nestedDefinitionElements = nestedDefinition.DefinitionElements
+                    List<Api.DefinitionElement> nestedDefinitionElements = nestedDefinition.DefinitionElements
                         .Where(x => !(x is Api.DefinitionSubArticle))
                         .ToList();
 
-                    var mappedNestedDefinition = MapDefinition(nestedDefinitionElements, dictionary);
+                    Vm.Definition mappedNestedDefinition = MapDefinition(nestedDefinitionElements, dictionary);
 
-                    var innerDefinitions = nestedDefinitionElements
+                    List<Vm.Definition> innerDefinitions = nestedDefinitionElements
                         .Where(d => d is Api.Definition)
                         .Cast<Api.Definition>()
                         .Select(d => MapDefinition(d.DefinitionElements, dictionary))
@@ -154,11 +154,11 @@ public class OrdbokModelMapper
             }
             else
             {
-                var nestedDefinitionElements = definition.DefinitionElements
+                List<Api.DefinitionElement> nestedDefinitionElements = definition.DefinitionElements
                     .Where(x => !(x is Api.DefinitionSubArticle))
                     .ToList();
 
-                var mappedDefinition = MapDefinition(nestedDefinitionElements, dictionary);
+                Vm.Definition mappedDefinition = MapDefinition(nestedDefinitionElements, dictionary);
 
                 vmResult.Add(mappedDefinition);
             }
@@ -172,37 +172,39 @@ public class OrdbokModelMapper
         var vmResult = new List<Vm.SubArticle>();
 
         // TODO go recursive if a new nested level is discovered
-        foreach (var definitionElement in definitionElements)
+        foreach (Api.DefinitionElement definitionElement in definitionElements)
         {
             // Top level element is always a Definition (hopefully)
             var definition = (Api.Definition)definitionElement;
 
-            var childrenAreDefinitions = definition.DefinitionElements.All(de => de is Api.Definition);
+            bool childrenAreDefinitions = definition.DefinitionElements.All(de => de is Api.Definition);
 
             if (childrenAreDefinitions)
             {
-                var nestedDefinitions = definition.DefinitionElements.Cast<Api.Definition>().ToList();
+                List<Api.Definition> nestedDefinitions = definition.DefinitionElements.Cast<Api.Definition>().ToList();
 
-                foreach (var nestedDefinition in nestedDefinitions)
+                foreach (Api.Definition? nestedDefinition in nestedDefinitions)
                 {
-                    var nestedDefinitionSubArticles = nestedDefinition.DefinitionElements
+                    List<Api.DefinitionSubArticle> nestedDefinitionSubArticles = nestedDefinition.DefinitionElements
                         .Where(x => x is Api.DefinitionSubArticle)
                         .Cast<Api.DefinitionSubArticle>()
                         .ToList();
 
-                    var mappedSubArticles = nestedDefinitionSubArticles.Select(x => MapSubArticle(x, dictionary));
+                    IEnumerable<Vm.SubArticle> mappedSubArticles =
+                        nestedDefinitionSubArticles.Select(x => MapSubArticle(x, dictionary));
 
                     vmResult.AddRange(mappedSubArticles);
                 }
             }
             else
             {
-                var nestedDefinitionSubArticles = definition.DefinitionElements
+                List<Api.DefinitionSubArticle> nestedDefinitionSubArticles = definition.DefinitionElements
                     .Where(x => x is Api.DefinitionSubArticle)
                     .Cast<Api.DefinitionSubArticle>()
                     .ToList();
 
-                var mappedSubArticles = nestedDefinitionSubArticles.Select(x => MapSubArticle(x, dictionary));
+                IEnumerable<Vm.SubArticle> mappedSubArticles =
+                    nestedDefinitionSubArticles.Select(x => MapSubArticle(x, dictionary));
 
                 vmResult.AddRange(mappedSubArticles);
             }
@@ -215,17 +217,17 @@ public class OrdbokModelMapper
     {
         var vmResult = new Vm.Definition();
 
-        var explanations = definitionElements
+        List<Api.Explanation> explanations = definitionElements
             .Where(de => de is Api.Explanation)
             .Cast<Api.Explanation>()
             .ToList();
 
-        var examples = definitionElements
+        List<Api.Example> examples = definitionElements
             .Where(de => de is Api.Example)
             .Cast<Api.Example>()
             .ToList();
 
-        var innerDefinitions = definitionElements
+        List<Api.Definition> innerDefinitions = definitionElements
             .Where(de => de is Api.Definition)
             .Cast<Api.Definition>()
             .ToList();
@@ -262,7 +264,7 @@ public class OrdbokModelMapper
     {
         var vmResult = new List<Vm.Etymology>();
 
-        foreach (var etymologyGroup in etymologyGroups)
+        foreach (Api.EtymologyGroup etymologyGroup in etymologyGroups)
         {
             var vmEtymology = new Vm.Etymology();
 

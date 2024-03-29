@@ -9,13 +9,11 @@ public class ProtectedConverter : ValueConverter<ulong, string>
 {
     public ProtectedConverter(IDataProtectionProvider provider, string purpose)
         : this(new Wrapper(provider, purpose))
-    {
-    }
+    { }
 
     private ProtectedConverter(Wrapper wrapper)
         : base(wrapper.To, wrapper.From)
-    {
-    }
+    { }
 
     private class Wrapper
     {

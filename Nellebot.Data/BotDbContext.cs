@@ -19,7 +19,7 @@ public class BotDbContext : DbContext
     public BotDbContext(DbContextOptions options)
         : base(options)
     {
-        var insideLINQPad = AppDomain.CurrentDomain.FriendlyName.StartsWith("LINQPad");
+        bool insideLINQPad = AppDomain.CurrentDomain.FriendlyName.StartsWith("LINQPad");
 
         if (!insideLINQPad) throw new Exception("This constructor should only be used in LINQPad");
 
@@ -89,17 +89,17 @@ public class BotDbContext : DbContext
         builder.Entity<UserLog>()
             .Property(x => x.ValueType)
             .HasConversion(
-                           x => x.FullName ?? typeof(object).FullName!,
-                           x => Type.GetType(x) ?? typeof(object));
+                x => x.FullName ?? typeof(object).FullName!,
+                x => Type.GetType(x) ?? typeof(object));
 
         builder.Entity<ModmailTicket>()
             .OwnsOne(
-                     x => x.TicketPost,
-                     x =>
-                     {
-                         x.Property(x => x.ChannelThreadId).HasColumnName("ChannelThreadId");
-                         x.Property(x => x.MessageId).HasColumnName("MessageId");
-                     });
+                x => x.TicketPost,
+                x =>
+                {
+                    x.Property(x => x.ChannelThreadId).HasColumnName("ChannelThreadId");
+                    x.Property(x => x.MessageId).HasColumnName("MessageId");
+                });
 
         builder.Entity<ModmailTicket>()
             .Property(x => x.RequesterId)

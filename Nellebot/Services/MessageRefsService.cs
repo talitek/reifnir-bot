@@ -33,9 +33,9 @@ public class MessageRefsService
 
     public async Task<int> PopulateMessageRefs(DateTimeOffset lastHeartbeat, string eventSource)
     {
-        var guild = _discordResolver.ResolveGuild();
+        DiscordGuild guild = _discordResolver.ResolveGuild();
 
-        var channels = guild.Channels.Values.Where(c => c.Type == ChannelType.Text).ToList();
+        List<DiscordChannel>? channels = guild.Channels.Values.Where(c => c.Type == ChannelType.Text).ToList();
 
         if (channels == null || !channels.Any())
         {
@@ -46,11 +46,11 @@ public class MessageRefsService
 
         var messageRefCreatedCount = 0;
 
-        var lastHeartbeatWithMargin = lastHeartbeat - TimeSpan.FromMinutes(5);
+        DateTimeOffset lastHeartbeatWithMargin = lastHeartbeat - TimeSpan.FromMinutes(5);
 
-        var lastHeartbeatSnowflake = GetSnowflakeFromDateTimeOffset(lastHeartbeatWithMargin);
+        ulong lastHeartbeatSnowflake = GetSnowflakeFromDateTimeOffset(lastHeartbeatWithMargin);
 
-        foreach (var channel in channels)
+        foreach (DiscordChannel? channel in channels)
         {
             try
             {
@@ -62,23 +62,23 @@ public class MessageRefsService
 
                 try
                 {
-                    await foreach (var message in channel.GetMessagesAfterAsync(lastHeartbeatSnowflake))
+                    await foreach (DiscordMessage? message in channel.GetMessagesAfterAsync(lastHeartbeatSnowflake))
                     {
                         if (message is null)
                         {
                             _discordErrorLogger.LogWarning(
-                                                           $"PopulateMessageRefsInit ({eventSource})",
-                                                           "Message was null");
+                                $"PopulateMessageRefsInit ({eventSource})",
+                                "Message was null");
                             continue;
                         }
 
                         if (message.Author.IsCurrent) continue;
 
-                        var created =
+                        bool created =
                             await _messageRefRepo.CreateMessageRefIfNotExists(
-                                                                              message.Id,
-                                                                              message.Channel.Id,
-                                                                              message.Author.Id);
+                                message.Id,
+                                message.Channel.Id,
+                                message.Author.Id);
 
                         if (created) messageRefCreatedCount++;
                     }
@@ -86,13 +86,13 @@ public class MessageRefsService
                 catch (NullReferenceException ex)
                 {
                     _logger.LogError(
-                                     ex,
-                                     "NullReferenceException in PopulateMessageRefs. LastHeartbeatSnowflake: {LastHeartbeatSnowflake}. EventSource: {EventSource}",
-                                     lastHeartbeatSnowflake,
-                                     eventSource);
+                        ex,
+                        "NullReferenceException in PopulateMessageRefs. LastHeartbeatSnowflake: {LastHeartbeatSnowflake}. EventSource: {EventSource}",
+                        lastHeartbeatSnowflake,
+                        eventSource);
                     _discordErrorLogger.LogWarning(
-                                                   "PopulateMessageRefs",
-                                                   $"NullReferenceException in PopulateMessageRefs. LastHeartbeatSnowflake: {lastHeartbeatSnowflake}. EventSource: {eventSource}");
+                        "PopulateMessageRefs",
+                        $"NullReferenceException in PopulateMessageRefs. LastHeartbeatSnowflake: {lastHeartbeatSnowflake}. EventSource: {eventSource}");
                 }
             }
             catch (Exception ex)
@@ -113,23 +113,23 @@ public class MessageRefsService
     {
         var createdMessages = new List<DiscordMessage>();
 
-        var channels = guild.Channels.Values.Where(c => c.Type == ChannelType.Text).ToList();
+        List<DiscordChannel> channels = guild.Channels.Values.Where(c => c.Type == ChannelType.Text).ToList();
 
         const int messageBatchSize = 1000;
 
-        foreach (var channel in channels)
+        foreach (DiscordChannel channel in channels)
         {
             try
             {
-                var lastMessageSnowflake = channel.LastMessageId;
+                ulong? lastMessageSnowflake = channel.LastMessageId;
 
                 if (lastMessageSnowflake == null) continue;
 
                 try
                 {
-                    await foreach (var message in channel.GetMessagesBeforeAsync(
-                                        (ulong)lastMessageSnowflake,
-                                        messageBatchSize))
+                    await foreach (DiscordMessage? message in channel.GetMessagesBeforeAsync(
+                                       (ulong)lastMessageSnowflake,
+                                       messageBatchSize))
                     {
                         if (message is null)
                         {
@@ -139,11 +139,11 @@ public class MessageRefsService
 
                         if (message.Author.IsCurrent) continue;
 
-                        var created =
+                        bool created =
                             await _messageRefRepo.CreateMessageRefIfNotExists(
-                                                                              message.Id,
-                                                                              message.Channel.Id,
-                                                                              message.Author.Id);
+                                message.Id,
+                                message.Channel.Id,
+                                message.Author.Id);
 
                         if (created) createdMessages.Add(message);
                     }
@@ -151,12 +151,12 @@ public class MessageRefsService
                 catch (NullReferenceException ex)
                 {
                     _logger.LogError(
-                                     ex,
-                                     "NullReferenceException in PopulateMessageRefs. LastMessageSnowflake: {LastMessageSnowflake}.",
-                                     lastMessageSnowflake);
+                        ex,
+                        "NullReferenceException in PopulateMessageRefs. LastMessageSnowflake: {LastMessageSnowflake}.",
+                        lastMessageSnowflake);
                     _discordErrorLogger.LogWarning(
-                                                   "PopulateMessageRefs",
-                                                   $"NullReferenceException in PopulateMessageRefs. LastMessageSnowflake: {lastMessageSnowflake}.");
+                        "PopulateMessageRefs",
+                        $"NullReferenceException in PopulateMessageRefs. LastMessageSnowflake: {lastMessageSnowflake}.");
                 }
             }
             catch (Exception ex)
@@ -176,10 +176,10 @@ public class MessageRefsService
 
     private static ulong GetSnowflakeFromDateTimeOffset(DateTimeOffset dateTime)
     {
-        var discordEpochMs = DiscordConstants.DiscordEpochMs;
-        var dateTimeMs = dateTime.ToUnixTimeMilliseconds();
+        long discordEpochMs = DiscordConstants.DiscordEpochMs;
+        long dateTimeMs = dateTime.ToUnixTimeMilliseconds();
 
-        var snowflake = (dateTimeMs - discordEpochMs) << 22;
+        long snowflake = (dateTimeMs - discordEpochMs) << 22;
 
         return (ulong)snowflake;
     }

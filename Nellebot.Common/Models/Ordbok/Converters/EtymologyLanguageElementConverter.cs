@@ -12,7 +12,7 @@ public class EtymologyLanguageElementConverter : JsonConverter<EtymologyLanguage
         Type typeToConvert,
         JsonSerializerOptions options)
     {
-        var typeDiscriminator = TypeElementConverterHelper.GetTypeDiscriminator(ref reader);
+        string typeDiscriminator = TypeElementConverterHelper.GetTypeDiscriminator(ref reader);
 
         EtymologyLanguageElement? result;
 

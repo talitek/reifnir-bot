@@ -37,28 +37,29 @@ public class TrustedMemberModule : BaseCommandModule
     [Command("list-award-channels")]
     public async Task ListCookieChannels(CommandContext ctx)
     {
-        var groupIds = _options.AwardVoteGroupIds;
+        ulong[]? groupIds = _options.AwardVoteGroupIds;
 
         if (groupIds == null) return;
 
         var sb = new StringBuilder();
 
-        var guildChannels = await ctx.Guild.GetChannelsAsync();
+        IReadOnlyList<DiscordChannel> guildChannels = await ctx.Guild.GetChannelsAsync();
 
         var channelGroups = new List<Tuple<string, List<DiscordChannel>>>();
 
-        var categoryChannels = guildChannels
-            .Where(c => c.Type == ChannelType.Category
-                        && groupIds.Contains(c.Id));
+        IEnumerable<DiscordChannel> categoryChannels = guildChannels
+            .Where(
+                c => c.Type == ChannelType.Category
+                     && groupIds.Contains(c.Id));
 
-        foreach (var category in categoryChannels)
+        foreach (DiscordChannel category in categoryChannels)
         {
             sb.AppendLine($"**{category.Name}**");
 
-            var textChannelsForCategory =
+            IEnumerable<DiscordChannel> textChannelsForCategory =
                 guildChannels.Where(c => c.Type == ChannelType.Text && c.ParentId == category.Id);
 
-            foreach (var channel in textChannelsForCategory) sb.AppendLine($"#{channel.Name}");
+            foreach (DiscordChannel channel in textChannelsForCategory) sb.AppendLine($"#{channel.Name}");
 
             sb.AppendLine();
         }

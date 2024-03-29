@@ -42,17 +42,17 @@ public class GetGoodbyeMessagesHandler : IRequestHandler<GetGoodbyeMessagesComma
 
     public async Task Handle(GetGoodbyeMessagesCommand request, CancellationToken cancellationToken)
     {
-        var ctx = request.Ctx;
-        var author = ctx.Member ?? throw new Exception("Member was null");
+        CommandContext ctx = request.Ctx;
+        DiscordMember author = ctx.Member ?? throw new Exception("Member was null");
 
-        var goodbyeMessages = (await _cache.LoadFromCacheAsync(
-                                                               SharedCacheKeys.GoodbyeMessages,
-                                                               async () =>
-                                                                   await _messageTemplateRepo
-                                                                       .GetAllMessageTemplates(GoodbyeMessageTemplateType),
-                                                               TimeSpan
-                                                                   .FromMinutes(MessageTemplatesCacheDurationMinutes))
-                               ?? Enumerable.Empty<MessageTemplate>())
+        List<MessageTemplate> goodbyeMessages = (await _cache.LoadFromCacheAsync(
+                                                     SharedCacheKeys.GoodbyeMessages,
+                                                     async () =>
+                                                         await _messageTemplateRepo
+                                                             .GetAllMessageTemplates(GoodbyeMessageTemplateType),
+                                                     TimeSpan
+                                                         .FromMinutes(MessageTemplatesCacheDurationMinutes))
+                                                 ?? Enumerable.Empty<MessageTemplate>())
             .ToList();
 
         if (goodbyeMessages.Count == 0)
@@ -67,7 +67,7 @@ public class GetGoodbyeMessagesHandler : IRequestHandler<GetGoodbyeMessagesComma
 
         for (var i = 0; i < pageCount; i++)
         {
-            var messagesForPage = goodbyeMessages
+            List<MessageTemplate> messagesForPage = goodbyeMessages
                 .Skip(i * MessagesPerPage)
                 .Take(MessagesPerPage)
                 .ToList();
@@ -76,10 +76,10 @@ public class GetGoodbyeMessagesHandler : IRequestHandler<GetGoodbyeMessagesComma
 
             for (var j = 0; j < messagesForPage.Count; j++)
             {
-                var message = messagesForPage[j];
-                var messageTemplateWithoutBoldedUserToken = message.Message.Replace($"**{UserToken}**", UserToken);
+                MessageTemplate message = messagesForPage[j];
+                string messageTemplateWithoutBoldedUserToken = message.Message.Replace($"**{UserToken}**", UserToken);
 
-                var member = await _discordResolver.ResolveGuildMember(message.AuthorId);
+                DiscordMember? member = await _discordResolver.ResolveGuildMember(message.AuthorId);
 
                 sb.AppendLine($"Id: {message.Id}, Author: {member?.DisplayName ?? "Unknown"}");
                 sb.AppendLine($"```\r\n{messageTemplateWithoutBoldedUserToken}\r\n```");
@@ -87,7 +87,7 @@ public class GetGoodbyeMessagesHandler : IRequestHandler<GetGoodbyeMessagesComma
             }
 
             var pageContent = sb.ToString();
-            var pageEb = new DiscordEmbedBuilder()
+            DiscordEmbedBuilder pageEb = new DiscordEmbedBuilder()
                 .WithTitle($"Goodbye messages. Page {i + 1}/{pageCount}")
                 .WithColor(DiscordConstants.DefaultEmbedColor)
                 .WithDescription(pageContent);
@@ -96,10 +96,10 @@ public class GetGoodbyeMessagesHandler : IRequestHandler<GetGoodbyeMessagesComma
         }
 
         await ctx.Channel.SendPaginatedMessageAsync(
-                                                    author,
-                                                    pages,
-                                                    PaginationBehaviour.WrapAround,
-                                                    ButtonPaginationBehavior.Disable,
-                                                    cancellationToken);
+            author,
+            pages,
+            PaginationBehaviour.WrapAround,
+            ButtonPaginationBehavior.Disable,
+            cancellationToken);
     }
 }

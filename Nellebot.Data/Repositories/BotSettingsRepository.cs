@@ -15,7 +15,7 @@ public class BotSettingsRepository
 
     public async Task<string?> GetBotSetting(string key)
     {
-        var setting = await _dbContext.GuildSettings
+        BotSettting? setting = await _dbContext.GuildSettings
             .SingleOrDefaultAsync(x => x.Key == key);
 
         return setting?.Value;
@@ -23,7 +23,7 @@ public class BotSettingsRepository
 
     public async Task<BotSettting> SaveBotSetting(string key, string value)
     {
-        var setting = await _dbContext.GuildSettings
+        BotSettting? setting = await _dbContext.GuildSettings
             .SingleOrDefaultAsync(x => x.Key == key);
 
         if (setting == null)

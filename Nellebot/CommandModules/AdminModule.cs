@@ -10,6 +10,7 @@ using Nellebot.CommandHandlers;
 using Nellebot.CommandHandlers.Modmail;
 using Nellebot.CommandHandlers.Ordbok;
 using Nellebot.Common.Extensions;
+using Nellebot.Common.Models.Modmail;
 using Nellebot.Data.Repositories;
 using Nellebot.Workers;
 
@@ -64,10 +65,10 @@ public class AdminModule : BaseCommandModule
     [Command("delete-spam-after")]
     public async Task DeleteSpam(CommandContext ctx, ulong channelId, ulong messageId)
     {
-        var channel = ctx.Guild.GetChannel(channelId);
+        DiscordChannel channel = ctx.Guild.GetChannel(channelId);
 
         var messagesToDelete = new List<DiscordMessage>();
-        await foreach (var m in channel.GetMessagesAfterAsync(messageId, 1000)) messagesToDelete.Add(m);
+        await foreach (DiscordMessage m in channel.GetMessagesAfterAsync(messageId, 1000)) messagesToDelete.Add(m);
 
         await channel.DeleteMessagesAsync(messagesToDelete);
 
@@ -77,9 +78,10 @@ public class AdminModule : BaseCommandModule
     [Command("modmail-close-all")]
     public async Task CloseAll(CommandContext ctx)
     {
-        var expiredTickets = await _modmailTicketRepo.GetOpenExpiredTickets(TimeSpan.FromSeconds(1));
+        List<ModmailTicket> expiredTickets = await _modmailTicketRepo.GetOpenExpiredTickets(TimeSpan.FromSeconds(1));
 
-        foreach (var ticket in expiredTickets) await _mediator.Send(new CloseInactiveModmailTicketCommand(ticket));
+        foreach (ModmailTicket ticket in expiredTickets)
+            await _mediator.Send(new CloseInactiveModmailTicketCommand(ticket));
 
         await ctx.Channel.SendMessageAsync($"Closed {expiredTickets.Count} tickets");
     }

@@ -4,8 +4,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
+using DSharpPlus.Entities;
 using MediatR;
 using Nellebot.Common.Models.Ordbok;
+using Nellebot.Common.Models.Ordbok.Api;
 using Nellebot.Common.Models.Ordbok.Store;
 using Nellebot.Data.Repositories;
 using Nellebot.Services.Ordbok;
@@ -16,8 +18,7 @@ public record RebuildArticleStoreCommand : BotCommandCommand
 {
     public RebuildArticleStoreCommand(CommandContext ctx)
         : base(ctx)
-    {
-    }
+    { }
 }
 
 public class RebuildArticleStoreHandler : IRequestHandler<RebuildArticleStoreCommand>
@@ -40,21 +41,23 @@ public class RebuildArticleStoreHandler : IRequestHandler<RebuildArticleStoreCom
 
     public async Task Handle(RebuildArticleStoreCommand request, CancellationToken cancellationToken)
     {
-        var ctx = request.Ctx;
-        var channel = request.Ctx.Channel;
+        CommandContext ctx = request.Ctx;
+        DiscordChannel channel = request.Ctx.Channel;
 
         await ctx.RespondAsync("Rebuilding Ordbok article store");
 
-        foreach (var dictionary in Dictionaries)
+        foreach (string dictionary in Dictionaries)
         {
-            foreach (var wordClass in WordClasses)
+            foreach (string wordClass in WordClasses)
             {
-                var message = await channel.SendMessageAsync($"Downloading {dictionary} {wordClass} articles...");
+                DiscordMessage message =
+                    await channel.SendMessageAsync($"Downloading {dictionary} {wordClass} articles...");
 
                 try
                 {
-                    var articles = await _ordbokClient.GetAll(dictionary, wordClass, cancellationToken) ??
-                                   throw new Exception("Result is null");
+                    OrdbokSearchResponse articles =
+                        await _ordbokClient.GetAll(dictionary, wordClass, cancellationToken) ??
+                        throw new Exception("Result is null");
 
                     var articleStore = new OrdbokArticleStore
                     {
@@ -75,14 +78,14 @@ public class RebuildArticleStoreHandler : IRequestHandler<RebuildArticleStoreCom
             }
         }
 
-        foreach (var dictionary in Dictionaries)
+        foreach (string dictionary in Dictionaries)
         {
-            var message = await channel.SendMessageAsync($"Downloading {dictionary} concepts...");
+            DiscordMessage message = await channel.SendMessageAsync($"Downloading {dictionary} concepts...");
 
             try
             {
-                var concepts = await _ordbokClient.GetConcepts(dictionary, cancellationToken) ??
-                               throw new Exception("Result is null");
+                OrdbokConcepts concepts = await _ordbokClient.GetConcepts(dictionary, cancellationToken) ??
+                                          throw new Exception("Result is null");
 
                 var conceptStore = new OrdbokConceptStore
                 {

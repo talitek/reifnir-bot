@@ -29,7 +29,7 @@ public class UserLog
         switch (ValueType.Name)
         {
             case nameof(DateTime):
-                var parsed = DateTime.TryParse(RawValue, out var parsedDate);
+                bool parsed = DateTime.TryParse(RawValue, out DateTime parsedDate);
 
                 if (!parsed) return default;
 
@@ -50,7 +50,7 @@ public class UserLog
         switch (ValueType.Name)
         {
             case nameof(DateTime):
-                var convertedDateTime = Convert.ChangeType(value, ValueType);
+                object? convertedDateTime = Convert.ChangeType(value, ValueType);
 
                 if (convertedDateTime == null)
                 {

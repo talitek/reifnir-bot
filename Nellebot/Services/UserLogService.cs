@@ -19,19 +19,19 @@ public class UserLogService
 
     public Task<UserLog?> GetLatestFieldForUser(ulong userId, UserLogType logType)
     {
-        var cacheKey = string.Format(SharedCacheKeys.UserLog, userId, logType);
+        string cacheKey = string.Format(SharedCacheKeys.UserLog, userId, logType);
 
-        var userLog = _cache.LoadFromCacheAsync(
-                                                cacheKey,
-                                                () => _userLogRepo.GetLatestFieldForUser(userId, logType),
-                                                TimeSpan.FromMinutes(5));
+        Task<UserLog?> userLog = _cache.LoadFromCacheAsync(
+            cacheKey,
+            () => _userLogRepo.GetLatestFieldForUser(userId, logType),
+            TimeSpan.FromMinutes(5));
 
         return userLog;
     }
 
     public async Task CreateUserLog<T>(ulong userId, T value, UserLogType logType, ulong? responsibleUserId = null)
     {
-        var cacheKey = string.Format(SharedCacheKeys.UserLog, userId, logType);
+        string cacheKey = string.Format(SharedCacheKeys.UserLog, userId, logType);
 
         await _userLogRepo.CreateUserLog(userId, value, logType, responsibleUserId);
 

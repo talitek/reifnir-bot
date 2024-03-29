@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using Microsoft.Extensions.DependencyInjection;
+using Nellebot.Common.AppDiscordModels;
 using Nellebot.DiscordModelMappers;
 using Nellebot.Services;
 
@@ -12,15 +13,16 @@ public class RequireOwnerOrAdmin : CheckBaseAttribute
 {
     public override Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
     {
-        var authorizationService = ctx.Services.GetService<AuthorizationService>()
-                                   ?? throw new Exception($"Could not resolve {nameof(AuthorizationService)}");
+        AuthorizationService authorizationService = ctx.Services.GetService<AuthorizationService>()
+                                                    ?? throw new Exception(
+                                                        $"Could not resolve {nameof(AuthorizationService)}");
 
         if (ctx.Member == null) return Task.FromResult(false);
 
-        var appMember = DiscordMemberMapper.Map(ctx.Member);
-        var appApplication = DiscordApplicationMapper.Map(ctx.Client.CurrentApplication);
+        AppDiscordMember appMember = DiscordMemberMapper.Map(ctx.Member);
+        AppDiscordApplication appApplication = DiscordApplicationMapper.Map(ctx.Client.CurrentApplication);
 
-        var result = authorizationService.IsOwnerOrAdmin(appMember, appApplication);
+        bool result = authorizationService.IsOwnerOrAdmin(appMember, appApplication);
 
         return Task.FromResult(result);
     }

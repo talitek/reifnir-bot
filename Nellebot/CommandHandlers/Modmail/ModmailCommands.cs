@@ -7,8 +7,7 @@ public record RequestModmailTicketCommand : BaseCommand
 {
     public RequestModmailTicketCommand(BaseContext ctx)
         : base(ctx)
-    {
-    }
+    { }
 
     public RequestModmailTicketCommand(BaseContext ctx, DiscordMessage requestMessage)
         : base(ctx)

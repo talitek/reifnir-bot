@@ -17,18 +17,20 @@ public class AwardMessageRepository
 
     public async Task<AwardMessage?> GetAwardMessageByOriginalMessageId(ulong awardChannelId, ulong originalMessageId)
     {
-        var awardMessage = await _dbContext.AwardMessages
-            .SingleOrDefaultAsync(m => m.OriginalMessageId == originalMessageId
-                                       && m.AwardChannelId == awardChannelId);
+        AwardMessage? awardMessage = await _dbContext.AwardMessages
+            .SingleOrDefaultAsync(
+                m => m.OriginalMessageId == originalMessageId
+                     && m.AwardChannelId == awardChannelId);
 
         return awardMessage;
     }
 
     public async Task<AwardMessage?> GetAwardMessageByAwardedMessageId(ulong awardChannelId, ulong awardedMessageId)
     {
-        var awardMessage = await _dbContext.AwardMessages
-            .SingleOrDefaultAsync(m => m.AwardedMessageId == awardedMessageId
-                                       && m.AwardChannelId == awardChannelId);
+        AwardMessage? awardMessage = await _dbContext.AwardMessages
+            .SingleOrDefaultAsync(
+                m => m.AwardedMessageId == awardedMessageId
+                     && m.AwardChannelId == awardChannelId);
 
         return awardMessage;
     }
@@ -61,7 +63,7 @@ public class AwardMessageRepository
 
     public async Task DeleteAwardMessage(Guid id)
     {
-        var existingMessage = await _dbContext.AwardMessages.FindAsync(id);
+        AwardMessage? existingMessage = await _dbContext.AwardMessages.FindAsync(id);
 
         if (existingMessage != null)
         {
@@ -73,7 +75,7 @@ public class AwardMessageRepository
 
     public async Task UpdateAwardCount(Guid id, uint awardCount)
     {
-        var existingMessage = await _dbContext.AwardMessages.FindAsync(id);
+        AwardMessage? existingMessage = await _dbContext.AwardMessages.FindAsync(id);
 
         if (existingMessage != null)
         {

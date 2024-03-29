@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus;
@@ -26,7 +27,7 @@ public class DiscordResolver
 
     public TryResolveResult<DiscordRole> TryResolveRoleByName(DiscordGuild guild, string discordRoleName)
     {
-        var matchingDiscordRoles = guild.Roles
+        List<KeyValuePair<ulong, DiscordRole>> matchingDiscordRoles = guild.Roles
             .Where(kv => kv.Value.Name.Contains(discordRoleName, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
@@ -40,16 +41,16 @@ public class DiscordResolver
             return TryResolveResult<DiscordRole>.FromError($"More than 1 role matches the name {discordRoleName}");
         }
 
-        var discordRole = matchingDiscordRoles[0].Value;
+        DiscordRole discordRole = matchingDiscordRoles[0].Value;
 
         return TryResolveResult<DiscordRole>.FromValue(discordRole);
     }
 
     public DiscordThreadChannel? ResolveThread(ulong threadId)
     {
-        var guild = ResolveGuild();
+        DiscordGuild guild = ResolveGuild();
 
-        var threadExists = guild.Threads.TryGetValue(threadId, out var discordThreadChannel);
+        bool threadExists = guild.Threads.TryGetValue(threadId, out DiscordThreadChannel? discordThreadChannel);
 
         if (threadExists) return discordThreadChannel;
 
@@ -60,9 +61,9 @@ public class DiscordResolver
 
     public async Task<DiscordChannel?> ResolveChannelAsync(ulong channelId)
     {
-        var guild = ResolveGuild();
+        DiscordGuild guild = ResolveGuild();
 
-        var channelExists = guild.Channels.TryGetValue(channelId, out var discordChannel);
+        bool channelExists = guild.Channels.TryGetValue(channelId, out DiscordChannel? discordChannel);
 
         if (channelExists) return discordChannel;
 
@@ -85,7 +86,7 @@ public class DiscordResolver
 
     public async Task<DiscordMember?> ResolveGuildMember(DiscordGuild guild, ulong userId)
     {
-        var memberExists = guild.Members.TryGetValue(userId, out var member);
+        bool memberExists = guild.Members.TryGetValue(userId, out DiscordMember? member);
 
         if (memberExists) return member;
 
@@ -121,7 +122,7 @@ public class DiscordResolver
     {
         try
         {
-            var message = await channel.GetMessageAsync(messageId);
+            DiscordMessage message = await channel.GetMessageAsync(messageId);
 
             return TryResolveResult<DiscordMessage>.FromValue(message);
         }
@@ -137,7 +138,7 @@ public class DiscordResolver
         Func<T, bool> predicate)
         where T : DiscordAuditLogEntry
     {
-        await foreach (var entry in guild.GetAuditLogsAsync(50, null!, logType))
+        await foreach (DiscordAuditLogEntry entry in guild.GetAuditLogsAsync(50, null!, logType))
         {
             if (entry is T tEntry && predicate(tEntry))
             {
@@ -155,7 +156,7 @@ public class DiscordResolver
         int maxAgeMinutes = 1)
         where T : DiscordAuditLogEntry
     {
-        await foreach (var entry in guild.GetAuditLogsAsync(50, null!, logType))
+        await foreach (DiscordAuditLogEntry entry in guild.GetAuditLogsAsync(50, null!, logType))
         {
             if (entry.CreationTimestamp < DateTimeOffset.UtcNow.AddMinutes(-maxAgeMinutes)) continue;
 

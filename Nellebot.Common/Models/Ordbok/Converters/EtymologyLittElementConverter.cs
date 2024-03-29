@@ -12,7 +12,7 @@ public class EtymologyLittElementConverter : JsonConverter<EtymologyLittElement>
         Type typeToConvert,
         JsonSerializerOptions options)
     {
-        var typeDiscriminator = TypeElementConverterHelper.GetTypeDiscriminator(ref reader);
+        string typeDiscriminator = TypeElementConverterHelper.GetTypeDiscriminator(ref reader);
 
         EtymologyLittElement? result;
 

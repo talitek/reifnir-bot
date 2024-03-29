@@ -31,6 +31,24 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
         _options = options.Value;
     }
 
+    public async Task Handle(MessageDeletedNotification notification, CancellationToken cancellationToken)
+    {
+        MessageDeleteEventArgs eventArgs = notification.EventArgs;
+        DiscordChannel channel = eventArgs.Channel;
+        ulong messageId = eventArgs.Message.Id;
+
+        if (channel.IsPrivate) return;
+
+        if (IsAwardAllowedChannel(channel))
+        {
+            await _awardMessageService.HandleAwardMessageDeleted(messageId);
+        }
+        else if (IsAwardChannel(channel))
+        {
+            await _awardMessageService.HandleAwardedMessageDeleted(messageId);
+        }
+    }
+
     public async Task Handle(MessageReactionAddedNotification notification, CancellationToken cancellationToken)
     {
         MessageReactionAddEventArgs eventArgs = notification.EventArgs;
@@ -41,7 +59,7 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
 
         if (!ShouldHandleReaction(channel, user)) return;
 
-        var isAwardEmoji = emoji.Name == EmojiMap.Cookie;
+        bool isAwardEmoji = emoji.Name == EmojiMap.Cookie;
 
         if (!IsAwardAllowedChannel(channel)) return;
 
@@ -59,7 +77,7 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
 
         if (channel.IsPrivate) return;
 
-        var isAwardEmoji = emoji.Name == EmojiMap.Cookie;
+        bool isAwardEmoji = emoji.Name == EmojiMap.Cookie;
 
         if (!IsAwardAllowedChannel(channel)) return;
 
@@ -84,29 +102,11 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
         await _awardMessageService.HandleAwardMessageUpdated(message);
     }
 
-    public async Task Handle(MessageDeletedNotification notification, CancellationToken cancellationToken)
-    {
-        MessageDeleteEventArgs eventArgs = notification.EventArgs;
-        DiscordChannel channel = eventArgs.Channel;
-        var messageId = eventArgs.Message.Id;
-
-        if (channel.IsPrivate) return;
-
-        if (IsAwardAllowedChannel(channel))
-        {
-            await _awardMessageService.HandleAwardMessageDeleted(messageId);
-        }
-        else if (IsAwardChannel(channel))
-        {
-            await _awardMessageService.HandleAwardedMessageDeleted(messageId);
-        }
-    }
-
     private bool IsAwardAllowedChannel(DiscordChannel channel)
     {
         if (channel.IsThread) channel = channel.Parent;
 
-        var allowedGroupIds = _options.AwardVoteGroupIds;
+        ulong[] allowedGroupIds = _options.AwardVoteGroupIds;
 
         if (allowedGroupIds.Length == 0)
         {
@@ -114,14 +114,14 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
             return false;
         }
 
-        var isAllowedChannel = allowedGroupIds.ToList().Contains(channel.ParentId!.Value);
+        bool isAllowedChannel = allowedGroupIds.ToList().Contains(channel.ParentId!.Value);
 
         return isAllowedChannel;
     }
 
     private bool IsAwardChannel(DiscordChannel channel)
     {
-        var awardChannelId = _options.AwardChannelId;
+        ulong awardChannelId = _options.AwardChannelId;
 
         return channel.Id == awardChannelId;
     }

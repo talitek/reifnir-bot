@@ -2,8 +2,10 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using DSharpPlus.Entities;
 using MediatR;
 using Microsoft.Extensions.Options;
+using Nellebot.Common.Models.Modmail;
 using Nellebot.Data.Repositories;
 using Nellebot.Utils;
 
@@ -34,10 +36,10 @@ public class RelayMessageHandlers : IRequestHandler<RelayRequesterMessageCommand
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
     public async Task Handle(RelayModeratorMessageCommand request, CancellationToken cancellationToken)
     {
-        var moderatorMember = await _resolver.ResolveGuildMember(request.Ctx.User.Id)
-                              ?? throw new Exception("Could not resolve member");
+        DiscordMember moderatorMember = await _resolver.ResolveGuildMember(request.Ctx.User.Id)
+                                        ?? throw new Exception("Could not resolve member");
 
-        var messageToRelay = request.Ctx.Message;
+        DiscordMessage messageToRelay = request.Ctx.Message;
 
         if (!moderatorMember.Roles.Any(r => r.Id == _options.AdminRoleId))
         {
@@ -46,14 +48,14 @@ public class RelayMessageHandlers : IRequestHandler<RelayRequesterMessageCommand
         }
 
         var relayMessageContent = $"""
-                                   Message from moderator:
-                                   {messageToRelay.GetQuotedContent()}
-                                   """;
+            Message from moderator:
+            {messageToRelay.GetQuotedContent()}
+            """;
 
-        var requesterMember = await _resolver.ResolveGuildMember(request.Ticket.RequesterId)
-                              ?? throw new Exception("Could not resolve member");
+        DiscordMember requesterMember = await _resolver.ResolveGuildMember(request.Ticket.RequesterId)
+                                        ?? throw new Exception("Could not resolve member");
 
-        var relayedMessage = await requesterMember.SendMessageAsync(relayMessageContent);
+        DiscordMessage relayedMessage = await requesterMember.SendMessageAsync(relayMessageContent);
 
         await messageToRelay.CreateSuccessReactionAsync();
 
@@ -68,19 +70,19 @@ public class RelayMessageHandlers : IRequestHandler<RelayRequesterMessageCommand
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
     public async Task Handle(RelayRequesterMessageCommand request, CancellationToken cancellationToken)
     {
-        var ticket = request.Ticket;
-        var messageToRelay = request.Ctx.Message;
+        ModmailTicket ticket = request.Ticket;
+        DiscordMessage messageToRelay = request.Ctx.Message;
 
-        var ticketPost = ticket.TicketPost
-                         ?? throw new Exception("The ticket does not have a post channelId");
+        ModmailTicketPost ticketPost = ticket.TicketPost
+                                       ?? throw new Exception("The ticket does not have a post channelId");
 
-        var threadChannel = _resolver.ResolveThread(ticketPost.ChannelThreadId)
-                            ?? throw new Exception("Could not resolve thread channel");
+        DiscordThreadChannel threadChannel = _resolver.ResolveThread(ticketPost.ChannelThreadId)
+                                             ?? throw new Exception("Could not resolve thread channel");
 
         var relayMessageContent = $"""
-                                   {ticket.RequesterDisplayName} says
-                                   {messageToRelay.GetQuotedContent()}
-                                   """;
+            {ticket.RequesterDisplayName} says
+            {messageToRelay.GetQuotedContent()}
+            """;
 
         await threadChannel.SendMessageAsync(relayMessageContent);
 

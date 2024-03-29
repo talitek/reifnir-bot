@@ -18,16 +18,16 @@ public class SuggestionHandler : INotificationHandler<MessageCreatedNotification
 
     public async Task Handle(MessageCreatedNotification notification, CancellationToken cancellationToken)
     {
-        var suggestionsForumChannelId = _options.SuggestionsChannelId2;
+        ulong suggestionsForumChannelId = _options.SuggestionsChannelId2;
 
-        var channel = notification.EventArgs.Channel;
-        var message = notification.EventArgs.Message;
+        DiscordChannel channel = notification.EventArgs.Channel;
+        DiscordMessage message = notification.EventArgs.Message;
 
-        var channelParentId = channel.Parent?.Id;
+        ulong? channelParentId = channel.Parent?.Id;
 
         if (channelParentId == null || channelParentId != suggestionsForumChannelId) return;
 
-        var isOriginalForumPost = message.Id == channel!.Id;
+        bool isOriginalForumPost = message.Id == channel!.Id;
 
         if (!isOriginalForumPost) return;
 

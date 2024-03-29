@@ -1,5 +1,6 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using DSharpPlus.EventArgs;
 using MediatR;
 using Nellebot.Data.Repositories;
 
@@ -16,7 +17,7 @@ public class UntitledHandler : INotificationHandler<MessageCreatedNotification>
 
     public Task Handle(MessageCreatedNotification notification, CancellationToken cancellationToken)
     {
-        var args = notification.EventArgs;
+        MessageCreateEventArgs args = notification.EventArgs;
 
         return _messageRefRepo.CreateMessageRef(args.Message.Id, args.Channel.Id, args.Author.Id);
     }

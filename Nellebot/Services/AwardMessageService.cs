@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Logging;
@@ -11,7 +10,6 @@ using Nellebot.Common.Models;
 using Nellebot.Data.Repositories;
 using Nellebot.Services.Loggers;
 using Nellebot.Utils;
-using Nellebot.Workers;
 
 namespace Nellebot.Services;
 
@@ -67,9 +65,9 @@ public class AwardMessageService
             return;
         }
 
-        var awardReactionCount = await GetAwardReactionCount(message, messageAuthor);
+        uint awardReactionCount = await GetAwardReactionCount(message, messageAuthor);
 
-        var hasEnoughAwards = awardReactionCount >= _options.RequiredAwardCount;
+        bool hasEnoughAwards = awardReactionCount >= _options.RequiredAwardCount;
 
         AwardMessage? awardMessage =
             await _awardMessageRepo.GetAwardMessageByOriginalMessageId(awardChannel.Id, message.Id);
@@ -141,9 +139,9 @@ public class AwardMessageService
             return;
         }
 
-        var awardReactionCount = await GetAwardReactionCount(message, messageAuthor);
+        uint awardReactionCount = await GetAwardReactionCount(message, messageAuthor);
 
-        var hasAwards = awardReactionCount > 0;
+        bool hasAwards = awardReactionCount > 0;
 
         if (!hasAwards)
         {
@@ -281,7 +279,7 @@ public class AwardMessageService
 
     private DiscordEmbed BuildAwardedMessageEmbed(DiscordMessage message, DiscordMember author, string channel)
     {
-        var authorDisplayName = author.DisplayName;
+        string authorDisplayName = author.DisplayName;
 
         var messageContentSb = new StringBuilder();
 
@@ -294,6 +292,7 @@ public class AwardMessageService
         }
 
         DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder()
+
             // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
             .WithAuthor(authorDisplayName, null, author.GuildAvatarUrl ?? author.AvatarUrl)
             .WithFooter($"#{channel}")
@@ -361,7 +360,7 @@ public class AwardMessageService
             }
         }
 
-        var messageContent = messageContentSb.ToString().Replace(" ", $"{InvisibleChar}");
+        string messageContent = messageContentSb.ToString().Replace(" ", $"{InvisibleChar}");
 
         embedBuilder = embedBuilder.WithDescription(messageContent);
 

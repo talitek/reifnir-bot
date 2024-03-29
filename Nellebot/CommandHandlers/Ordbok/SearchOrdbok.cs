@@ -23,8 +23,7 @@ public record SearchOrdbokQuery : BotCommandQuery
 {
     public SearchOrdbokQuery(CommandContext ctx)
         : base(ctx)
-    {
-    }
+    { }
 
     public string Query { get; set; } = string.Empty;
 
@@ -59,14 +58,17 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
 
     public async Task Handle(SearchOrdbokQuery request, CancellationToken cancellationToken)
     {
-        var ctx = request.Ctx;
-        var query = request.Query;
-        var dictionary = request.Dictionary;
-        var attachTemplate = request.AttachTemplate;
+        CommandContext ctx = request.Ctx;
+        string query = request.Query;
+        string dictionary = request.Dictionary;
+        bool attachTemplate = request.AttachTemplate;
 
-        var searchResponse = await _ordbokClient.Search(request.Dictionary, query, cancellationToken);
+        Api.OrdbokSearchResponse? searchResponse = await _ordbokClient.Search(
+            request.Dictionary,
+            query,
+            cancellationToken);
 
-        var articleIds = searchResponse?.Articles[dictionary];
+        int[]? articleIds = searchResponse?.Articles[dictionary];
 
         if (articleIds == null || articleIds.Length == 0)
         {
@@ -74,23 +76,24 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
             return;
         }
 
-        var ordbokArticles = await _ordbokClient.GetArticles(dictionary, articleIds.ToList(), cancellationToken);
+        List<Api.Article?> ordbokArticles =
+            await _ordbokClient.GetArticles(dictionary, articleIds.ToList(), cancellationToken);
 
-        var articles = MapAndSelectArticles(ordbokArticles, dictionary);
+        List<Vm.Article> articles = MapAndSelectArticles(ordbokArticles, dictionary);
 
         var queryUrl = $"https://ordbokene.no/{(dictionary == OrdbokDictionaryMap.Bokmal ? "bm" : "nn")}/w/{query}";
 
-        var textTemplateResult = await RenderTextTemplate(articles);
+        string textTemplateResult = await RenderTextTemplate(articles);
 
-        var htmlTemplateResult = await RenderHtmlTemplate(dictionary, articles);
+        string htmlTemplateResult = await RenderHtmlTemplate(dictionary, articles);
 
-        var truncatedContent = textTemplateResult.Substring(
-                                                            0,
-                                                            Math.Min(
-                                                                     textTemplateResult.Length,
-                                                                     DiscordConstants.MaxEmbedContentLength));
+        string truncatedContent = textTemplateResult.Substring(
+            0,
+            Math.Min(
+                textTemplateResult.Length,
+                DiscordConstants.MaxEmbedContentLength));
 
-        var eb = new DiscordEmbedBuilder()
+        DiscordEmbedBuilder eb = new DiscordEmbedBuilder()
             .WithTitle(dictionary == OrdbokDictionaryMap.Bokmal ? "Bokmålsordboka" : "Nynorskordboka")
             .WithUrl(queryUrl)
             .WithDescription(truncatedContent)
@@ -104,7 +107,7 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
 
         try
         {
-            var result = await _htmlToImageService.GenerateImageFile(htmlTemplateResult);
+            GenerateImageFileResult result = await _htmlToImageService.GenerateImageFile(htmlTemplateResult);
 
             imageFileStream = result.ImageFileStream;
             htmlFileStream = result.HtmlFileStream;
@@ -141,29 +144,29 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
 
     private async Task<string> RenderTextTemplate(List<Vm.Article> articles)
     {
-        var textTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Text);
-        var textTemplate = Template.Parse(textTemplateSource);
+        string textTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Text);
+        Template? textTemplate = Template.Parse(textTemplateSource);
 
-        var maxDefinitions = MaxDefinitionsInTextForm;
+        int maxDefinitions = MaxDefinitionsInTextForm;
 
-        var textTemplateResult = textTemplate.Render(new { articles, maxDefinitions });
+        string? textTemplateResult = textTemplate.Render(new { articles, maxDefinitions });
 
         return textTemplateResult;
     }
 
     private async Task<string> RenderHtmlTemplate(string dictionary, List<Vm.Article> articles)
     {
-        var htmlTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Html);
-        var htmlTemplate = Template.Parse(htmlTemplateSource);
+        string htmlTemplateSource = await _templateLoader.LoadTemplate("OrdbokArticle", ScribanTemplateType.Html);
+        Template? htmlTemplate = Template.Parse(htmlTemplateSource);
 
-        var htmlTemplateResult = htmlTemplate.Render(new { articles, dictionary });
+        string? htmlTemplateResult = htmlTemplate.Render(new { articles, dictionary });
 
         return htmlTemplateResult;
     }
 
     private List<Vm.Article> MapAndSelectArticles(List<Api.Article?> ordbokArticles, string dictionary)
     {
-        var articles = ordbokArticles
+        List<Vm.Article> articles = ordbokArticles
             .Where(a => a != null)
             .Select(x => _ordbokModelMapper.MapArticle(x!, dictionary))
             .OrderBy(a => a.Lemmas.Max(l => l.HgNo))

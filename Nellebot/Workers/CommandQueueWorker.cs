@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Nellebot.CommandHandlers;
 
 namespace Nellebot.Workers;
 
@@ -24,7 +25,7 @@ public class CommandQueueWorker : BackgroundService
     {
         try
         {
-            await foreach (var command in _channel.Reader.ReadAllAsync(stoppingToken))
+            await foreach (ICommand? command in _channel.Reader.ReadAllAsync(stoppingToken))
             {
                 if (command != null)
                 {

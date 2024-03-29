@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
+using DSharpPlus.Entities;
 using MediatR;
 using Microsoft.Extensions.Options;
 
@@ -12,8 +14,7 @@ public record AddMissingMemberRolesCommand : BotCommandCommand
 {
     public AddMissingMemberRolesCommand(CommandContext ctx)
         : base(ctx)
-    {
-    }
+    { }
 }
 
 public class AddMissingMembeRolesHandler : IRequestHandler<AddMissingMemberRolesCommand>
@@ -27,19 +28,19 @@ public class AddMissingMembeRolesHandler : IRequestHandler<AddMissingMemberRoles
 
     public async Task Handle(AddMissingMemberRolesCommand request, CancellationToken cancellationToken)
     {
-        var ctx = request.Ctx;
+        CommandContext ctx = request.Ctx;
 
-        var memberRoleId = _options.MemberRoleId;
-        var memberRoleIds = _options.MemberRoleIds;
+        ulong memberRoleId = _options.MemberRoleId;
+        ulong[] memberRoleIds = _options.MemberRoleIds;
 
-        var memberRole = ctx.Guild.Roles[_options.MemberRoleId];
+        DiscordRole? memberRole = ctx.Guild.Roles[_options.MemberRoleId];
 
         if (memberRole == null)
         {
             throw new ArgumentException($"Could not find role with id {memberRoleId}");
         }
 
-        var memberRoleCandidates = ctx.Guild.Members
+        List<DiscordMember> memberRoleCandidates = ctx.Guild.Members
             .Where(m => !m.Value.Roles.Any(r => r.Id == memberRoleId))
             .Where(m => m.Value.Roles.Any(r => memberRoleIds.Contains(r.Id)))
             .Select(r => r.Value)
@@ -59,7 +60,7 @@ public class AddMissingMembeRolesHandler : IRequestHandler<AddMissingMemberRoles
         var progressPercentLastUpdate = 0.0;
         const int baseSleepInMs = 1000;
 
-        foreach (var member in memberRoleCandidates)
+        foreach (DiscordMember member in memberRoleCandidates)
         {
             var roleAddAttempt = 0;
             var roleAdded = false;
@@ -93,7 +94,7 @@ public class AddMissingMembeRolesHandler : IRequestHandler<AddMissingMemberRoles
 
             totalCount++;
 
-            var currentProgress = (double)totalCount / memberRoleCandidates.Count * 100;
+            double currentProgress = ((double)totalCount / memberRoleCandidates.Count) * 100;
 
             if (currentProgress - progressPercentLastUpdate >= 10 || currentProgress == 100)
             {

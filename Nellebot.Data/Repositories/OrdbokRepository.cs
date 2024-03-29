@@ -27,9 +27,9 @@ public class OrdbokRepository
         OrdbokArticleStore ordbokArticleStore,
         CancellationToken cancellationToken = default)
     {
-        var existingArticleStore = await _dbContext.OrdbokArticlesStore.FindAsync(
-             new[] { ordbokArticleStore.Dictionary, ordbokArticleStore.WordClass },
-             cancellationToken);
+        OrdbokArticleStore? existingArticleStore = await _dbContext.OrdbokArticlesStore.FindAsync(
+            new[] { ordbokArticleStore.Dictionary, ordbokArticleStore.WordClass },
+            cancellationToken);
 
         if (existingArticleStore == null)
         {
@@ -49,7 +49,7 @@ public class OrdbokRepository
         string wordClass,
         CancellationToken cancellationToken = default)
     {
-        var count = await _dbContext.OrdbokArticlesStore
+        int count = await _dbContext.OrdbokArticlesStore
             .Where(x => x.Dictionary == dictionary && x.WordClass == wordClass)
             .Select(x => x.ArticleCount)
             .SingleOrDefaultAsync(cancellationToken);
@@ -63,7 +63,7 @@ public class OrdbokRepository
         int index,
         CancellationToken cancellationToken = default)
     {
-        var articleId = await _dbContext.OrdbokArticlesStore
+        int articleId = await _dbContext.OrdbokArticlesStore
             .Where(x => x.Dictionary == dictionary && x.WordClass == wordClass)
             .Select(x => x.ArticleList[index])
             .SingleOrDefaultAsync(cancellationToken);
@@ -80,9 +80,9 @@ public class OrdbokRepository
 
     public async Task SaveConceptStore(OrdbokConceptStore ordbokConcepts, CancellationToken cancellationToken = default)
     {
-        var existingConceptStore = await _dbContext.OrdbokConceptStore.FindAsync(
-             new[] { ordbokConcepts.Dictionary },
-             cancellationToken);
+        OrdbokConceptStore? existingConceptStore = await _dbContext.OrdbokConceptStore.FindAsync(
+            new[] { ordbokConcepts.Dictionary },
+            cancellationToken);
 
         if (existingConceptStore == null)
         {

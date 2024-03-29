@@ -9,7 +9,7 @@ public class EtymologyGroupConverter : JsonConverter<EtymologyGroup>
 {
     public override EtymologyGroup? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        var typeDiscriminator = TypeElementConverterHelper.GetTypeDiscriminator(ref reader);
+        string typeDiscriminator = TypeElementConverterHelper.GetTypeDiscriminator(ref reader);
 
         EtymologyGroup? result;
 

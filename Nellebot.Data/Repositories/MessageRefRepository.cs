@@ -62,7 +62,7 @@ public class MessageRefRepository
 
     public async Task<bool> CreateMessageRefIfNotExists(ulong messageId, ulong channelId, ulong userId)
     {
-        var messageRef = await GetMessageRef(messageId);
+        MessageRef? messageRef = await GetMessageRef(messageId);
 
         if (messageRef != null) return false;
 

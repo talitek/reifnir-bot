@@ -9,7 +9,7 @@ public class ExplanationItemConverter : JsonConverter<ExplanationItem>
 {
     public override ExplanationItem? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        var typeDiscriminator = TypeElementConverterHelper.GetTypeDiscriminator(ref reader);
+        string typeDiscriminator = TypeElementConverterHelper.GetTypeDiscriminator(ref reader);
 
         ExplanationItem? result;
 

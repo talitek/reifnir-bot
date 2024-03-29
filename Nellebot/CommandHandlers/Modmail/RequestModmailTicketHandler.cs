@@ -3,6 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
+using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
 using MediatR;
 using Microsoft.Extensions.Options;
@@ -36,15 +38,15 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
 
     public async Task Handle(RequestModmailTicketCommand request, CancellationToken cancellationToken)
     {
-        var ctx = request.Ctx;
-        var channel = ctx.Channel;
-        var requestMessage = request.RequestMessage;
+        BaseContext ctx = request.Ctx;
+        DiscordChannel channel = ctx.Channel;
+        DiscordMessage? requestMessage = request.RequestMessage;
 
-        var member = await _resolver.ResolveGuildMember(ctx.User.Id);
+        DiscordMember? member = await _resolver.ResolveGuildMember(ctx.User.Id);
 
         if (member is null)
         {
-            var isDmFromNonGuildMember = channel.IsPrivate;
+            bool isDmFromNonGuildMember = channel.IsPrivate;
 
             if (isDmFromNonGuildMember)
             {
@@ -58,7 +60,8 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             throw new Exception("Couldn't fetch member");
         }
 
-        var existingTicket = await _modmailTicketRepo.GetActiveTicketByRequesterId(ctx.User.Id, cancellationToken);
+        ModmailTicket? existingTicket =
+            await _modmailTicketRepo.GetActiveTicketByRequesterId(ctx.User.Id, cancellationToken);
 
         if (existingTicket != null)
         {
@@ -69,7 +72,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             return;
         }
 
-        var choice = await CollectIdentityChoice(member, cancellationToken);
+        string choice = await CollectIdentityChoice(member, cancellationToken);
 
         if (choice == CancelButtonId)
         {
@@ -78,7 +81,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             return;
         }
 
-        var requesterIsAnonymous = choice == PseudonymButtonId;
+        bool requesterIsAnonymous = choice == PseudonymButtonId;
 
         string requesterDisplayName;
 
@@ -91,7 +94,11 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             requesterDisplayName = PseudonymGenerator.GetRandomPseudonym();
         }
 
-        var stub = await CreateStubModmailTicket(ctx, requesterDisplayName, requesterIsAnonymous, cancellationToken);
+        ModmailTicket stub = await CreateStubModmailTicket(
+            ctx,
+            requesterDisplayName,
+            requesterIsAnonymous,
+            cancellationToken);
 
         await member.SendMessageAsync($"Understood. Your message will be sent as **{requesterDisplayName}**.");
 
@@ -99,7 +106,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
 
         if (requestMessage is not null)
         {
-            var confirmed = await CollectRequestMessageConfirmation(requestMessage, member);
+            bool confirmed = await CollectRequestMessageConfirmation(requestMessage, member);
 
             if (!confirmed)
             {
@@ -112,7 +119,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         }
         else
         {
-            var collectedMessage = await CollectRequestMessage(member);
+            DiscordMessage? collectedMessage = await CollectRequestMessage(member);
 
             if (collectedMessage is null ||
                 collectedMessage.Content.Equals(CancelMessageToken, StringComparison.InvariantCultureIgnoreCase))
@@ -130,9 +137,9 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         await messageToRelay.CreateSuccessReactionAsync();
 
         var ticketCreateMessage = """
-                                  Thanks! A staff member will get back to you soon.
-                                  If there is something you wish to add do so by sending a new message as I won't be checking for updates to your messages.
-                                  """;
+            Thanks! A staff member will get back to you soon.
+            If there is something you wish to add do so by sending a new message as I won't be checking for updates to your messages.
+            """;
 
         await member.SendMessageAsync(ticketCreateMessage);
     }
@@ -146,9 +153,10 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         var messageContent =
             "Please type your message here and I will pass it on. If you want to cancel just type `cancel`.";
 
-        var promptForMessageMessage = await member.SendMessageAsync(messageContent);
+        DiscordMessage promptForMessageMessage = await member.SendMessageAsync(messageContent);
 
-        var promptInteractivityResult = await promptForMessageMessage.Channel.GetNextMessageAsync(member);
+        InteractivityResult<DiscordMessage> promptInteractivityResult =
+            await promptForMessageMessage.Channel.GetNextMessageAsync(member);
 
         if (promptInteractivityResult.TimedOut)
         {
@@ -165,24 +173,25 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
     private static async Task<bool> CollectRequestMessageConfirmation(DiscordMessage message, DiscordMember member)
     {
         var messageContent = $"""
-                              The following message will be sent to the moderators.
-                              {message.GetQuotedContent()}
-                              Please react with {EmojiMap.WhiteCheckmark} to confirm or {EmojiMap.RedX} to cancel.
-                              """;
+            The following message will be sent to the moderators.
+            {message.GetQuotedContent()}
+            Please react with {EmojiMap.WhiteCheckmark} to confirm or {EmojiMap.RedX} to cancel.
+            """;
 
-        var promptForConfirmMessage = await member.SendMessageAsync(messageContent);
+        DiscordMessage promptForConfirmMessage = await member.SendMessageAsync(messageContent);
 
         await promptForConfirmMessage.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.WhiteCheckmark));
         await promptForConfirmMessage.CreateReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.RedX));
 
-        var promptInteractivityResult = await promptForConfirmMessage.WaitForReactionAsync(member);
+        InteractivityResult<MessageReactionAddEventArgs> promptInteractivityResult =
+            await promptForConfirmMessage.WaitForReactionAsync(member);
 
         if (promptInteractivityResult.TimedOut)
         {
             return false;
         }
 
-        var choice = promptInteractivityResult.Result.Emoji.Name;
+        string choice = promptInteractivityResult.Result.Emoji.Name;
 
         await promptForConfirmMessage.DeleteOwnReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.WhiteCheckmark));
         await promptForConfirmMessage.DeleteOwnReactionAsync(DiscordEmoji.FromUnicode(EmojiMap.RedX));
@@ -196,24 +205,25 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
     /// <returns>Returns true if the user chooses to be anonymous.</returns>
     private static async Task<string> CollectIdentityChoice(DiscordMember member, CancellationToken cancellationToken)
     {
-        var realName = member.DisplayName;
+        string realName = member.DisplayName;
 
         var introMessageContent = $"""
-                                   Hello and welcome to Modmail!
-                                   Would you like to send the message as **{realName}** or do you want to use a random pseudonym?
-                                   """;
+            Hello and welcome to Modmail!
+            Would you like to send the message as **{realName}** or do you want to use a random pseudonym?
+            """;
 
         var realNameButton = new DiscordButtonComponent(ButtonStyle.Primary, RealNameButtonId, realName);
         var pseudonymButton = new DiscordButtonComponent(ButtonStyle.Primary, PseudonymButtonId, "Random pseudonym");
         var cancelButton = new DiscordButtonComponent(ButtonStyle.Secondary, CancelButtonId, "Cancel");
 
-        var introMessageBuilder = new DiscordMessageBuilder()
+        DiscordMessageBuilder introMessageBuilder = new DiscordMessageBuilder()
             .WithContent(introMessageContent)
             .AddComponents(realNameButton, pseudonymButton, cancelButton);
 
-        var introMessage = await member.SendMessageAsync(introMessageBuilder);
+        DiscordMessage introMessage = await member.SendMessageAsync(introMessageBuilder);
 
-        var interactionResult = await introMessage.WaitForButtonAsync(cancellationToken);
+        InteractivityResult<ComponentInteractionCreateEventArgs> interactionResult =
+            await introMessage.WaitForButtonAsync(cancellationToken);
 
         if (interactionResult.TimedOut)
         {
@@ -224,8 +234,8 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         choiceInteractionResponseBuilder.ClearComponents();
 
         await interactionResult.Result.Interaction.CreateResponseAsync(
-                                                                       InteractionResponseType.UpdateMessage,
-                                                                       choiceInteractionResponseBuilder);
+            InteractionResponseType.UpdateMessage,
+            choiceInteractionResponseBuilder);
 
         return interactionResult.Result.Id;
     }
@@ -266,28 +276,28 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         DiscordMessage requestMesage,
         CancellationToken cancellationToken)
     {
-        var modmailChannelId = _options.ModmailChannelId;
+        ulong modmailChannelId = _options.ModmailChannelId;
 
         var modmailChannel = (DiscordForumChannel)_resolver.ResolveGuild().Channels[modmailChannelId];
 
-        var modmailPostTitle = ticket.IsAnonymous
+        string modmailPostTitle = ticket.IsAnonymous
             ? $"Ticket from anonymous user {ticket.RequesterDisplayName}"
             : $"Ticket from server member {ticket.RequesterDisplayName}";
 
         var relayMessageContent = $"""
-                                   {ticket.RequesterDisplayName} says
-                                   {requestMesage.GetQuotedContent()}
-                                   """;
+            {ticket.RequesterDisplayName} says
+            {requestMesage.GetQuotedContent()}
+            """;
 
-        var modmailPostMessage = new DiscordMessageBuilder()
+        DiscordMessageBuilder modmailPostMessage = new DiscordMessageBuilder()
             .WithContent(relayMessageContent);
 
-        var fpBuilder = new ForumPostBuilder()
+        ForumPostBuilder fpBuilder = new ForumPostBuilder()
             .WithName(modmailPostTitle)
             .WithMessage(modmailPostMessage);
 
         // Refresh the ticket in case it was updated while waiting for the user to type their message.
-        var refreshedTicket =
+        ModmailTicket refreshedTicket =
             await _modmailTicketRepo.GetActiveTicketByRequesterId(ticket.RequesterId, cancellationToken)
             ?? throw new Exception("Ticket's gone");
 
@@ -296,9 +306,9 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             throw new Exception("Ticket already posted");
         }
 
-        var forumPost = await modmailChannel.CreateForumPostAsync(fpBuilder);
+        DiscordForumPostStarter forumPost = await modmailChannel.CreateForumPostAsync(fpBuilder);
 
-        var postedTicket = refreshedTicket with
+        ModmailTicket postedTicket = refreshedTicket with
         {
             TicketPost = new ModmailTicketPost(forumPost.Channel.Id, forumPost.Message.Id),
         };

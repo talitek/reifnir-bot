@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Nellebot.Common.Models.Ordbok.ViewModels;
 using Nellebot.Services;
 using Nellebot.Services.Ordbok;
 using NSubstitute;
@@ -17,11 +18,11 @@ public class OrdbokTests
     [TestMethod]
     public async Task TestArticleDeserialization()
     {
-        var directory = AppDomain.CurrentDomain.BaseDirectory;
+        string directory = AppDomain.CurrentDomain.BaseDirectory;
 
-        var file = Path.Combine(directory, "TestFiles/test.json");
+        string file = Path.Combine(directory, "TestFiles/test.json");
 
-        var json = await File.ReadAllTextAsync(file);
+        string json = await File.ReadAllTextAsync(file);
 
         try
         {
@@ -37,7 +38,7 @@ public class OrdbokTests
 
             var modelMapper = new OrdbokModelMapper(ordbokContentParser, localizationService);
 
-            var article = modelMapper.MapArticle(result!, "bm");
+            Article article = modelMapper.MapArticle(result!, "bm");
         }
         catch (Exception ex)
         {

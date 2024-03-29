@@ -22,14 +22,14 @@ public class RoleService
             throw new ArgumentException("Role name cannot be empty");
         }
 
-        var role = await _userRoleRepo.GetRoleByNameOrAlias(roleName.Trim().ToLower());
+        UserRole? role = await _userRoleRepo.GetRoleByNameOrAlias(roleName.Trim().ToLower());
 
         return role;
     }
 
     public async Task<List<UserRole>> GetUserRolesByGroup(uint groupNumber)
     {
-        var roles = await _userRoleRepo.GetRolesByGroup(groupNumber);
+        List<UserRole> roles = await _userRoleRepo.GetRolesByGroup(groupNumber);
 
         return roles;
     }

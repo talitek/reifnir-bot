@@ -1,5 +1,4 @@
 ﻿using System.Threading.Channels;
-using DSharpPlus.Entities;
 using MediatR;
 using Nellebot.CommandHandlers;
 
@@ -34,32 +33,28 @@ public class RequestQueueChannel : AbstractQueueChannel<IRequest>
 {
     public RequestQueueChannel(Channel<IRequest> channel)
         : base(channel)
-    {
-    }
+    { }
 }
 
 public class CommandQueueChannel : AbstractQueueChannel<ICommand>
 {
     public CommandQueueChannel(Channel<ICommand> channel)
         : base(channel)
-    {
-    }
+    { }
 }
 
 public class CommandParallelQueueChannel : AbstractQueueChannel<ICommand>
 {
     public CommandParallelQueueChannel(Channel<ICommand> channel)
         : base(channel)
-    {
-    }
+    { }
 }
 
 public class EventQueueChannel : AbstractQueueChannel<INotification>
 {
     public EventQueueChannel(Channel<INotification> channel)
         : base(channel)
-    {
-    }
+    { }
 }
 
 public record BaseDiscordLogItem(ulong DiscordGuildId, ulong DiscordChannelId);
@@ -71,6 +66,5 @@ public class DiscordLogChannel : AbstractQueueChannel<BaseDiscordLogItem>
 {
     public DiscordLogChannel(Channel<BaseDiscordLogItem> channel)
         : base(channel)
-    {
-    }
+    { }
 }

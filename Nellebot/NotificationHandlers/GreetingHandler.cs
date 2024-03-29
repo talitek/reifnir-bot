@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -43,7 +44,7 @@ public class GreetingHandler :
 
     public async Task Handle(BufferedMemberLeftNotification notification, CancellationToken cancellationToken)
     {
-        var userList = notification.Usernames.ToList();
+        List<string> userList = notification.Usernames.ToList();
 
         if (userList.Count == 0) return;
 
@@ -55,24 +56,24 @@ public class GreetingHandler :
 
         if (userList.Count <= MaxUsernamesToDisplay)
         {
-            var userListOutput = string.Join(", ", userList.Select(x => $"**{x}**"));
+            string userListOutput = string.Join(", ", userList.Select(x => $"**{x}**"));
             _discordLogger.LogGreetingMessage($"The following users have left the server: {userListOutput}. Goodbye!");
             return;
         }
 
-        var usersToShow = userList.Take(MaxUsernamesToDisplay);
-        var remainingCount = userList.Count - MaxUsernamesToDisplay;
-        var usersToShowOutput = string.Join(", ", usersToShow.Select(x => $"**{x}**"));
+        IEnumerable<string> usersToShow = userList.Take(MaxUsernamesToDisplay);
+        int remainingCount = userList.Count - MaxUsernamesToDisplay;
+        string usersToShowOutput = string.Join(", ", usersToShow.Select(x => $"**{x}**"));
 
         _discordLogger.LogGreetingMessage(
-                                          $"The following users have left the server: {usersToShowOutput} and {remainingCount} others. Goodbye!");
+            $"The following users have left the server: {usersToShowOutput} and {remainingCount} others. Goodbye!");
     }
 
     public async Task Handle(GuildMemberAddedNotification notification, CancellationToken cancellationToken)
     {
-        var memberMention = notification.EventArgs.Member.Mention;
+        string memberMention = notification.EventArgs.Member.Mention;
 
-        var greetingMessage = await _botSettingsService.GetGreetingsMessage(memberMention);
+        string? greetingMessage = await _botSettingsService.GetGreetingsMessage(memberMention);
 
         if (greetingMessage == null) throw new Exception("Could not load greeting message");
 
@@ -81,7 +82,7 @@ public class GreetingHandler :
 
     public Task Handle(GuildMemberRemovedNotification notification, CancellationToken cancellationToken)
     {
-        var memberName = notification.EventArgs.Member.DisplayName;
+        string memberName = notification.EventArgs.Member.DisplayName;
 
         _goodbyeMessageBuffer.AddUser(memberName);
 
@@ -92,19 +93,19 @@ public class GreetingHandler :
     {
         string messageTemplate;
 
-        var goodbyeMessages = (await _cache.LoadFromCacheAsync(
-                                                               SharedCacheKeys.GoodbyeMessages,
-                                                               async () =>
-                                                                   await _messageTemplateRepo
-                                                                       .GetAllMessageTemplates(GoodbyeMessageTemplateType),
-                                                               TimeSpan
-                                                                   .FromMinutes(MessageTemplatesCacheDurationMinutes))
-                               ?? Enumerable.Empty<MessageTemplate>())
+        List<MessageTemplate> goodbyeMessages = (await _cache.LoadFromCacheAsync(
+                                                     SharedCacheKeys.GoodbyeMessages,
+                                                     async () =>
+                                                         await _messageTemplateRepo
+                                                             .GetAllMessageTemplates(GoodbyeMessageTemplateType),
+                                                     TimeSpan
+                                                         .FromMinutes(MessageTemplatesCacheDurationMinutes))
+                                                 ?? Enumerable.Empty<MessageTemplate>())
             .ToList();
 
         if (goodbyeMessages.Count > 0)
         {
-            var idx = new Random().Next(0, goodbyeMessages.Count);
+            int idx = new Random().Next(0, goodbyeMessages.Count);
             messageTemplate = goodbyeMessages[idx].Message;
         }
         else
@@ -112,7 +113,7 @@ public class GreetingHandler :
             messageTemplate = FallbackGoodbyeMessageTemplate;
         }
 
-        var formattedGoodbyeMessage = messageTemplate.Replace("$USER", username);
+        string formattedGoodbyeMessage = messageTemplate.Replace("$USER", username);
 
         return formattedGoodbyeMessage;
     }

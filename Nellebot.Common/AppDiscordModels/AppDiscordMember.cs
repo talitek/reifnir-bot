@@ -28,10 +28,10 @@ public class AppDiscordMember : AppDiscordUser
 
     public string GetDetailedMemberIdentifier()
     {
-        var memberUsername = Username;
-        var memberDisplayName = DisplayName;
+        string memberUsername = Username;
+        string memberDisplayName = DisplayName;
 
-        var memberFormattedDisplayName = memberUsername != memberDisplayName
+        string memberFormattedDisplayName = memberUsername != memberDisplayName
             ? $"{DisplayName} ({GetFullUsername()}, {Id})"
             : $"{GetFullUsername()} ({Id})";
 

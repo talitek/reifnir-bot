@@ -21,7 +21,7 @@ public class ModmailTicketRepository
         ulong requesterId,
         CancellationToken cancellationToken = default)
     {
-        var allActiveTickets = await _dbContext.ModmailTickets
+        List<ModmailTicket> allActiveTickets = await _dbContext.ModmailTickets
             .Where(x => !x.IsClosed)
             .ToListAsync(cancellationToken);
 
@@ -32,13 +32,13 @@ public class ModmailTicketRepository
     {
         return _dbContext.ModmailTickets
             .SingleOrDefaultAsync(
-                                  x => x.TicketPost != null && x.TicketPost.ChannelThreadId == channelId,
-                                  cancellationToken);
+                x => x.TicketPost != null && x.TicketPost.ChannelThreadId == channelId,
+                cancellationToken);
     }
 
     public async Task<ModmailTicket> CreateTicket(ModmailTicket ticket, CancellationToken cancellationToken = default)
     {
-        var activeTicketExists = await _dbContext.ModmailTickets
+        bool activeTicketExists = await _dbContext.ModmailTickets
             .AnyAsync(x => x.RequesterId == ticket.RequesterId && !x.IsClosed, cancellationToken);
 
         if (activeTicketExists)
@@ -55,8 +55,9 @@ public class ModmailTicketRepository
 
     public async Task DeleteTicket(ModmailTicket ticket, CancellationToken cancellationToken = default)
     {
-        var existingTicket = await _dbContext.ModmailTickets.FindAsync(new object[] { ticket.Id }, cancellationToken)
-                             ?? throw new Exception($"Could not find ticket with id {ticket.Id}");
+        ModmailTicket existingTicket =
+            await _dbContext.ModmailTickets.FindAsync(new object[] { ticket.Id }, cancellationToken)
+            ?? throw new Exception($"Could not find ticket with id {ticket.Id}");
 
         _dbContext.ModmailTickets.Remove(existingTicket);
 
@@ -67,8 +68,9 @@ public class ModmailTicketRepository
         ModmailTicket ticket,
         CancellationToken cancellationToken = default)
     {
-        var existingTicket = await _dbContext.ModmailTickets.FindAsync(new object[] { ticket.Id }, cancellationToken)
-                             ?? throw new Exception($"Could not find ticket with id {ticket.Id}");
+        ModmailTicket existingTicket =
+            await _dbContext.ModmailTickets.FindAsync(new object[] { ticket.Id }, cancellationToken)
+            ?? throw new Exception($"Could not find ticket with id {ticket.Id}");
 
         existingTicket.LastActivity = DateTime.UtcNow;
 
@@ -81,8 +83,9 @@ public class ModmailTicketRepository
         ModmailTicket ticket,
         CancellationToken cancellationToken = default)
     {
-        var existingTicket = await _dbContext.ModmailTickets.FindAsync(new object[] { ticket.Id }, cancellationToken)
-                             ?? throw new Exception($"Could not find ticket with id {ticket.Id}");
+        ModmailTicket existingTicket =
+            await _dbContext.ModmailTickets.FindAsync(new object[] { ticket.Id }, cancellationToken)
+            ?? throw new Exception($"Could not find ticket with id {ticket.Id}");
 
         existingTicket.TicketPost = ticket.TicketPost;
 
@@ -93,8 +96,9 @@ public class ModmailTicketRepository
 
     public async Task<ModmailTicket> CloseTicket(ModmailTicket ticket, CancellationToken cancellationToken = default)
     {
-        var existingTicket = await _dbContext.ModmailTickets.FindAsync(new object[] { ticket.Id }, cancellationToken)
-                             ?? throw new Exception($"Could not find ticket with id {ticket.Id}");
+        ModmailTicket existingTicket =
+            await _dbContext.ModmailTickets.FindAsync(new object[] { ticket.Id }, cancellationToken)
+            ?? throw new Exception($"Could not find ticket with id {ticket.Id}");
 
         existingTicket.IsClosed = true;
 
