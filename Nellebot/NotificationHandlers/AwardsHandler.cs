@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.Helpers;
 using Nellebot.Services;
-using Nellebot.Workers;
 
 namespace Nellebot.NotificationHandlers;
 
@@ -48,7 +47,7 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
 
         if (!isAwardEmoji) return;
 
-        await _awardMessageService.HandleAwardChange(new MessageAwardItem(message));
+        await _awardMessageService.HandleAwardChange(message);
     }
 
     public async Task Handle(MessageReactionRemovedNotification notification, CancellationToken cancellationToken)
@@ -66,7 +65,7 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
 
         if (!isAwardEmoji) return;
 
-        await _awardMessageService.HandleAwardChange(new MessageAwardItem(message));
+        await _awardMessageService.HandleAwardChange(message);
     }
 
     public async Task Handle(MessageUpdatedNotification notification, CancellationToken cancellationToken)
@@ -82,7 +81,7 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
 
         if (!IsAwardAllowedChannel(channel)) return;
 
-        await _awardMessageService.HandleAwardMessageUpdated(new MessageAwardItem(message));
+        await _awardMessageService.HandleAwardMessageUpdated(message);
     }
 
     public async Task Handle(MessageDeletedNotification notification, CancellationToken cancellationToken)
@@ -95,11 +94,11 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
 
         if (IsAwardAllowedChannel(channel))
         {
-            await _awardMessageService.HandleAwardMessageDeleted(new MessageAwardItem(messageId));
+            await _awardMessageService.HandleAwardMessageDeleted(messageId);
         }
         else if (IsAwardChannel(channel))
         {
-            await _awardMessageService.HandleAwardedMessageDeleted(new MessageAwardItem(messageId));
+            await _awardMessageService.HandleAwardedMessageDeleted(messageId);
         }
     }
 

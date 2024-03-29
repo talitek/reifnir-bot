@@ -40,21 +40,17 @@ public class AwardMessageService
         _options = options.Value;
     }
 
-    public async Task HandleAwardChange(MessageAwardItem awardItem)
+    public async Task HandleAwardChange(DiscordMessage partialMessage)
     {
-        // TODO optimize by resolving full message only if it will be posted
-        DiscordMessage partialMessage = awardItem.DiscordMessage;
-
-        DiscordMessage? message = await _discordResolver.ResolveMessage(partialMessage.Channel, partialMessage.Id);
+        DiscordChannel channel = partialMessage.Channel ?? throw new Exception("Channel was null");
+        DiscordMessage? message = await _discordResolver.ResolveMessage(channel, partialMessage.Id);
+        DiscordGuild guild = channel.Guild;
 
         if (message == null)
         {
             _logger.LogDebug("Could not resolve message");
             return;
         }
-
-        DiscordChannel? channel = message.Channel;
-        DiscordGuild guild = channel.Guild;
 
         DiscordMember? messageAuthor = await _discordResolver.ResolveGuildMember(guild, message.Author.Id);
 
@@ -118,21 +114,17 @@ public class AwardMessageService
         }
     }
 
-    public async Task HandleAwardMessageUpdated(
-        MessageAwardItem awardItem)
+    public async Task HandleAwardMessageUpdated(DiscordMessage partialMessage)
     {
-        DiscordMessage partialMessage = awardItem.DiscordMessage;
-
-        DiscordMessage? message = await _discordResolver.ResolveMessage(partialMessage.Channel, partialMessage.Id);
+        DiscordChannel channel = partialMessage.Channel ?? throw new Exception("Channel was null");
+        DiscordMessage? message = await _discordResolver.ResolveMessage(channel, partialMessage.Id);
+        DiscordGuild guild = channel.Guild;
 
         if (message == null)
         {
             _logger.LogDebug("Could not resolve message");
             return;
         }
-
-        DiscordChannel? channel = message.Channel;
-        DiscordGuild guild = channel.Guild;
 
         DiscordMember? messageAuthor = await _discordResolver.ResolveGuildMember(guild, message.Author.Id);
 
@@ -172,11 +164,8 @@ public class AwardMessageService
         await UpdateAwardedMessageEmbed(awardChannel, awardMessage.AwardedMessageId, message, messageAuthor);
     }
 
-    public async Task HandleAwardMessageDeleted(
-        MessageAwardItem awardItem)
+    public async Task HandleAwardMessageDeleted(ulong messageId)
     {
-        var messageId = awardItem.DiscordMessageId;
-
         DiscordChannel? awardChannel = await _discordResolver.ResolveChannelAsync(_options.AwardChannelId);
 
         if (awardChannel is null)
@@ -199,11 +188,8 @@ public class AwardMessageService
         await _awardMessageRepo.DeleteAwardMessage(awardMessage.Id);
     }
 
-    public async Task HandleAwardedMessageDeleted(
-        MessageAwardItem awardItem)
+    public async Task HandleAwardedMessageDeleted(ulong messageId)
     {
-        var messageId = awardItem.DiscordMessageId;
-
         DiscordChannel? awardChannel = await _discordResolver.ResolveChannelAsync(_options.AwardChannelId);
 
         if (awardChannel is null)
