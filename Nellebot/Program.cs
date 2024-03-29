@@ -147,7 +147,6 @@ public class Program
 
     private static void AddBotEventHandlers(IServiceCollection services)
     {
-        services.AddSingleton<AwardEventHandler>();
         services.AddSingleton<CommandEventHandler>();
     }
 
@@ -160,8 +159,7 @@ public class Program
         services.AddSingleton(_ => new CommandParallelQueueChannel(Channel.CreateBounded<ICommand>(channelSize)));
         services.AddSingleton(_ => new EventQueueChannel(Channel.CreateBounded<INotification>(channelSize)));
         services.AddSingleton(_ => new DiscordLogChannel(Channel.CreateBounded<BaseDiscordLogItem>(channelSize)));
-        services.AddSingleton(_ =>
-                                  new MessageAwardQueueChannel(Channel.CreateBounded<MessageAwardItem>(channelSize)));
+        services.AddSingleton(_ => new MessageAwardQueueChannel(Channel.CreateBounded<MessageAwardItem>(channelSize)));
     }
 
     private static void AddWorkers(IServiceCollection services)

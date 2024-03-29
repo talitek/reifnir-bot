@@ -21,7 +21,6 @@ namespace Nellebot.Workers;
 
 public class BotWorker : IHostedService
 {
-    private readonly AwardEventHandler _awardEventHandler;
     private readonly DiscordClient _client;
     private readonly CommandEventHandler _commandEventHandler;
     private readonly EventQueueChannel _eventQueue;
@@ -35,7 +34,6 @@ public class BotWorker : IHostedService
         DiscordClient client,
         IServiceProvider serviceProvider,
         CommandEventHandler commandEventHandler,
-        AwardEventHandler awardEventHandler,
         EventQueueChannel eventQueue)
     {
         _options = options.Value;
@@ -43,7 +41,6 @@ public class BotWorker : IHostedService
         _client = client;
         _serviceProvider = serviceProvider;
         _commandEventHandler = commandEventHandler;
-        _awardEventHandler = awardEventHandler;
         _eventQueue = eventQueue;
     }
 
@@ -51,16 +48,13 @@ public class BotWorker : IHostedService
     {
         _logger.LogInformation("Starting bot");
 
-        var commands = RegisterClassicCommands();
+        RegisterClassicCommands();
 
         RegisterSlashCommands();
 
         ConfigureInteractivity();
 
         RegisterLifecycleEventHandlers();
-
-        _commandEventHandler.RegisterHandlers(commands);
-        _awardEventHandler.RegisterHandlers();
 
         RegisterMessageHandlers();
         RegisterGuildEventHandlers();
@@ -75,7 +69,7 @@ public class BotWorker : IHostedService
         return _client.DisconnectAsync();
     }
 
-    private CommandsNextExtension RegisterClassicCommands()
+    private void RegisterClassicCommands()
     {
         var commandPrefix = _options.CommandPrefix;
 
@@ -88,7 +82,7 @@ public class BotWorker : IHostedService
 
         commands.RegisterCommands(Assembly.GetExecutingAssembly());
 
-        return commands;
+        _commandEventHandler.RegisterHandlers(commands);
     }
 
     private void RegisterSlashCommands()
@@ -111,25 +105,31 @@ public class BotWorker : IHostedService
 
     private void RegisterMessageHandlers()
     {
-        _client.MessageCreated += (sender, args) =>
+        _client.MessageReactionAdded += (_, args) =>
+            _eventQueue.Writer.WriteAsync(new MessageReactionAddedNotification(args)).AsTask();
+        _client.MessageReactionRemoved += (_, args) =>
+            _eventQueue.Writer.WriteAsync(new MessageReactionRemovedNotification(args)).AsTask();
+        _client.MessageCreated += (_, args) =>
             _eventQueue.Writer.WriteAsync(new MessageCreatedNotification(args)).AsTask();
-        _client.MessageDeleted += (sender, args) =>
+        _client.MessageUpdated += (_, args) =>
+            _eventQueue.Writer.WriteAsync(new MessageUpdatedNotification(args)).AsTask();
+        _client.MessageDeleted += (_, args) =>
             _eventQueue.Writer.WriteAsync(new MessageDeletedNotification(args)).AsTask();
-        _client.MessagesBulkDeleted += (sender, args) =>
+        _client.MessagesBulkDeleted += (_, args) =>
             _eventQueue.Writer.WriteAsync(new MessageBulkDeletedNotification(args)).AsTask();
     }
 
     private void RegisterGuildEventHandlers()
     {
-        _client.GuildMemberAdded += (sender, args) =>
+        _client.GuildMemberAdded += (_, args) =>
             _eventQueue.Writer.WriteAsync(new GuildMemberAddedNotification(args)).AsTask();
-        _client.GuildMemberRemoved += (sender, args) =>
+        _client.GuildMemberRemoved += (_, args) =>
             _eventQueue.Writer.WriteAsync(new GuildMemberRemovedNotification(args)).AsTask();
-        _client.GuildMemberUpdated += (sender, args) =>
+        _client.GuildMemberUpdated += (_, args) =>
             _eventQueue.Writer.WriteAsync(new GuildMemberUpdatedNotification(args)).AsTask();
-        _client.GuildBanAdded += (sender, args) =>
+        _client.GuildBanAdded += (_, args) =>
             _eventQueue.Writer.WriteAsync(new GuildBanAddedNotification(args)).AsTask();
-        _client.GuildBanRemoved += (sender, args) =>
+        _client.GuildBanRemoved += (_, args) =>
             _eventQueue.Writer.WriteAsync(new GuildBanRemovedNotification(args)).AsTask();
     }
 
