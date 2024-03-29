@@ -3,10 +3,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.Helpers;
+using Nellebot.Services;
 using Nellebot.Workers;
 
 namespace Nellebot.NotificationHandlers;
@@ -16,27 +18,27 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
     INotificationHandler<MessageUpdatedNotification>,
     INotificationHandler<MessageDeletedNotification>
 {
-    private readonly MessageAwardQueueChannel _awardQueue;
+    private readonly AwardMessageService _awardMessageService;
     private readonly ILogger<AwardsHandler> _logger;
     private readonly BotOptions _options;
 
     public AwardsHandler(
         ILogger<AwardsHandler> logger,
-        MessageAwardQueueChannel awardQueue,
-        IOptions<BotOptions> options)
+        IOptions<BotOptions> options,
+        AwardMessageService awardMessageService)
     {
         _logger = logger;
-        _awardQueue = awardQueue;
+        _awardMessageService = awardMessageService;
         _options = options.Value;
     }
 
     public async Task Handle(MessageReactionAddedNotification notification, CancellationToken cancellationToken)
     {
-        var eventArgs = notification.EventArgs;
-        var channel = eventArgs.Channel;
-        var message = eventArgs.Message;
-        var user = eventArgs.User;
-        var emoji = eventArgs.Emoji;
+        MessageReactionAddEventArgs eventArgs = notification.EventArgs;
+        DiscordChannel channel = eventArgs.Channel;
+        DiscordMessage message = eventArgs.Message;
+        DiscordUser user = eventArgs.User;
+        DiscordEmoji emoji = eventArgs.Emoji;
 
         if (!ShouldHandleReaction(channel, user)) return;
 
@@ -46,17 +48,15 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
 
         if (!isAwardEmoji) return;
 
-        await _awardQueue.Writer.WriteAsync(
-            new MessageAwardItem(message, MessageAwardQueueAction.ReactionChanged),
-            cancellationToken);
+        await _awardMessageService.HandleAwardChange(new MessageAwardItem(message));
     }
 
     public async Task Handle(MessageReactionRemovedNotification notification, CancellationToken cancellationToken)
     {
-        var eventArgs = notification.EventArgs;
-        var channel = eventArgs.Channel;
-        var message = eventArgs.Message;
-        var emoji = eventArgs.Emoji;
+        MessageReactionRemoveEventArgs eventArgs = notification.EventArgs;
+        DiscordChannel channel = eventArgs.Channel;
+        DiscordMessage message = eventArgs.Message;
+        DiscordEmoji emoji = eventArgs.Emoji;
 
         if (channel.IsPrivate) return;
 
@@ -66,17 +66,15 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
 
         if (!isAwardEmoji) return;
 
-        await _awardQueue.Writer.WriteAsync(
-            new MessageAwardItem(message, MessageAwardQueueAction.ReactionChanged),
-            cancellationToken);
+        await _awardMessageService.HandleAwardChange(new MessageAwardItem(message));
     }
 
     public async Task Handle(MessageUpdatedNotification notification, CancellationToken cancellationToken)
     {
-        var eventArgs = notification.EventArgs;
-        var channel = eventArgs.Channel;
-        var message = eventArgs.Message;
-        var user = eventArgs.Author;
+        MessageUpdateEventArgs eventArgs = notification.EventArgs;
+        DiscordChannel channel = eventArgs.Channel;
+        DiscordMessage? message = eventArgs.Message;
+        DiscordUser user = eventArgs.Author;
 
         if (message == null) throw new Exception($"{nameof(eventArgs.Message)} is null");
 
@@ -84,39 +82,24 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
 
         if (!IsAwardAllowedChannel(channel)) return;
 
-        await _awardQueue.Writer.WriteAsync(
-            new MessageAwardItem(message, MessageAwardQueueAction.MessageUpdated),
-            cancellationToken);
+        await _awardMessageService.HandleAwardMessageUpdated(new MessageAwardItem(message));
     }
 
     public async Task Handle(MessageDeletedNotification notification, CancellationToken cancellationToken)
     {
-        var eventArgs = notification.EventArgs;
-        var channel = eventArgs.Channel;
+        MessageDeleteEventArgs eventArgs = notification.EventArgs;
+        DiscordChannel channel = eventArgs.Channel;
         var messageId = eventArgs.Message.Id;
 
         if (channel.IsPrivate) return;
 
         if (IsAwardAllowedChannel(channel))
         {
-            await _awardQueue.Writer.WriteAsync(
-                new MessageAwardItem(
-                    messageId,
-                    channel,
-                    MessageAwardQueueAction.MessageDeleted),
-                cancellationToken);
-
-            return;
+            await _awardMessageService.HandleAwardMessageDeleted(new MessageAwardItem(messageId));
         }
-
-        if (IsAwardChannel(channel))
+        else if (IsAwardChannel(channel))
         {
-            await _awardQueue.Writer.WriteAsync(
-                new MessageAwardItem(
-                    messageId,
-                    channel,
-                    MessageAwardQueueAction.AwardDeleted),
-                cancellationToken);
+            await _awardMessageService.HandleAwardedMessageDeleted(new MessageAwardItem(messageId));
         }
     }
 

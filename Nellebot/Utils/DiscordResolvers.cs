@@ -58,19 +58,6 @@ public class DiscordResolver
         return null;
     }
 
-    public DiscordChannel? ResolveChannel(ulong channelId)
-    {
-        var guild = ResolveGuild();
-
-        var channelExists = guild.Channels.TryGetValue(channelId, out var discordChannel);
-
-        if (channelExists) return discordChannel;
-
-        _discordErrorLogger.LogError($"Couldn't resolve channel with id {channelId}");
-
-        return null;
-    }
-
     public async Task<DiscordChannel?> ResolveChannelAsync(ulong channelId)
     {
         var guild = ResolveGuild();
@@ -89,18 +76,6 @@ public class DiscordResolver
 
             return null;
         }
-    }
-
-    [Obsolete("Use ResolveChannel(ulong) instead")]
-    public Task<DiscordChannel?> ResolveChannel(DiscordGuild guild, ulong channelId)
-    {
-        return Task.FromResult(ResolveChannel(channelId));
-    }
-
-    [Obsolete("Use ResolveChannel(ulong) instead")]
-    public Task<DiscordChannel?> ResolveChannel(ulong guildId, ulong channelId)
-    {
-        return Task.FromResult(ResolveChannel(channelId));
     }
 
     public Task<DiscordMember?> ResolveGuildMember(ulong userId)

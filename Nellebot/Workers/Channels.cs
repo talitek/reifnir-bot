@@ -77,41 +77,18 @@ public class DiscordLogChannel : AbstractQueueChannel<BaseDiscordLogItem>
 
 public record MessageAwardItem
 {
-    public MessageAwardItem(DiscordMessage discordMessage, MessageAwardQueueAction action)
+    public MessageAwardItem(DiscordMessage discordMessage)
     {
         DiscordMessage = discordMessage;
-        Action = action;
     }
 
-    public MessageAwardItem(ulong discordMessageId, DiscordChannel channel, MessageAwardQueueAction action)
+    public MessageAwardItem(ulong discordMessageId)
     {
         DiscordMessageId = discordMessageId;
-        DiscordChannel = channel;
-        Action = action;
     }
 
     public DiscordMessage DiscordMessage { get; } = null!;
 
-    public MessageAwardQueueAction Action { get; }
-
     // Used when message is deleted. TODO refactor to different object
     public ulong DiscordMessageId { get; }
-
-    public DiscordChannel? DiscordChannel { get; }
-}
-
-public class MessageAwardQueueChannel : AbstractQueueChannel<MessageAwardItem>
-{
-    public MessageAwardQueueChannel(Channel<MessageAwardItem> channel)
-        : base(channel)
-    {
-    }
-}
-
-public enum MessageAwardQueueAction
-{
-    ReactionChanged = 0,
-    MessageUpdated = 1,
-    MessageDeleted = 2,
-    AwardDeleted = 3,
 }

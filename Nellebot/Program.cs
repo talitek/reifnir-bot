@@ -159,7 +159,6 @@ public class Program
         services.AddSingleton(_ => new CommandParallelQueueChannel(Channel.CreateBounded<ICommand>(channelSize)));
         services.AddSingleton(_ => new EventQueueChannel(Channel.CreateBounded<INotification>(channelSize)));
         services.AddSingleton(_ => new DiscordLogChannel(Channel.CreateBounded<BaseDiscordLogItem>(channelSize)));
-        services.AddSingleton(_ => new MessageAwardQueueChannel(Channel.CreateBounded<MessageAwardItem>(channelSize)));
     }
 
     private static void AddWorkers(IServiceCollection services)
@@ -170,7 +169,6 @@ public class Program
         services.AddHostedService<CommandParallelQueueWorker>();
         services.AddHostedService<EventQueueWorker>();
         services.AddHostedService<DiscordLoggerWorker>();
-        services.AddHostedService<MessageAwardQueueWorker>();
         services.AddHostedService<ModmailCleanupWorker>();
     }
 }
