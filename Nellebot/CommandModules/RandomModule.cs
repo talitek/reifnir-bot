@@ -41,6 +41,6 @@ public class RandomModule : BaseCommandModule
         var slapper = ctx.Member?.DisplayName ?? ctx.User.Username;
         var slapee = member.DisplayName;
 
-        return ctx.RespondAsync($"{slapper} slaps {slapee} around a bit with a large trout");
+        return ctx.Channel.SendMessageAsync($"_**{slapper}** slaps **{slapee}** around a bit with a large trout_");
     }
 }

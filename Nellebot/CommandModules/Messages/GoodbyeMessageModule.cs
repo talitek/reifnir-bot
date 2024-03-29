@@ -5,7 +5,7 @@ using Nellebot.Attributes;
 using Nellebot.CommandHandlers.MessageTemplates;
 using Nellebot.Workers;
 
-namespace Nellebot.CommandModules;
+namespace Nellebot.CommandModules.Messages;
 
 [BaseCommandCheck]
 [RequireTrustedMember]

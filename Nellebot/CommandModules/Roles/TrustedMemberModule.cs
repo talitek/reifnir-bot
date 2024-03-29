@@ -12,7 +12,7 @@ using Nellebot.Attributes;
 using Nellebot.CommandHandlers;
 using Nellebot.Workers;
 
-namespace Nellebot.CommandModules;
+namespace Nellebot.CommandModules.Roles;
 
 [BaseCommandCheck]
 [RequireTrustedMember]

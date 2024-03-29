@@ -12,7 +12,7 @@ using Nellebot.Common.Models.UserRoles;
 using Nellebot.Services;
 using Nellebot.Services.Loggers;
 
-namespace Nellebot.CommandModules;
+namespace Nellebot.CommandModules.Roles;
 
 public class RoleModule : ApplicationCommandModule
 {

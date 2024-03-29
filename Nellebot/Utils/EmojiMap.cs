@@ -1,4 +1,4 @@
-﻿namespace Nellebot.Helpers;
+﻿namespace Nellebot.Utils;
 
 public static class EmojiMap
 {

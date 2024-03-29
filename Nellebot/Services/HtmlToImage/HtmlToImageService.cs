@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using PuppeteerSharp;
 
-namespace Nellebot.Services;
+namespace Nellebot.Services.HtmlToImage;
 
 public class HtmlToImageService
 {

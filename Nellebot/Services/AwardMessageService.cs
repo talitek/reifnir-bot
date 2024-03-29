@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.Common.Models;
 using Nellebot.Data.Repositories;
-using Nellebot.Helpers;
 using Nellebot.Services.Loggers;
 using Nellebot.Utils;
 using Nellebot.Workers;

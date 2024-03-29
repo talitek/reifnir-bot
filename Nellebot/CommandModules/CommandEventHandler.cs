@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
 using Nellebot.Services.Loggers;
 
-namespace Nellebot.EventHandlers;
+namespace Nellebot.CommandModules;
 
 public class CommandEventHandler
 {

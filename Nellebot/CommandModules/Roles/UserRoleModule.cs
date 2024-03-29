@@ -10,7 +10,7 @@ using Nellebot.DiscordModelMappers;
 using Nellebot.Services;
 using Nellebot.Utils;
 
-namespace Nellebot.CommandModules;
+namespace Nellebot.CommandModules.Roles;
 
 [BaseCommandCheck]
 [RequireOwnerOrAdmin]

@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
-using Nellebot.Helpers;
 
 namespace Nellebot.Utils;
 

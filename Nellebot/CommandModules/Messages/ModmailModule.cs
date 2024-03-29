@@ -5,7 +5,7 @@ using Nellebot.CommandHandlers.Modmail;
 using Nellebot.Workers;
 using BaseContext = Nellebot.CommandHandlers.BaseContext;
 
-namespace Nellebot.CommandModules;
+namespace Nellebot.CommandModules.Messages;
 
 public class ModmailModule : ApplicationCommandModule
 {

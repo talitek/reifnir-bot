@@ -10,6 +10,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Nellebot.Common.Models.Ordbok;
 using Nellebot.Services;
+using Nellebot.Services.HtmlToImage;
 using Nellebot.Services.Ordbok;
 using Nellebot.Utils;
 using Scriban;

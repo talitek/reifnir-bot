@@ -14,7 +14,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.CommandModules;
-using Nellebot.EventHandlers;
+using Nellebot.CommandModules.Messages;
+using Nellebot.CommandModules.Roles;
 using Nellebot.NotificationHandlers;
 
 namespace Nellebot.Workers;

@@ -6,7 +6,6 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Nellebot.Attributes;
 using Nellebot.Data.Repositories;
-using Nellebot.Helpers;
 using Nellebot.Infrastructure;
 using Nellebot.Utils;
 

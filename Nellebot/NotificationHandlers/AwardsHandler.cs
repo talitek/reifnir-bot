@@ -7,8 +7,8 @@ using DSharpPlus.EventArgs;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Nellebot.Helpers;
 using Nellebot.Services;
+using Nellebot.Utils;
 
 namespace Nellebot.NotificationHandlers;
 

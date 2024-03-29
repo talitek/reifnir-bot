@@ -9,7 +9,6 @@ using Microsoft.Extensions.Options;
 using Nellebot.Common.Models.Modmail;
 using Nellebot.Common.Utils;
 using Nellebot.Data.Repositories;
-using Nellebot.Helpers;
 using Nellebot.Utils;
 
 namespace Nellebot.CommandHandlers.Modmail;
