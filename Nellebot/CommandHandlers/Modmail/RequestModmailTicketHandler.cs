@@ -9,7 +9,6 @@ using Microsoft.Extensions.Options;
 using Nellebot.Common.Models.Modmail;
 using Nellebot.Common.Utils;
 using Nellebot.Data.Repositories;
-using Nellebot.Helpers;
 using Nellebot.Utils;
 
 namespace Nellebot.CommandHandlers.Modmail;
@@ -20,12 +19,15 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
     private const string PseudonymButtonId = "pseudonymButton";
     private const string CancelButtonId = "cancelButton";
     private const string CancelMessageToken = "cancel";
+    private readonly ModmailTicketRepository _modmailTicketRepo;
 
     private readonly BotOptions _options;
     private readonly DiscordResolver _resolver;
-    private readonly ModmailTicketRepository _modmailTicketRepo;
 
-    public RequestModmailTicketHandler(IOptions<BotOptions> options, DiscordResolver resolver, ModmailTicketRepository modmailTicketRepo)
+    public RequestModmailTicketHandler(
+        IOptions<BotOptions> options,
+        DiscordResolver resolver,
+        ModmailTicketRepository modmailTicketRepo)
     {
         _options = options.Value;
         _resolver = resolver;
@@ -112,7 +114,8 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         {
             var collectedMessage = await CollectRequestMessage(member);
 
-            if (collectedMessage is null || collectedMessage.Content.Equals(CancelMessageToken, StringComparison.InvariantCultureIgnoreCase))
+            if (collectedMessage is null ||
+                collectedMessage.Content.Equals(CancelMessageToken, StringComparison.InvariantCultureIgnoreCase))
             {
                 await HandleCancellation(member, stub, cancellationToken);
 
@@ -127,42 +130,45 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         await messageToRelay.CreateSuccessReactionAsync();
 
         var ticketCreateMessage = """
-            Thanks! A staff member will get back to you soon.
-            If there is something you wish to add do so by sending a new message as I won't be checking for updates to your messages. 
-            """;
+                                  Thanks! A staff member will get back to you soon.
+                                  If there is something you wish to add do so by sending a new message as I won't be checking for updates to your messages.
+                                  """;
 
         await member.SendMessageAsync(ticketCreateMessage);
     }
 
     /// <summary>
-    /// Collect a request message if the user didn't provide one in the command.
+    ///     Collect a request message if the user didn't provide one in the command.
     /// </summary>
-    /// <returns>The collected <see cref="DiscordMessage"/>.</returns>
+    /// <returns>The collected <see cref="DiscordMessage" />.</returns>
     private static async Task<DiscordMessage?> CollectRequestMessage(DiscordMember member)
     {
-        var messageContent = "Please type your message here and I will pass it on. If you want to cancel just type `cancel`.";
+        var messageContent =
+            "Please type your message here and I will pass it on. If you want to cancel just type `cancel`.";
 
         var promptForMessageMessage = await member.SendMessageAsync(messageContent);
 
         var promptInteractivityResult = await promptForMessageMessage.Channel.GetNextMessageAsync(member);
 
         if (promptInteractivityResult.TimedOut)
+        {
             return null;
+        }
 
         return promptInteractivityResult.Result;
     }
 
     /// <summary>
-    /// Collect confirmation from user if they provided a request message in the command.
+    ///     Collect confirmation from user if they provided a request message in the command.
     /// </summary>
-    /// <returns>The collected <see cref="DiscordMessage"/>.</returns>
+    /// <returns>The collected <see cref="DiscordMessage" />.</returns>
     private static async Task<bool> CollectRequestMessageConfirmation(DiscordMessage message, DiscordMember member)
     {
         var messageContent = $"""
-            The following message will be sent to the moderators.
-            {message.GetQuotedContent()}
-            Please react with {EmojiMap.WhiteCheckmark} to confirm or {EmojiMap.RedX} to cancel.
-            """;
+                              The following message will be sent to the moderators.
+                              {message.GetQuotedContent()}
+                              Please react with {EmojiMap.WhiteCheckmark} to confirm or {EmojiMap.RedX} to cancel.
+                              """;
 
         var promptForConfirmMessage = await member.SendMessageAsync(messageContent);
 
@@ -172,7 +178,9 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         var promptInteractivityResult = await promptForConfirmMessage.WaitForReactionAsync(member);
 
         if (promptInteractivityResult.TimedOut)
+        {
             return false;
+        }
 
         var choice = promptInteractivityResult.Result.Emoji.Name;
 
@@ -183,7 +191,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
     }
 
     /// <summary>
-    /// Collect choice of identity from user i.e. use real name or pseudonym.
+    ///     Collect choice of identity from user i.e. use real name or pseudonym.
     /// </summary>
     /// <returns>Returns true if the user chooses to be anonymous.</returns>
     private static async Task<string> CollectIdentityChoice(DiscordMember member, CancellationToken cancellationToken)
@@ -191,9 +199,9 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         var realName = member.DisplayName;
 
         var introMessageContent = $"""
-            Hello and welcome to Modmail! 
-            Would you like to send the message as **{realName}** or do you want to use a random pseudonym?
-            """;
+                                   Hello and welcome to Modmail!
+                                   Would you like to send the message as **{realName}** or do you want to use a random pseudonym?
+                                   """;
 
         var realNameButton = new DiscordButtonComponent(ButtonStyle.Primary, RealNameButtonId, realName);
         var pseudonymButton = new DiscordButtonComponent(ButtonStyle.Primary, PseudonymButtonId, "Random pseudonym");
@@ -208,24 +216,35 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         var interactionResult = await introMessage.WaitForButtonAsync(cancellationToken);
 
         if (interactionResult.TimedOut)
+        {
             return CancelButtonId; // Assume cancelled
+        }
 
         var choiceInteractionResponseBuilder = new DiscordInteractionResponseBuilder(introMessageBuilder);
         choiceInteractionResponseBuilder.ClearComponents();
 
-        await interactionResult.Result.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage, choiceInteractionResponseBuilder);
+        await interactionResult.Result.Interaction.CreateResponseAsync(
+                                                                       InteractionResponseType.UpdateMessage,
+                                                                       choiceInteractionResponseBuilder);
 
         return interactionResult.Result.Id;
     }
 
-    private async Task HandleCancellation(DiscordMember member, ModmailTicket? stub = null, CancellationToken cancellationToken = default)
+    private async Task HandleCancellation(
+        DiscordMember member,
+        ModmailTicket? stub = null,
+        CancellationToken cancellationToken = default)
     {
         if (stub != null) await CancelStubModmailTicket(stub, cancellationToken);
 
         await member.SendMessageAsync("Understood. You can always request a ticket again later.");
     }
 
-    private Task<ModmailTicket> CreateStubModmailTicket(BaseContext ctx, string requesterDisplayName, bool requesterIsAnonymous, CancellationToken cancellationToken)
+    private Task<ModmailTicket> CreateStubModmailTicket(
+        BaseContext ctx,
+        string requesterDisplayName,
+        bool requesterIsAnonymous,
+        CancellationToken cancellationToken)
     {
         var modmailTicket = new ModmailTicket
         {
@@ -242,7 +261,10 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         return _modmailTicketRepo.DeleteTicket(ticket, cancellationToken);
     }
 
-    private async Task PostStubModmailTicket(ModmailTicket ticket, DiscordMessage requestMesage, CancellationToken cancellationToken)
+    private async Task PostStubModmailTicket(
+        ModmailTicket ticket,
+        DiscordMessage requestMesage,
+        CancellationToken cancellationToken)
     {
         var modmailChannelId = _options.ModmailChannelId;
 
@@ -253,9 +275,9 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             : $"Ticket from server member {ticket.RequesterDisplayName}";
 
         var relayMessageContent = $"""
-            {ticket.RequesterDisplayName} says
-            {requestMesage.GetQuotedContent()}
-            """;
+                                   {ticket.RequesterDisplayName} says
+                                   {requestMesage.GetQuotedContent()}
+                                   """;
 
         var modmailPostMessage = new DiscordMessageBuilder()
             .WithContent(relayMessageContent);
@@ -265,11 +287,14 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             .WithMessage(modmailPostMessage);
 
         // Refresh the ticket in case it was updated while waiting for the user to type their message.
-        var refreshedTicket = (await _modmailTicketRepo.GetActiveTicketByRequesterId(ticket.RequesterId, cancellationToken))
-            ?? throw new Exception($"Ticket's gone");
+        var refreshedTicket =
+            await _modmailTicketRepo.GetActiveTicketByRequesterId(ticket.RequesterId, cancellationToken)
+            ?? throw new Exception("Ticket's gone");
 
         if (refreshedTicket.TicketPost != null)
+        {
             throw new Exception("Ticket already posted");
+        }
 
         var forumPost = await modmailChannel.CreateForumPostAsync(fpBuilder);
 

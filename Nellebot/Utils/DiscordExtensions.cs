@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
-using Nellebot.Helpers;
 
 namespace Nellebot.Utils;
 
@@ -19,8 +18,8 @@ public static class DiscordExtensions
         var mentionOrDisplayName = useMention ? member.Mention : memberDisplayName;
 
         var memberFormattedDisplayName = memberUsername != memberDisplayName
-                ? $"{mentionOrDisplayName} ({member.GetFullUsername()}, {member.Id})"
-                : $"{member.GetFullUsername()} ({member.Id})";
+            ? $"{mentionOrDisplayName} ({member.GetFullUsername()}, {member.Id})"
+            : $"{member.GetFullUsername()} ({member.Id})";
 
         return memberFormattedDisplayName;
     }

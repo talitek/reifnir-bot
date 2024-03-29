@@ -22,8 +22,8 @@ namespace Nellebot.CommandModules;
 public class AdminModule : BaseCommandModule
 {
     private readonly CommandQueueChannel _commandQueue;
-    private readonly ModmailTicketRepository _modmailTicketRepo;
     private readonly IMediator _mediator;
+    private readonly ModmailTicketRepository _modmailTicketRepo;
 
     public AdminModule(
         CommandQueueChannel commandQueue,
@@ -40,10 +40,7 @@ public class AdminModule : BaseCommandModule
     {
         name = name.RemoveQuotes();
 
-        return ctx.Guild.CurrentMember.ModifyAsync((props) =>
-        {
-            props.Nickname = name;
-        });
+        return ctx.Guild.CurrentMember.ModifyAsync(props => { props.Nickname = name; });
     }
 
     [Command("add-missing-members")]
@@ -67,13 +64,10 @@ public class AdminModule : BaseCommandModule
     [Command("delete-spam-after")]
     public async Task DeleteSpam(CommandContext ctx, ulong channelId, ulong messageId)
     {
-        DiscordChannel channel = ctx.Guild.GetChannel(channelId);
+        var channel = ctx.Guild.GetChannel(channelId);
 
         var messagesToDelete = new List<DiscordMessage>();
-        await foreach (var m in channel.GetMessagesAfterAsync(messageId, 1000))
-        {
-            messagesToDelete.Add(m);
-        }
+        await foreach (var m in channel.GetMessagesAfterAsync(messageId, 1000)) messagesToDelete.Add(m);
 
         await channel.DeleteMessagesAsync(messagesToDelete);
 
@@ -85,10 +79,7 @@ public class AdminModule : BaseCommandModule
     {
         var expiredTickets = await _modmailTicketRepo.GetOpenExpiredTickets(TimeSpan.FromSeconds(1));
 
-        foreach (var ticket in expiredTickets)
-        {
-            await _mediator.Send(new CloseInactiveModmailTicketCommand(ticket));
-        }
+        foreach (var ticket in expiredTickets) await _mediator.Send(new CloseInactiveModmailTicketCommand(ticket));
 
         await ctx.Channel.SendMessageAsync($"Closed {expiredTickets.Count} tickets");
     }

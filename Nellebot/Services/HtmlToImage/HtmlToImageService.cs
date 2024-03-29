@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using PuppeteerSharp;
 
-namespace Nellebot.Services;
+namespace Nellebot.Services.HtmlToImage;
 
 public class HtmlToImageService
 {
@@ -31,7 +31,7 @@ public class HtmlToImageService
         using var page = await browser.NewPageAsync();
 
         await page.GoToAsync($"file://{Path.GetFullPath(tempHtmlFilePath)}");
-        await page.SetViewportAsync(new ViewPortOptions()
+        await page.SetViewportAsync(new ViewPortOptions
         {
             Width = _imageWidthInPixels,
         });
@@ -41,9 +41,9 @@ public class HtmlToImageService
         var htmlFileStream = await ReadFileAsync(tempHtmlFilePath);
 
         return new GenerateImageFileResult(
-            ImageFileName: randomImageFileName,
-            ImageFileStream: imageFileStream,
-            HtmlFileStream: htmlFileStream);
+                                           randomImageFileName,
+                                           imageFileStream,
+                                           htmlFileStream);
     }
 
     private async Task<FileStream> ReadFileAsync(string filePath)

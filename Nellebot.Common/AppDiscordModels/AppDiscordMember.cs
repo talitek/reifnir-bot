@@ -9,11 +9,11 @@ public class AppDiscordMember : AppDiscordUser
     public IEnumerable<AppDiscordRole> Roles { get; set; } = null!;
 
     /// <summary>
-    /// Builds a stub AppDiscordMember with the given id.
-    /// The source of the stub is usually a MessageRef, where only the member id is available.
+    ///     Builds a stub AppDiscordMember with the given id.
+    ///     The source of the stub is usually a MessageRef, where only the member id is available.
     /// </summary>
     /// <param name="id">The DiscordUserId.</param>
-    /// <returns><see cref="AppDiscordMember"/>.</returns>
+    /// <returns><see cref="AppDiscordMember" />.</returns>
     public static AppDiscordMember BuildStub(ulong id)
     {
         return new AppDiscordMember
@@ -32,8 +32,8 @@ public class AppDiscordMember : AppDiscordUser
         var memberDisplayName = DisplayName;
 
         var memberFormattedDisplayName = memberUsername != memberDisplayName
-                ? $"{DisplayName} ({GetFullUsername()}, {Id})"
-                : $"{GetFullUsername()} ({Id})";
+            ? $"{DisplayName} ({GetFullUsername()}, {Id})"
+            : $"{GetFullUsername()} ({Id})";
 
         return memberFormattedDisplayName;
     }

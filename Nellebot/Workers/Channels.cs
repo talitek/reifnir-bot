@@ -20,7 +20,7 @@ public abstract class AbstractQueueChannel<T> : IQueueChannel<T>
 {
     private readonly Channel<T> _channel;
 
-    public AbstractQueueChannel(Channel<T> channel)
+    protected AbstractQueueChannel(Channel<T> channel)
     {
         _channel = channel;
     }
@@ -73,45 +73,4 @@ public class DiscordLogChannel : AbstractQueueChannel<BaseDiscordLogItem>
         : base(channel)
     {
     }
-}
-
-public record MessageAwardItem
-{
-    public DiscordMessage DiscordMessage { get; } = null!;
-
-    public MessageAwardQueueAction Action { get; }
-
-    // Used when message is deleted. TODO refactor to different object
-    public ulong DiscordMessageId { get; }
-
-    public DiscordChannel? DiscordChannel { get; }
-
-    public MessageAwardItem(DiscordMessage discordMessage, MessageAwardQueueAction action)
-    {
-        DiscordMessage = discordMessage;
-        Action = action;
-    }
-
-    public MessageAwardItem(ulong discordMessageId, DiscordChannel channel, MessageAwardQueueAction action)
-    {
-        DiscordMessageId = discordMessageId;
-        DiscordChannel = channel;
-        Action = action;
-    }
-}
-
-public class MessageAwardQueueChannel : AbstractQueueChannel<MessageAwardItem>
-{
-    public MessageAwardQueueChannel(Channel<MessageAwardItem> channel)
-        : base(channel)
-    {
-    }
-}
-
-public enum MessageAwardQueueAction
-{
-    ReactionChanged = 0,
-    MessageUpdated = 1,
-    MessageDeleted = 2,
-    AwardDeleted = 3,
 }

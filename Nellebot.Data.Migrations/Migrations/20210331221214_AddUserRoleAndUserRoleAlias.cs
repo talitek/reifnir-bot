@@ -14,7 +14,7 @@ namespace Nellebot.Data.Migrations.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     RoleId = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
                     Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    GroupNumber = table.Column<long>(type: "bigint", nullable: true)
+                    GroupNumber = table.Column<long>(type: "bigint", nullable: true),
                 },
                 constraints: table =>
                 {
@@ -27,7 +27,7 @@ namespace Nellebot.Data.Migrations.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserRoleId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Alias = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false)
+                    Alias = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                 },
                 constraints: table =>
                 {

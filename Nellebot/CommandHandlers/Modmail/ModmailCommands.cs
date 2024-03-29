@@ -6,7 +6,9 @@ namespace Nellebot.CommandHandlers.Modmail;
 public record RequestModmailTicketCommand : BaseCommand
 {
     public RequestModmailTicketCommand(BaseContext ctx)
-        : base(ctx) { }
+        : base(ctx)
+    {
+    }
 
     public RequestModmailTicketCommand(BaseContext ctx, DiscordMessage requestMessage)
         : base(ctx)
@@ -18,5 +20,7 @@ public record RequestModmailTicketCommand : BaseCommand
 }
 
 public record RelayModeratorMessageCommand(MessageContext Ctx, ModmailTicket Ticket) : MessageCommand(Ctx);
+
 public record RelayRequesterMessageCommand(MessageContext Ctx, ModmailTicket Ticket) : MessageCommand(Ctx);
+
 public record CloseInactiveModmailTicketCommand(ModmailTicket Ticket) : ICommand;

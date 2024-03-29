@@ -10,7 +10,7 @@ namespace Nellebot.CommandHandlers;
 public record SetGreetingMessageCommand : BotCommandCommand
 {
     public SetGreetingMessageCommand(CommandContext ctx, string greetingMessage)
-    : base(ctx)
+        : base(ctx)
     {
         GreetingMessage = greetingMessage;
     }

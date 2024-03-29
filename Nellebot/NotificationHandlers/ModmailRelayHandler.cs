@@ -16,12 +16,15 @@ namespace Nellebot.NotificationHandlers;
 public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotification>
 {
     private const string CancelMessageToken = "cancel";
+    private readonly BotOptions _botOptions;
 
     private readonly CommandParallelQueueChannel _commandQueue;
     private readonly ModmailTicketRepository _modmailTicketRepo;
-    private readonly BotOptions _botOptions;
 
-    public ModmailRelayHandler(CommandParallelQueueChannel commandQueue, ModmailTicketRepository modmailTicketRepo, IOptions<BotOptions> botOptions)
+    public ModmailRelayHandler(
+        CommandParallelQueueChannel commandQueue,
+        ModmailTicketRepository modmailTicketRepo,
+        IOptions<BotOptions> botOptions)
     {
         _commandQueue = commandQueue;
         _modmailTicketRepo = modmailTicketRepo;
@@ -38,10 +41,7 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
 
         if (user.IsBot) return Task.CompletedTask;
 
-        if (channel.IsPrivate)
-        {
-            return HandlePrivateMessage(channel, user, message, cancellationToken);
-        }
+        if (channel.IsPrivate) return HandlePrivateMessage(channel, user, message, cancellationToken);
 
         if (channel.ParentId == _botOptions.ModmailChannelId)
         {
@@ -52,12 +52,18 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
         return Task.CompletedTask;
     }
 
-    private async Task HandlePrivateMessage(DiscordChannel channel, DiscordUser user, DiscordMessage message, CancellationToken cancellationToken)
+    private async Task HandlePrivateMessage(
+        DiscordChannel channel,
+        DiscordUser user,
+        DiscordMessage message,
+        CancellationToken cancellationToken)
     {
         // The message could be an interactivity response containing the token "cancel".
         // If so, disregard the message. Not the most elegant solution, but it should do.
         if (message.Content.Equals(CancelMessageToken, StringComparison.InvariantCultureIgnoreCase))
+        {
             return;
+        }
 
         var userTicketInPool = await _modmailTicketRepo.GetActiveTicketByRequesterId(user.Id, cancellationToken);
 
@@ -91,7 +97,11 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
         await _commandQueue.Writer.WriteAsync(relayRequesterMessageCommand, cancellationToken);
     }
 
-    private async Task HandleThreadMessage(DiscordChannel channel, DiscordUser user, DiscordMessage message, CancellationToken cancellationToken)
+    private async Task HandleThreadMessage(
+        DiscordChannel channel,
+        DiscordUser user,
+        DiscordMessage message,
+        CancellationToken cancellationToken)
     {
         var channelTicketInPool = await _modmailTicketRepo.GetTicketByChannelId(channel.Id, cancellationToken);
 
@@ -109,7 +119,8 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
             Message = message,
         };
 
-        var relayModeratorMessageCommand = new RelayModeratorMessageCommand(moderatorMessageContext, channelTicketInPool);
+        var relayModeratorMessageCommand =
+            new RelayModeratorMessageCommand(moderatorMessageContext, channelTicketInPool);
 
         await _commandQueue.Writer.WriteAsync(relayModeratorMessageCommand, cancellationToken);
     }

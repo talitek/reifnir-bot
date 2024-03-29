@@ -7,7 +7,7 @@ using Api = Nellebot.Common.Models.Ordbok.Api;
 namespace Nellebot.Services.Ordbok;
 
 /// <summary>
-/// Replaces content which contains $-tokens with values from items array.
+///     Replaces content which contains $-tokens with values from items array.
 /// </summary>
 public interface IOrdbokContentParser
 {
@@ -42,7 +42,8 @@ public class OrdbokContentParser : IOrdbokContentParser
             switch (item)
             {
                 case Api.EtymologyLanguageIdElement idElement:
-                    var localizedIdElement = _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
+                    var localizedIdElement =
+                        _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
                     replacementValues.Add(localizedIdElement);
                     break;
                 case Api.EtymologyLanguageTextElement textElement:
@@ -67,7 +68,8 @@ public class OrdbokContentParser : IOrdbokContentParser
             switch (item)
             {
                 case Api.EtymologyLittIdElement idElement:
-                    var localizedIdElement = _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
+                    var localizedIdElement =
+                        _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
                     replacementValues.Add(localizedIdElement);
                     break;
                 case Api.EtymologyLittTextElement textElement:
@@ -92,7 +94,8 @@ public class OrdbokContentParser : IOrdbokContentParser
             switch (item)
             {
                 case Api.EtymologyReferenceIdElement idElement:
-                    var localizedElementId = _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
+                    var localizedElementId =
+                        _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
 
                     replacementValues.Add(localizedElementId);
                     break;
@@ -130,7 +133,8 @@ public class OrdbokContentParser : IOrdbokContentParser
             switch (item)
             {
                 case Api.ExplanationIdItem idElement:
-                    var localizedElementId = _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
+                    var localizedElementId =
+                        _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
                     replacementValues.Add(localizedElementId);
                     break;
                 case Api.ExplanationTextItem textElement:
@@ -151,14 +155,16 @@ public class OrdbokContentParser : IOrdbokContentParser
                         var pValues = new List<string>();
 
                         if (!string.IsNullOrWhiteSpace(hgNo))
-                            pValues.Add(hgNo);
-                        if (definitionOrder > 0)
-                            pValues.Add(definitionOrder.ToString());
-
-                        if (pValues.Count > 0)
                         {
-                            displayValue = $"{displayValue} ({string.Join(",", pValues)})";
+                            pValues.Add(hgNo);
                         }
+
+                        if (definitionOrder > 0)
+                        {
+                            pValues.Add(definitionOrder.ToString());
+                        }
+
+                        if (pValues.Count > 0) displayValue = $"{displayValue} ({string.Join(",", pValues)})";
                     }
 
                     replacementValues.Add(displayValue);
@@ -183,7 +189,8 @@ public class OrdbokContentParser : IOrdbokContentParser
             switch (item)
             {
                 case Api.QuoteIdItem idElement:
-                    var localizedIdItem = _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
+                    var localizedIdItem =
+                        _localizationService.GetString(idElement.Id, LocalizationResource.Ordbok, dictionary);
                     replacementValues.Add(localizedIdItem);
                     break;
                 case Api.QuoteTextItem textElement:
@@ -202,7 +209,9 @@ public class OrdbokContentParser : IOrdbokContentParser
         var contentHasVariables = values.Any();
 
         if (!contentHasVariables)
+        {
             return contentString;
+        }
 
         var regex = new Regex(Regex.Escape("$"));
 

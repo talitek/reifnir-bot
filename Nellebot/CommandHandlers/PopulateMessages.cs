@@ -10,7 +10,9 @@ namespace Nellebot.CommandHandlers;
 public record PopulateMessagesCommand : BotCommandCommand
 {
     public PopulateMessagesCommand(CommandContext ctx)
-        : base(ctx) { }
+        : base(ctx)
+    {
+    }
 }
 
 public class PopulateMessagesHandler : IRequestHandler<PopulateMessagesCommand>

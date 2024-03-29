@@ -1,109 +1,106 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Nellebot.Common.Models;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Nellebot.Common.Models;
 
-namespace Nellebot.Data.Repositories
+namespace Nellebot.Data.Repositories;
+
+public class AwardMessageRepository
 {
-    public class AwardMessageRepository
+    private readonly BotDbContext _dbContext;
+
+    public AwardMessageRepository(BotDbContext dbContext)
     {
-        private readonly BotDbContext _dbContext;
+        _dbContext = dbContext;
+    }
 
-        public AwardMessageRepository(BotDbContext dbContext)
+    public async Task<AwardMessage?> GetAwardMessageByOriginalMessageId(ulong awardChannelId, ulong originalMessageId)
+    {
+        var awardMessage = await _dbContext.AwardMessages
+            .SingleOrDefaultAsync(m => m.OriginalMessageId == originalMessageId
+                                       && m.AwardChannelId == awardChannelId);
+
+        return awardMessage;
+    }
+
+    public async Task<AwardMessage?> GetAwardMessageByAwardedMessageId(ulong awardChannelId, ulong awardedMessageId)
+    {
+        var awardMessage = await _dbContext.AwardMessages
+            .SingleOrDefaultAsync(m => m.AwardedMessageId == awardedMessageId
+                                       && m.AwardChannelId == awardChannelId);
+
+        return awardMessage;
+    }
+
+    public async Task<AwardMessage> CreateAwardMessage(
+        ulong originalMessageId,
+        ulong originalChannelId,
+        ulong awardedMessageId,
+        ulong awardChannelId,
+        ulong userId,
+        uint awardCount)
+    {
+        var awardMessage = new AwardMessage
         {
-            _dbContext = dbContext;
-        }
+            OriginalMessageId = originalMessageId,
+            OriginalChannelId = originalChannelId,
+            UserId = userId,
+            AwardedMessageId = awardedMessageId,
+            AwardChannelId = awardChannelId,
+            AwardCount = awardCount,
+            DateTime = DateTime.UtcNow,
+        };
 
-        public async Task<AwardMessage?> GetAwardMessageByOriginalMessageId(ulong awardChannelId, ulong originalMessageId)
+        await _dbContext.AddAsync(awardMessage);
+
+        await _dbContext.SaveChangesAsync();
+
+        return awardMessage;
+    }
+
+    public async Task DeleteAwardMessage(Guid id)
+    {
+        var existingMessage = await _dbContext.AwardMessages.FindAsync(id);
+
+        if (existingMessage != null)
         {
-            var awardMessage = await _dbContext.AwardMessages
-                                .SingleOrDefaultAsync(m => m.OriginalMessageId == originalMessageId
-                                                        && m.AwardChannelId == awardChannelId);
-
-            return awardMessage;
-        }
-
-        public async Task<AwardMessage?> GetAwardMessageByAwardedMessageId(ulong awardChannelId, ulong awardedMessageId)
-        {
-            var awardMessage = await _dbContext.AwardMessages
-                                .SingleOrDefaultAsync(m => m.AwardedMessageId == awardedMessageId
-                                                        && m.AwardChannelId == awardChannelId);
-
-            return awardMessage;
-        }
-
-        public async Task<AwardMessage> CreateAwardMessage(
-            ulong originalMessageId,
-            ulong originalChannelId,
-            ulong awardedMessageId,
-            ulong awardChannelId,
-            ulong userId,
-            uint awardCount)
-        {
-            var awardMessage = new AwardMessage
-            {
-                OriginalMessageId = originalMessageId,
-                OriginalChannelId = originalChannelId,
-                UserId = userId,
-                AwardedMessageId = awardedMessageId,
-                AwardChannelId = awardChannelId,
-                AwardCount = awardCount,
-                DateTime = DateTime.UtcNow
-            };
-
-            await _dbContext.AddAsync(awardMessage);
+            _dbContext.Remove(existingMessage);
 
             await _dbContext.SaveChangesAsync();
-
-            return awardMessage;
         }
+    }
 
-        public async Task DeleteAwardMessage(Guid id)
+    public async Task UpdateAwardCount(Guid id, uint awardCount)
+    {
+        var existingMessage = await _dbContext.AwardMessages.FindAsync(id);
+
+        if (existingMessage != null)
         {
-            var existingMessage = await _dbContext.AwardMessages.FindAsync(id);
+            existingMessage.AwardCount = awardCount;
 
-            if (existingMessage != null)
-            {
-                _dbContext.Remove(existingMessage);
-
-                await _dbContext.SaveChangesAsync();
-            }
+            await _dbContext.SaveChangesAsync();
         }
+    }
 
-        public async Task UpdateAwardCount(Guid id, uint awardCount)
-        {
-            var existingMessage = await _dbContext.AwardMessages.FindAsync(id);
+    public async Task<UserAwardStats> GetAwardStatsForUser(ulong userId)
+    {
+        var awardStats = new UserAwardStats();
 
-            if (existingMessage != null)
-            {
-                existingMessage.AwardCount = awardCount;
+        awardStats.TotalAwardCount = (uint)await _dbContext.AwardMessages
+            .Where(m => m.UserId == userId)
+            .SumAsync(a => a.AwardCount);
 
-                await _dbContext.SaveChangesAsync();
-            }
-        }
+        awardStats.AwardMessageCount = (uint)await _dbContext.AwardMessages
+            .Where(m => m.UserId == userId)
+            .CountAsync();
 
-        public async Task<UserAwardStats> GetAwardStatsForUser(ulong userId)
-        {
-            var awardStats = new UserAwardStats();
+        awardStats.TopAwardedMessages = await _dbContext.AwardMessages
+            .Where(m => m.UserId == userId)
+            .OrderByDescending(m => m.AwardCount)
+            .Take(10)
+            .ToListAsync();
 
-            awardStats.TotalAwardCount = (uint)await _dbContext.AwardMessages
-                .Where(m => m.UserId == userId)
-                .SumAsync(a => a.AwardCount);
-
-            awardStats.AwardMessageCount = (uint)await _dbContext.AwardMessages
-                .Where(m => m.UserId == userId)
-                .CountAsync();
-
-            awardStats.TopAwardedMessages = await _dbContext.AwardMessages
-                .Where(m => m.UserId == userId)
-                .OrderByDescending(m => m.AwardCount)
-                .Take(10)
-                .ToListAsync();
-
-            return awardStats;
-        }
+        return awardStats;
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Nellebot.Common.Extensions;
 using Api = Nellebot.Common.Models.Ordbok.Api;
@@ -82,17 +81,11 @@ public class OrdbokModelMapper
     {
         var vmResult = new Vm.ParadigmV2();
 
-        if (lemmas == null || !lemmas.Any())
-        {
-            return vmResult;
-        }
+        if (lemmas == null || !lemmas.Any()) return vmResult;
 
         var paradigms = lemmas.First().Paradigms;
 
-        if (paradigms == null || !paradigms.Any())
-        {
-            return vmResult;
-        }
+        if (paradigms == null || !paradigms.Any()) return vmResult;
 
         var inflectionGroup = paradigms.First().InflectionGroup;
 
@@ -114,11 +107,11 @@ public class OrdbokModelMapper
             }
         }
 
-
         vmResult.WordClass = _localizationService.GetString(inflectionGroup, LocalizationResource.Ordbok, dictionary);
         if (inflectionClass != null)
         {
-            vmResult.InflectionClass = _localizationService.GetString(inflectionClass, LocalizationResource.Ordbok, dictionary);
+            vmResult.InflectionClass =
+                _localizationService.GetString(inflectionClass, LocalizationResource.Ordbok, dictionary);
         }
 
         return vmResult;
@@ -162,8 +155,8 @@ public class OrdbokModelMapper
             else
             {
                 var nestedDefinitionElements = definition.DefinitionElements
-                        .Where(x => !(x is Api.DefinitionSubArticle))
-                        .ToList();
+                    .Where(x => !(x is Api.DefinitionSubArticle))
+                    .ToList();
 
                 var mappedDefinition = MapDefinition(nestedDefinitionElements, dictionary);
 
@@ -205,9 +198,9 @@ public class OrdbokModelMapper
             else
             {
                 var nestedDefinitionSubArticles = definition.DefinitionElements
-                        .Where(x => x is Api.DefinitionSubArticle)
-                        .Cast<Api.DefinitionSubArticle>()
-                        .ToList();
+                    .Where(x => x is Api.DefinitionSubArticle)
+                    .Cast<Api.DefinitionSubArticle>()
+                    .ToList();
 
                 var mappedSubArticles = nestedDefinitionSubArticles.Select(x => MapSubArticle(x, dictionary));
 
@@ -237,10 +230,13 @@ public class OrdbokModelMapper
             .Cast<Api.Definition>()
             .ToList();
 
-        vmResult.Explanations = explanations.Select(x => _contentParser.GetExplanationContent(x, dictionary, detailed: true)).ToList();
-        vmResult.ExplanationsSimple = explanations.Select(x => _contentParser.GetExplanationContent(x, dictionary, detailed: false)).ToList();
+        vmResult.Explanations =
+            explanations.Select(x => _contentParser.GetExplanationContent(x, dictionary, true)).ToList();
+        vmResult.ExplanationsSimple =
+            explanations.Select(x => _contentParser.GetExplanationContent(x, dictionary, false)).ToList();
         vmResult.Examples = examples.Select(x => _contentParser.GetExampleContent(x, dictionary)).ToList();
-        vmResult.InnerDefinitions = innerDefinitions.Select(x => MapDefinition(x.DefinitionElements, dictionary)).ToList();
+        vmResult.InnerDefinitions =
+            innerDefinitions.Select(x => MapDefinition(x.DefinitionElements, dictionary)).ToList();
 
         return vmResult;
     }
@@ -250,7 +246,9 @@ public class OrdbokModelMapper
         var vmResult = new Vm.SubArticle();
 
         if (subArticle.Article?.Body == null)
+        {
             return vmResult;
+        }
 
         vmResult.Lemmas = subArticle.Article.Body.Lemmas.Select(MapLemma).ToList();
 

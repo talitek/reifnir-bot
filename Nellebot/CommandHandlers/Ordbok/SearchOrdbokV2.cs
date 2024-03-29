@@ -14,7 +14,6 @@ using Nellebot.Services;
 using Nellebot.Services.Ordbok;
 using Nellebot.Utils;
 using Api = Nellebot.Common.Models.Ordbok.Api;
-using Vm = Nellebot.Common.Models.Ordbok.ViewModels;
 
 namespace Nellebot.CommandHandlers.Ordbok;
 
@@ -73,13 +72,15 @@ public class SearchOrdbokHandlerV2 : IRequestHandler<SearchOrdbokQueryV2>
 
         var articles = MapAndSelectArticles(ordbokArticles, dictionary);
 
-        var title = $"{(dictionary == OrdbokDictionaryMap.Bokmal ? "Bokmålsordboka" : "Nynorskordboka")} | {articles.Count} treff";
+        var title =
+            $"{(dictionary == OrdbokDictionaryMap.Bokmal ? "Bokmålsordboka" : "Nynorskordboka")} | {articles.Count} treff";
 
-        var queryUrl = $"https://ordbokene.no/{(dictionary == OrdbokDictionaryMap.Bokmal ? "bm" : "nn")}/search?q={query}&scope=ei";
+        var queryUrl =
+            $"https://ordbokene.no/{(dictionary == OrdbokDictionaryMap.Bokmal ? "bm" : "nn")}/search?q={query}&scope=ei";
 
         var messagePages = await BuildPages(articles, title, queryUrl);
 
-        await ctx.Interaction.SendPaginatedResponseAsync(ephemeral: false, user, messagePages, asEditResponse: true);
+        await ctx.Interaction.SendPaginatedResponseAsync(false, user, messagePages, asEditResponse: true);
     }
 
     private async Task<IEnumerable<Page>> BuildPages(List<Article> articles, string title, string queryUrl)
@@ -89,9 +90,9 @@ public class SearchOrdbokHandlerV2 : IRequestHandler<SearchOrdbokQueryV2>
         var articleCount = articles.Count;
         var pageCount = (int)Math.Ceiling((double)articleCount / MaxArticlesPerPage);
 
-        for (int i = 0; i < pageCount; i++)
+        for (var i = 0; i < pageCount; i++)
         {
-            int offset = i * MaxArticlesPerPage;
+            var offset = i * MaxArticlesPerPage;
 
             var articlesOnPage = articles.Skip(offset).Take(MaxArticlesPerPage).ToList();
 
@@ -99,7 +100,8 @@ public class SearchOrdbokHandlerV2 : IRequestHandler<SearchOrdbokQueryV2>
 
             var renderedTemplate = await RenderTextTemplate(articlesOnPage, pagination);
 
-            var truncatedContent = renderedTemplate[..Math.Min(renderedTemplate.Length, DiscordConstants.MaxEmbedContentLength)];
+            var truncatedContent =
+                renderedTemplate[..Math.Min(renderedTemplate.Length, DiscordConstants.MaxEmbedContentLength)];
 
             var eb = new DiscordEmbedBuilder()
                 .WithTitle(title)
@@ -114,16 +116,17 @@ public class SearchOrdbokHandlerV2 : IRequestHandler<SearchOrdbokQueryV2>
         return pages;
     }
 
-    private async Task<string> RenderTextTemplate(List<Vm.Article> articles, PaginationArgs pagination)
+    private async Task<string> RenderTextTemplate(List<Article> articles, PaginationArgs pagination)
     {
         var textTemplate = await _templateLoader.LoadTemplateV2("OrdbokArticleV2", ScribanTemplateType.Text);
 
-        var textTemplateResult = textTemplate.Render(new { articles, pagination, maxDefinitions = MaxDefinitionsInTextForm });
+        var textTemplateResult =
+            textTemplate.Render(new { articles, pagination, maxDefinitions = MaxDefinitionsInTextForm });
 
         return textTemplateResult;
     }
 
-    private List<Vm.Article> MapAndSelectArticles(List<Api.Article?> ordbokArticles, string dictionary)
+    private List<Article> MapAndSelectArticles(List<Api.Article?> ordbokArticles, string dictionary)
     {
         var articles = ordbokArticles
             .Where(a => a != null)

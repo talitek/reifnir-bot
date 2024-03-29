@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nellebot.Infrastructure;
@@ -12,12 +11,16 @@ namespace Nellebot.Workers;
 
 public class EventQueueWorker : BackgroundService
 {
-    private readonly ILogger<EventQueueWorker> _logger;
     private readonly EventQueueChannel _channel;
-    private readonly NotificationPublisher _publisher;
     private readonly IDiscordErrorLogger _discordErrorLogger;
+    private readonly ILogger<EventQueueWorker> _logger;
+    private readonly NotificationPublisher _publisher;
 
-    public EventQueueWorker(ILogger<EventQueueWorker> logger, EventQueueChannel channel, NotificationPublisher publisher, IDiscordErrorLogger discordErrorLogger)
+    public EventQueueWorker(
+        ILogger<EventQueueWorker> logger,
+        EventQueueChannel channel,
+        NotificationPublisher publisher,
+        IDiscordErrorLogger discordErrorLogger)
     {
         _logger = logger;
         _channel = channel;
@@ -29,14 +32,11 @@ public class EventQueueWorker : BackgroundService
     {
         try
         {
-            await foreach (INotification notification in _channel.Reader.ReadAllAsync(stoppingToken))
+            await foreach (var notification in _channel.Reader.ReadAllAsync(stoppingToken))
             {
-                INotification @event = notification;
+                var @event = notification;
 
-                if (@event == null)
-                {
-                    continue;
-                }
+                if (@event == null) continue;
 
                 _logger.LogDebug("Dequeued event. {RemainingMessageCount} left in queue", _channel.Reader.Count);
 
@@ -46,7 +46,7 @@ public class EventQueueWorker : BackgroundService
                 }
                 catch (AggregateException ex)
                 {
-                    foreach (Exception innerEx in ex.InnerExceptions)
+                    foreach (var innerEx in ex.InnerExceptions)
                     {
                         if (@event is not null and EventNotification eventNotification)
                         {

@@ -12,7 +12,7 @@ using Nellebot.Attributes;
 using Nellebot.CommandHandlers;
 using Nellebot.Workers;
 
-namespace Nellebot.CommandModules;
+namespace Nellebot.CommandModules.Roles;
 
 [BaseCommandCheck]
 [RequireTrustedMember]
@@ -37,33 +37,28 @@ public class TrustedMemberModule : BaseCommandModule
     [Command("list-award-channels")]
     public async Task ListCookieChannels(CommandContext ctx)
     {
-        ulong[] groupIds = _options.AwardVoteGroupIds;
+        var groupIds = _options.AwardVoteGroupIds;
 
-        if (groupIds == null)
-        {
-            return;
-        }
+        if (groupIds == null) return;
 
         var sb = new StringBuilder();
 
-        IReadOnlyList<DiscordChannel> guildChannels = await ctx.Guild.GetChannelsAsync();
+        var guildChannels = await ctx.Guild.GetChannelsAsync();
 
         var channelGroups = new List<Tuple<string, List<DiscordChannel>>>();
 
-        IEnumerable<DiscordChannel> categoryChannels = guildChannels
+        var categoryChannels = guildChannels
             .Where(c => c.Type == ChannelType.Category
                         && groupIds.Contains(c.Id));
 
-        foreach (DiscordChannel? category in categoryChannels)
+        foreach (var category in categoryChannels)
         {
             sb.AppendLine($"**{category.Name}**");
 
-            IEnumerable<DiscordChannel> textChannelsForCategory = guildChannels.Where(c => c.Type == ChannelType.Text && c.ParentId == category.Id);
+            var textChannelsForCategory =
+                guildChannels.Where(c => c.Type == ChannelType.Text && c.ParentId == category.Id);
 
-            foreach (DiscordChannel? channel in textChannelsForCategory)
-            {
-                sb.AppendLine($"#{channel.Name}");
-            }
+            foreach (var channel in textChannelsForCategory) sb.AppendLine($"#{channel.Name}");
 
             sb.AppendLine();
         }

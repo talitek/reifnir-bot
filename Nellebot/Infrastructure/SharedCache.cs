@@ -10,7 +10,7 @@ public class SharedCache
 
     public SharedCache()
     {
-        _cache = new MemoryCache(new MemoryCacheOptions()
+        _cache = new MemoryCache(new MemoryCacheOptions
         {
             SizeLimit = 1024,
         });
@@ -19,15 +19,20 @@ public class SharedCache
     public async Task<T?> LoadFromCacheAsync<T>(string key, Func<Task<T>> delegateFunction, TimeSpan duration)
     {
         if (_cache.TryGetValue(key, out T? value))
+        {
             return value;
+        }
 
         var loadedData = await delegateFunction();
 
-        _cache.Set(key, loadedData, new MemoryCacheEntryOptions()
-        {
-            AbsoluteExpirationRelativeToNow = duration,
-            Size = 1,
-        });
+        _cache.Set(
+                   key,
+                   loadedData,
+                   new MemoryCacheEntryOptions
+                   {
+                       AbsoluteExpirationRelativeToNow = duration,
+                       Size = 1,
+                   });
 
         return loadedData;
     }

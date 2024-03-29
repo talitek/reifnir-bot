@@ -12,14 +12,14 @@ using Nellebot.Common.Models.UserRoles;
 using Nellebot.Services;
 using Nellebot.Services.Loggers;
 
-namespace Nellebot.CommandModules;
+namespace Nellebot.CommandModules.Roles;
 
 public class RoleModule : ApplicationCommandModule
 {
     private const int MaxSelectComponentOptions = 25;
-    private readonly RoleService _roleService;
     private readonly IDiscordErrorLogger _discordErrorLogger;
     private readonly BotOptions _options;
+    private readonly RoleService _roleService;
 
     public RoleModule(RoleService roleService, IOptions<BotOptions> options, IDiscordErrorLogger discordErrorLogger)
     {
@@ -67,9 +67,9 @@ public class RoleModule : ApplicationCommandModule
         var aButton = new DiscordButtonComponent(ButtonStyle.Primary, "aButton", "Click me");
 
         var interactionBuilder = new DiscordInteractionResponseBuilder()
-           .WithContent("I does da test")
-           .AsEphemeral()
-           .AddComponents(aButton);
+            .WithContent("I does da test")
+            .AsEphemeral()
+            .AddComponents(aButton);
 
         await ctx.CreateResponseAsync(interactionBuilder);
 
@@ -85,7 +85,7 @@ public class RoleModule : ApplicationCommandModule
          *
          *  // When using the EditResponse method, there's no need to call getOriginalResponseAsync()
          *  var originalResponse = await ctx.EditResponseAsync(webhookBuilder);
-        */
+         */
 
         // At this point, regardless of answering with Create or Defer + Edit
         // We're done with the Slash command interaction
@@ -94,7 +94,9 @@ public class RoleModule : ApplicationCommandModule
         var responseBuilder = new DiscordInteractionResponseBuilder()
             .WithContent("Thanks for clicking me");
 
-        await interactionResult.Result.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage, responseBuilder);
+        await interactionResult.Result.Interaction.CreateResponseAsync(
+                                                                       InteractionResponseType.UpdateMessage,
+                                                                       responseBuilder);
     }
 
     [SlashCommand("roles", "Choose one or more roles")]
@@ -117,10 +119,10 @@ public class RoleModule : ApplicationCommandModule
     }
 
     /// <summary>
-    /// Role chooser flow for new users.
-    /// Present each role category input one after the other.
+    ///     Role chooser flow for new users.
+    ///     Present each role category input one after the other.
     /// </summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
     private async Task NewUserRoleFlow(InteractionContext ctx)
     {
         // Acknowledge the command interaction by responding with a "thinking..." message
@@ -146,7 +148,7 @@ public class RoleModule : ApplicationCommandModule
             var isMandatory = roleGroup == roleGroups.First();
 
             const string skipButtonId = "skip_button";
-            var skipButton = new DiscordButtonComponent(ButtonStyle.Secondary, skipButtonId, "Skip", disabled: isMandatory);
+            var skipButton = new DiscordButtonComponent(ButtonStyle.Secondary, skipButtonId, "Skip", isMandatory);
 
             var theMessage = await PresentRolesDropdown(ctx, roleGroup, user, roleDropdownId, skipButton);
 
@@ -160,7 +162,8 @@ public class RoleModule : ApplicationCommandModule
 
             // Acknowledge the interaction.
             // This deferred message will be handled either in the next interation or outside the loop when we're done
-            await roleDropdownInteractionResult.Result.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
+            await roleDropdownInteractionResult.Result.Interaction.CreateResponseAsync(InteractionResponseType
+                     .DeferredMessageUpdate);
 
             var isSkipped = roleDropdownInteractionResult.Result.Id == skipButtonId;
 
@@ -181,15 +184,9 @@ public class RoleModule : ApplicationCommandModule
             rolesToRemove.AddRange(rolesFromGroupToRemove);
         }
 
-        foreach (var roleToAdd in rolesToAdd)
-        {
-            await GrantDiscordRole(ctx, roleToAdd);
-        }
+        foreach (var roleToAdd in rolesToAdd) await GrantDiscordRole(ctx, roleToAdd);
 
-        foreach (var roleToRemove in rolesToRemove)
-        {
-            await RevokeDiscordRole(ctx, roleToRemove);
-        }
+        foreach (var roleToRemove in rolesToRemove) await RevokeDiscordRole(ctx, roleToRemove);
 
         // Respond by editing the deferred message with a thank you message
         var responseBuilder = new DiscordWebhookBuilder().WithContent("Enjoy your new roles!");
@@ -198,11 +195,11 @@ public class RoleModule : ApplicationCommandModule
     }
 
     /// <summary>
-    /// Role chooser flow for existing users aka members
-    /// Executing the command first prompts the user to choose
-    /// the role category they want to choose roles from.
+    ///     Role chooser flow for existing users aka members
+    ///     Executing the command first prompts the user to choose
+    ///     the role category they want to choose roles from.
     /// </summary>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
     private async Task MemberRoleFlow(InteractionContext ctx)
     {
         // Acknowledge the command interaction by responding with a "thinking..." message
@@ -228,7 +225,8 @@ public class RoleModule : ApplicationCommandModule
             var theMessageInteractivityResult = await theMessage.WaitForButtonAsync();
 
             // Acknowledge the interaction
-            await theMessageInteractivityResult.Result.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
+            await theMessageInteractivityResult.Result.Interaction.CreateResponseAsync(InteractionResponseType
+                     .DeferredMessageUpdate);
 
             var chosenButtonId = theMessageInteractivityResult.Result.Id;
 
@@ -253,7 +251,8 @@ public class RoleModule : ApplicationCommandModule
             messageCancellationTokenSource.Cancel();
 
             // Just acknowledge interaction
-            await roleDropdownInteractionResult.Result.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
+            await roleDropdownInteractionResult.Result.Interaction.CreateResponseAsync(InteractionResponseType
+                     .DeferredMessageUpdate);
 
             var isBackOption = roleDropdownInteractionResult.Result.Id == backButtonId;
 
@@ -265,19 +264,13 @@ public class RoleModule : ApplicationCommandModule
                 .Except(user.Roles.Select(r => r.Id))
                 .ToList();
 
-            foreach (var roleToAdd in rolesToAdd)
-            {
-                await GrantDiscordRole(ctx, roleToAdd);
-            }
+            foreach (var roleToAdd in rolesToAdd) await GrantDiscordRole(ctx, roleToAdd);
 
             var rolesToRemove = user.Roles.Select(r => r.Id)
                 .Intersect(roleGroupToChange.ToList().Select(r => r.RoleId))
                 .Except(chosenRoleIds);
 
-            foreach (var roleToRemove in rolesToRemove)
-            {
-                await RevokeDiscordRole(ctx, roleToRemove);
-            }
+            foreach (var roleToRemove in rolesToRemove) await RevokeDiscordRole(ctx, roleToRemove);
         }
 
         // Respond by editing the deferred message with a thank you message
@@ -286,14 +279,17 @@ public class RoleModule : ApplicationCommandModule
         await ctx.Interaction.EditOriginalResponseAsync(responseBuilder);
     }
 
-    private async Task<DiscordMessage> PresentCategoriesMenu(InteractionContext ctx, List<IGrouping<UserRoleGroup?, UserRole>> roleGroups, string exitButtonId)
+    private async Task<DiscordMessage> PresentCategoriesMenu(
+        InteractionContext ctx,
+        List<IGrouping<UserRoleGroup?, UserRole>> roleGroups,
+        string exitButtonId)
     {
         var categoryButtonRow = new List<DiscordComponent>();
 
         foreach (var roleGroup in roleGroups)
         {
-            string buttonId = roleGroup.Key?.Id.ToString() ?? "none";
-            string buttonLabel = roleGroup.Key != null ? $"{roleGroup.Key.Name} roles" : "Ungrouped roles";
+            var buttonId = roleGroup.Key?.Id.ToString() ?? "none";
+            var buttonLabel = roleGroup.Key != null ? $"{roleGroup.Key.Name} roles" : "Ungrouped roles";
 
             categoryButtonRow.Add(new DiscordButtonComponent(ButtonStyle.Primary, buttonId, buttonLabel));
         }
@@ -309,7 +305,12 @@ public class RoleModule : ApplicationCommandModule
         return await ctx.EditResponseAsync(roleGroupButtonsResponse);
     }
 
-    private async Task<DiscordMessage> PresentRolesDropdown(InteractionContext ctx, IGrouping<UserRoleGroup?, UserRole> roleGroupToChange, DiscordMember user, string roleDropdownId, DiscordButtonComponent extraButton)
+    private async Task<DiscordMessage> PresentRolesDropdown(
+        InteractionContext ctx,
+        IGrouping<UserRoleGroup?, UserRole> roleGroupToChange,
+        DiscordMember user,
+        string roleDropdownId,
+        DiscordButtonComponent extraButton)
     {
         var roleDropdownOptions = new List<DiscordSelectComponentOption>();
 
@@ -317,7 +318,11 @@ public class RoleModule : ApplicationCommandModule
         {
             var userHasRole = user.Roles.Select(r => r.Id).Contains(userRole.RoleId);
 
-            roleDropdownOptions.Add(new DiscordSelectComponentOption(userRole.Name, userRole.RoleId.ToString(), userRole.Name, isDefault: userHasRole));
+            roleDropdownOptions.Add(new DiscordSelectComponentOption(
+                                                                     userRole.Name,
+                                                                     userRole.RoleId.ToString(),
+                                                                     userRole.Name,
+                                                                     userHasRole));
         }
 
         var isSingleSelect = roleGroupToChange.Key != null && roleGroupToChange.Key.MutuallyExclusive;
@@ -326,14 +331,19 @@ public class RoleModule : ApplicationCommandModule
         var minOptions = isSingleSelect ? 1 : 0;
 
         var roleDropdownPlaceHolder = isSingleSelect ? "Choose 1 role" : "Choose any roles";
-        var roleDropdown = new DiscordSelectComponent(roleDropdownId, roleDropdownPlaceHolder, roleDropdownOptions, minOptions: minOptions, maxOptions: maxOptions);
+        var roleDropdown = new DiscordSelectComponent(
+                                                      roleDropdownId,
+                                                      roleDropdownPlaceHolder,
+                                                      roleDropdownOptions,
+                                                      minOptions: minOptions,
+                                                      maxOptions: maxOptions);
 
         var buttonInteractionResultResponse = new DiscordWebhookBuilder()
             .WithContent(roleGroupToChange.Key != null ? $"{roleGroupToChange.Key.Name} roles" : "Ungrouped roles")
             .AddComponents(roleDropdown)
             .AddComponents(extraButton);
 
-        // Respond by editing the deferred message 
+        // Respond by editing the deferred message
         return await ctx.EditResponseAsync(buttonInteractionResultResponse);
     }
 
@@ -390,16 +400,18 @@ public class RoleModule : ApplicationCommandModule
     private async Task RemoveAllOtherRolesInMutexGroup(UserRole userRole, DiscordMember member, DiscordGuild guild)
     {
         if (userRole.Group == null || userRole.Group.MutuallyExclusive == false)
+        {
             return;
+        }
 
         var otherRolesInGroup = (await _roleService.GetUserRolesByGroup(userRole.Group.Id))
-                                            .Where(r => r.Id != userRole.Id);
+            .Where(r => r.Id != userRole.Id);
 
         var discordRolesInGroupToRemove = member.Roles
-                            .Where(r => otherRolesInGroup.Select(r => r.RoleId)
-                                        .ToList()
-                                        .Contains(r.Id))
-                            .ToList();
+            .Where(r => otherRolesInGroup.Select(r => r.RoleId)
+                       .ToList()
+                       .Contains(r.Id))
+            .ToList();
 
         foreach (var discordRoleToRemove in discordRolesInGroupToRemove)
         {

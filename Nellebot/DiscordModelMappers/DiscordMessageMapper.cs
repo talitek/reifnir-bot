@@ -10,14 +10,18 @@ public static class DiscordMessageMapper
         var appDiscordMessage = new AppDiscordMessage
         {
             Content = discordMessage.Content,
-            CreationTimestamp = discordMessage.CreationTimestamp
+            CreationTimestamp = discordMessage.CreationTimestamp,
         };
 
-        if (discordMessage.Author != null) 
+        if (discordMessage.Author != null)
+        {
             appDiscordMessage.Author = DiscordUserMapper.Map(discordMessage.Author);
+        }
 
         if (discordMessage.Channel != null)
+        {
             appDiscordMessage.Channel = DiscordChannelMapper.Map(discordMessage.Channel);
+        }
 
         return appDiscordMessage;
     }

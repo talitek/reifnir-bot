@@ -14,20 +14,20 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.CommandModules;
-using Nellebot.EventHandlers;
+using Nellebot.CommandModules.Messages;
+using Nellebot.CommandModules.Roles;
 using Nellebot.NotificationHandlers;
 
 namespace Nellebot.Workers;
 
 public class BotWorker : IHostedService
 {
-    private readonly BotOptions _options;
-    private readonly ILogger<BotWorker> _logger;
     private readonly DiscordClient _client;
-    private readonly IServiceProvider _serviceProvider;
     private readonly CommandEventHandler _commandEventHandler;
-    private readonly AwardEventHandler _awardEventHandler;
     private readonly EventQueueChannel _eventQueue;
+    private readonly ILogger<BotWorker> _logger;
+    private readonly BotOptions _options;
+    private readonly IServiceProvider _serviceProvider;
 
     public BotWorker(
         IOptions<BotOptions> options,
@@ -35,7 +35,6 @@ public class BotWorker : IHostedService
         DiscordClient client,
         IServiceProvider serviceProvider,
         CommandEventHandler commandEventHandler,
-        AwardEventHandler awardEventHandler,
         EventQueueChannel eventQueue)
     {
         _options = options.Value;
@@ -43,7 +42,6 @@ public class BotWorker : IHostedService
         _client = client;
         _serviceProvider = serviceProvider;
         _commandEventHandler = commandEventHandler;
-        _awardEventHandler = awardEventHandler;
         _eventQueue = eventQueue;
     }
 
@@ -51,16 +49,13 @@ public class BotWorker : IHostedService
     {
         _logger.LogInformation("Starting bot");
 
-        var commands = RegisterClassicCommands();
+        RegisterClassicCommands();
 
         RegisterSlashCommands();
 
         ConfigureInteractivity();
 
         RegisterLifecycleEventHandlers();
-
-        _commandEventHandler.RegisterHandlers(commands);
-        _awardEventHandler.RegisterHandlers();
 
         RegisterMessageHandlers();
         RegisterGuildEventHandlers();
@@ -75,11 +70,11 @@ public class BotWorker : IHostedService
         return _client.DisconnectAsync();
     }
 
-    private CommandsNextExtension RegisterClassicCommands()
+    private void RegisterClassicCommands()
     {
         var commandPrefix = _options.CommandPrefix;
 
-        var commands = _client.UseCommandsNext(new CommandsNextConfiguration()
+        var commands = _client.UseCommandsNext(new CommandsNextConfiguration
         {
             StringPrefixes = new[] { commandPrefix },
             Services = _serviceProvider,
@@ -88,7 +83,7 @@ public class BotWorker : IHostedService
 
         commands.RegisterCommands(Assembly.GetExecutingAssembly());
 
-        return commands;
+        _commandEventHandler.RegisterHandlers(commands);
     }
 
     private void RegisterSlashCommands()
@@ -103,7 +98,7 @@ public class BotWorker : IHostedService
 
     private void ConfigureInteractivity()
     {
-        _client.UseInteractivity(new InteractivityConfiguration()
+        _client.UseInteractivity(new InteractivityConfiguration
         {
             PaginationBehaviour = PaginationBehaviour.Ignore,
         });
@@ -111,18 +106,32 @@ public class BotWorker : IHostedService
 
     private void RegisterMessageHandlers()
     {
-        _client.MessageCreated += (sender, args) => _eventQueue.Writer.WriteAsync(new MessageCreatedNotification(args)).AsTask();
-        _client.MessageDeleted += (sender, args) => _eventQueue.Writer.WriteAsync(new MessageDeletedNotification(args)).AsTask();
-        _client.MessagesBulkDeleted += (sender, args) => _eventQueue.Writer.WriteAsync(new MessageBulkDeletedNotification(args)).AsTask();
+        _client.MessageReactionAdded += (_, args) =>
+            _eventQueue.Writer.WriteAsync(new MessageReactionAddedNotification(args)).AsTask();
+        _client.MessageReactionRemoved += (_, args) =>
+            _eventQueue.Writer.WriteAsync(new MessageReactionRemovedNotification(args)).AsTask();
+        _client.MessageCreated += (_, args) =>
+            _eventQueue.Writer.WriteAsync(new MessageCreatedNotification(args)).AsTask();
+        _client.MessageUpdated += (_, args) =>
+            _eventQueue.Writer.WriteAsync(new MessageUpdatedNotification(args)).AsTask();
+        _client.MessageDeleted += (_, args) =>
+            _eventQueue.Writer.WriteAsync(new MessageDeletedNotification(args)).AsTask();
+        _client.MessagesBulkDeleted += (_, args) =>
+            _eventQueue.Writer.WriteAsync(new MessageBulkDeletedNotification(args)).AsTask();
     }
 
     private void RegisterGuildEventHandlers()
     {
-        _client.GuildMemberAdded += (sender, args) => _eventQueue.Writer.WriteAsync(new GuildMemberAddedNotification(args)).AsTask();
-        _client.GuildMemberRemoved += (sender, args) => _eventQueue.Writer.WriteAsync(new GuildMemberRemovedNotification(args)).AsTask();
-        _client.GuildMemberUpdated += (sender, args) => _eventQueue.Writer.WriteAsync(new GuildMemberUpdatedNotification(args)).AsTask();
-        _client.GuildBanAdded += (sender, args) => _eventQueue.Writer.WriteAsync(new GuildBanAddedNotification(args)).AsTask();
-        _client.GuildBanRemoved += (sender, args) => _eventQueue.Writer.WriteAsync(new GuildBanRemovedNotification(args)).AsTask();
+        _client.GuildMemberAdded += (_, args) =>
+            _eventQueue.Writer.WriteAsync(new GuildMemberAddedNotification(args)).AsTask();
+        _client.GuildMemberRemoved += (_, args) =>
+            _eventQueue.Writer.WriteAsync(new GuildMemberRemovedNotification(args)).AsTask();
+        _client.GuildMemberUpdated += (_, args) =>
+            _eventQueue.Writer.WriteAsync(new GuildMemberUpdatedNotification(args)).AsTask();
+        _client.GuildBanAdded += (_, args) =>
+            _eventQueue.Writer.WriteAsync(new GuildBanAddedNotification(args)).AsTask();
+        _client.GuildBanRemoved += (_, args) =>
+            _eventQueue.Writer.WriteAsync(new GuildBanRemovedNotification(args)).AsTask();
     }
 
     private void RegisterLifecycleEventHandlers()
@@ -172,12 +181,13 @@ public class BotWorker : IHostedService
     {
         _logger.LogInformation("Bot resumed");
 
-        return _eventQueue.Writer.WriteAsync(new SessionCreatedOrResumedNotification(nameof(OnSessionResumed))).AsTask();
+        return _eventQueue.Writer.WriteAsync(new SessionCreatedOrResumedNotification(nameof(OnSessionResumed)))
+            .AsTask();
     }
 
     private Task OnGuildDownloadCompleted(DiscordClient sender, GuildDownloadCompletedEventArgs args)
     {
-        return _eventQueue.Writer.WriteAsync(new SessionCreatedOrResumedNotification(nameof(OnGuildDownloadCompleted))).AsTask();
+        return _eventQueue.Writer.WriteAsync(new SessionCreatedOrResumedNotification(nameof(OnGuildDownloadCompleted)))
+            .AsTask();
     }
-
 }

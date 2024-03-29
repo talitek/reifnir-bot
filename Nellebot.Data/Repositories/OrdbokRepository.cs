@@ -15,16 +15,21 @@ public class OrdbokRepository
         _dbContext = dbContext;
     }
 
-    public async Task<OrdbokArticleStore?> GetArticleStore(string dictionary, string wordClass, CancellationToken cancellationToken = default)
+    public async Task<OrdbokArticleStore?> GetArticleStore(
+        string dictionary,
+        string wordClass,
+        CancellationToken cancellationToken = default)
     {
         return await _dbContext.OrdbokArticlesStore.FindAsync(new[] { dictionary, wordClass }, cancellationToken);
     }
 
-    public async Task SaveArticleStore(OrdbokArticleStore ordbokArticleStore, CancellationToken cancellationToken = default)
+    public async Task SaveArticleStore(
+        OrdbokArticleStore ordbokArticleStore,
+        CancellationToken cancellationToken = default)
     {
         var existingArticleStore = await _dbContext.OrdbokArticlesStore.FindAsync(
-            new[] { ordbokArticleStore.Dictionary, ordbokArticleStore.WordClass },
-            cancellationToken);
+             new[] { ordbokArticleStore.Dictionary, ordbokArticleStore.WordClass },
+             cancellationToken);
 
         if (existingArticleStore == null)
         {
@@ -39,27 +44,36 @@ public class OrdbokRepository
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<int> GetArticleCount(string dictionary, string wordClass, CancellationToken cancellationToken = default)
+    public async Task<int> GetArticleCount(
+        string dictionary,
+        string wordClass,
+        CancellationToken cancellationToken = default)
     {
         var count = await _dbContext.OrdbokArticlesStore
-                        .Where(x => x.Dictionary == dictionary && x.WordClass == wordClass)
-                        .Select(x => x.ArticleCount)
-                        .SingleOrDefaultAsync(cancellationToken);
+            .Where(x => x.Dictionary == dictionary && x.WordClass == wordClass)
+            .Select(x => x.ArticleCount)
+            .SingleOrDefaultAsync(cancellationToken);
 
         return count;
     }
 
-    public async Task<int> GetArticleIdAtIndex(string dictionary, string wordClass, int index, CancellationToken cancellationToken = default)
+    public async Task<int> GetArticleIdAtIndex(
+        string dictionary,
+        string wordClass,
+        int index,
+        CancellationToken cancellationToken = default)
     {
         var articleId = await _dbContext.OrdbokArticlesStore
-                            .Where(x => x.Dictionary == dictionary && x.WordClass == wordClass)
-                            .Select(x => x.ArticleList[index])
-                            .SingleOrDefaultAsync(cancellationToken);
+            .Where(x => x.Dictionary == dictionary && x.WordClass == wordClass)
+            .Select(x => x.ArticleList[index])
+            .SingleOrDefaultAsync(cancellationToken);
 
         return articleId;
     }
 
-    public async Task<OrdbokConceptStore?> GetConceptStore(string dictionary, CancellationToken cancellationToken = default)
+    public async Task<OrdbokConceptStore?> GetConceptStore(
+        string dictionary,
+        CancellationToken cancellationToken = default)
     {
         return await _dbContext.OrdbokConceptStore.FindAsync(new[] { dictionary }, cancellationToken);
     }
@@ -67,8 +81,8 @@ public class OrdbokRepository
     public async Task SaveConceptStore(OrdbokConceptStore ordbokConcepts, CancellationToken cancellationToken = default)
     {
         var existingConceptStore = await _dbContext.OrdbokConceptStore.FindAsync(
-            new[] { ordbokConcepts.Dictionary },
-            cancellationToken);
+             new[] { ordbokConcepts.Dictionary },
+             cancellationToken);
 
         if (existingConceptStore == null)
         {

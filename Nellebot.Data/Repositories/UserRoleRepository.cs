@@ -18,7 +18,7 @@ public class UserRoleRepository : IUserRoleRepository
 
     public async Task<UserRole> CreateRole(ulong roleId, string name)
     {
-        var userRole = new UserRole()
+        var userRole = new UserRole
         {
             RoleId = roleId,
             Name = name,
@@ -36,7 +36,9 @@ public class UserRoleRepository : IUserRoleRepository
         var role = await _dbContext.UserRoles.SingleOrDefaultAsync(r => r.Id == id);
 
         if (role == null)
+        {
             throw new Exception("Role not found");
+        }
 
         role.Name = name;
 
@@ -50,7 +52,9 @@ public class UserRoleRepository : IUserRoleRepository
         var role = await _dbContext.UserRoles.SingleOrDefaultAsync(r => r.Id == id);
 
         if (role == null)
+        {
             return;
+        }
 
         _dbContext.Remove(role);
 
@@ -83,7 +87,7 @@ public class UserRoleRepository : IUserRoleRepository
 
     public async Task<UserRoleAlias> CreateRoleAlias(Guid userRoleId, string alias)
     {
-        var roleAlias = new UserRoleAlias()
+        var roleAlias = new UserRoleAlias
         {
             UserRoleId = userRoleId,
             Alias = alias,
@@ -101,7 +105,9 @@ public class UserRoleRepository : IUserRoleRepository
         var roleAlias = await _dbContext.UserRoleAliases.SingleOrDefaultAsync(ra => ra.Alias == alias);
 
         if (roleAlias == null)
+        {
             return;
+        }
 
         _dbContext.Remove(roleAlias);
 
@@ -113,7 +119,9 @@ public class UserRoleRepository : IUserRoleRepository
         var role = await _dbContext.UserRoles.FindAsync(id);
 
         if (role == null)
+        {
             throw new Exception("Role not found");
+        }
 
         if (!groupId.HasValue)
         {
@@ -127,7 +135,7 @@ public class UserRoleRepository : IUserRoleRepository
         // If role group doesn't exist, create it
         if (roleGroup == null)
         {
-            roleGroup = new UserRoleGroup()
+            roleGroup = new UserRoleGroup
             {
                 Id = groupId.Value,
                 Name = $"Untitled {groupId}",
@@ -148,9 +156,9 @@ public class UserRoleRepository : IUserRoleRepository
         var role = await _dbContext.UserRoles.FirstOrDefaultAsync(x => x.Name.ToLower() == roleName);
 
         role ??= await _dbContext.UserRoles
-                .Include(x => x.UserRoleAliases)
-                .Include(x => x.Group)
-                .SingleOrDefaultAsync(r => r.UserRoleAliases.Select(a => a.Alias).Contains(roleName));
+            .Include(x => x.UserRoleAliases)
+            .Include(x => x.Group)
+            .SingleOrDefaultAsync(r => r.UserRoleAliases.Select(a => a.Alias).Contains(roleName));
 
         return role;
     }
@@ -168,7 +176,9 @@ public class UserRoleRepository : IUserRoleRepository
         var roleGroup = await _dbContext.UserRoleGroups.FindAsync(groupId);
 
         if (roleGroup == null)
+        {
             throw new Exception("Role doesn't exist");
+        }
 
         roleGroup.Name = name;
 
@@ -182,7 +192,9 @@ public class UserRoleRepository : IUserRoleRepository
         var roleGroup = await _dbContext.UserRoleGroups.FindAsync(groupId);
 
         if (roleGroup == null)
+        {
             throw new Exception("Role doesn't exist");
+        }
 
         roleGroup.MutuallyExclusive = mutuallyExclusive;
 
@@ -196,7 +208,9 @@ public class UserRoleRepository : IUserRoleRepository
         var roleGroup = await _dbContext.UserRoleGroups.FindAsync(groupId);
 
         if (roleGroup == null)
+        {
             return;
+        }
 
         _dbContext.Remove(roleGroup);
 

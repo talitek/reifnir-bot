@@ -1,51 +1,53 @@
-﻿using Nellebot.Common.Models.Ordbok.Api;
-using System;
+﻿using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Nellebot.Common.Models.Ordbok.Api;
 
-namespace Nellebot.Common.Models.Ordbok.Converters
+namespace Nellebot.Common.Models.Ordbok.Converters;
+
+public class EtymologyLanguageElementConverter : JsonConverter<EtymologyLanguageElement>
 {
-    public class EtymologyLanguageElementConverter : JsonConverter<EtymologyLanguageElement>
+    public override EtymologyLanguageElement? Read(
+        ref Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options)
     {
-        public override EtymologyLanguageElement? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        var typeDiscriminator = TypeElementConverterHelper.GetTypeDiscriminator(ref reader);
+
+        EtymologyLanguageElement? result;
+
+        switch (typeDiscriminator.ToLower())
         {
-            var typeDiscriminator = TypeElementConverterHelper.GetTypeDiscriminator(ref reader);
-
-            EtymologyLanguageElement? result;
-
-            switch (typeDiscriminator.ToLower())
-            {
-                case "language":
-                case "grammar":
-                case "relation":
-                    result = JsonSerializer.Deserialize<EtymologyLanguageIdElement>(ref reader, options);
-                    break;
-                case "usage":
-                    result = JsonSerializer.Deserialize<EtymologyLanguageTextElement>(ref reader, options);
-                    break;
-                default:
-                    // Read and throw away object so that the reader reaches EndObject token
-                    _ = JsonSerializer.Deserialize<object>(ref reader, options);
-                    result = null;
-                    break;
-            }
-
-            return result;
+            case "language":
+            case "grammar":
+            case "relation":
+                result = JsonSerializer.Deserialize<EtymologyLanguageIdElement>(ref reader, options);
+                break;
+            case "usage":
+                result = JsonSerializer.Deserialize<EtymologyLanguageTextElement>(ref reader, options);
+                break;
+            default:
+                // Read and throw away object so that the reader reaches EndObject token
+                _ = JsonSerializer.Deserialize<object>(ref reader, options);
+                result = null;
+                break;
         }
 
-        public override void Write(Utf8JsonWriter writer, EtymologyLanguageElement value, JsonSerializerOptions options)
+        return result;
+    }
+
+    public override void Write(Utf8JsonWriter writer, EtymologyLanguageElement value, JsonSerializerOptions options)
+    {
+        switch (value)
         {
-            switch (value)
-            {
-                case EtymologyLanguageIdElement language:
-                    JsonSerializer.Serialize(writer, language);
-                    break;
-                case EtymologyLanguageTextElement usage:
-                    JsonSerializer.Serialize(writer, usage);
-                    break;
-                default:
-                    throw new JsonException($"Unknown subclass of {value.GetType().FullName}");
-            }
+            case EtymologyLanguageIdElement language:
+                JsonSerializer.Serialize(writer, language);
+                break;
+            case EtymologyLanguageTextElement usage:
+                JsonSerializer.Serialize(writer, usage);
+                break;
+            default:
+                throw new JsonException($"Unknown subclass of {value.GetType().FullName}");
         }
     }
 }

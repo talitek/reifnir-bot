@@ -14,11 +14,14 @@ public record DeleteGoodbyeMessageCommand(CommandContext Ctx, string Id) : BotCo
 
 public class DeleteGoodbyeMessageHandler : IRequestHandler<DeleteGoodbyeMessageCommand>
 {
-    private readonly MessageTemplateRepository _messageTemplateRepo;
     private readonly AuthorizationService _authService;
     private readonly SharedCache _cache;
+    private readonly MessageTemplateRepository _messageTemplateRepo;
 
-    public DeleteGoodbyeMessageHandler(MessageTemplateRepository messageTemplateRepo, AuthorizationService authService, SharedCache cache)
+    public DeleteGoodbyeMessageHandler(
+        MessageTemplateRepository messageTemplateRepo,
+        AuthorizationService authService,
+        SharedCache cache)
     {
         _messageTemplateRepo = messageTemplateRepo;
         _authService = authService;
@@ -34,7 +37,10 @@ public class DeleteGoodbyeMessageHandler : IRequestHandler<DeleteGoodbyeMessageC
         var messageTemplate = await _messageTemplateRepo.GetMessageTemplate(id, cancellationToken);
 
         if (messageTemplate == null)
-            throw new ArgumentException($"I couldn't find a goodbye message with id {id}, although I'm sure it's your fault.");
+        {
+            throw new ArgumentException(
+                                        $"I couldn't find a goodbye message with id {id}, although I'm sure it's your fault.");
+        }
 
         var appMember = DiscordMemberMapper.Map(ctx.Member);
         var appApplication = DiscordApplicationMapper.Map(ctx.Client.CurrentApplication);

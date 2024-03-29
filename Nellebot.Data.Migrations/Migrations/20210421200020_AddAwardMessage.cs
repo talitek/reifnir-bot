@@ -16,7 +16,7 @@ namespace Nellebot.Data.Migrations.Migrations
                     AwardedMessageId = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
                     UserId = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
                     DateTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    AwardCount = table.Column<long>(type: "bigint", nullable: false)
+                    AwardCount = table.Column<long>(type: "bigint", nullable: false),
                 },
                 constraints: table =>
                 {

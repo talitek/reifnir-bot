@@ -10,6 +10,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Nellebot.Common.Models.Ordbok;
 using Nellebot.Services;
+using Nellebot.Services.HtmlToImage;
 using Nellebot.Services.Ordbok;
 using Nellebot.Utils;
 using Scriban;
@@ -35,12 +36,12 @@ public record SearchOrdbokQuery : BotCommandQuery
 public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
 {
     private const int MaxDefinitionsInTextForm = 5;
+    private readonly HtmlToImageService _htmlToImageService;
+    private readonly ILogger<SearchOrdbokHandler> _logger;
 
     private readonly OrdbokHttpClient _ordbokClient;
     private readonly OrdbokModelMapper _ordbokModelMapper;
     private readonly ScribanTemplateLoader _templateLoader;
-    private readonly HtmlToImageService _htmlToImageService;
-    private readonly ILogger<SearchOrdbokHandler> _logger;
 
     public SearchOrdbokHandler(
         OrdbokHttpClient ordbokClient,
@@ -79,11 +80,15 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
 
         var queryUrl = $"https://ordbokene.no/{(dictionary == OrdbokDictionaryMap.Bokmal ? "bm" : "nn")}/w/{query}";
 
-        string textTemplateResult = await RenderTextTemplate(articles);
+        var textTemplateResult = await RenderTextTemplate(articles);
 
-        string htmlTemplateResult = await RenderHtmlTemplate(dictionary, articles);
+        var htmlTemplateResult = await RenderHtmlTemplate(dictionary, articles);
 
-        var truncatedContent = textTemplateResult.Substring(0, Math.Min(textTemplateResult.Length, DiscordConstants.MaxEmbedContentLength));
+        var truncatedContent = textTemplateResult.Substring(
+                                                            0,
+                                                            Math.Min(
+                                                                     textTemplateResult.Length,
+                                                                     DiscordConstants.MaxEmbedContentLength));
 
         var eb = new DiscordEmbedBuilder()
             .WithTitle(dictionary == OrdbokDictionaryMap.Bokmal ? "Bokmålsordboka" : "Nynorskordboka")
@@ -124,10 +129,14 @@ public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>
         await ctx.RespondAsync(mb);
 
         if (imageFileStream != null)
+        {
             await imageFileStream.DisposeAsync();
+        }
 
         if (htmlFileStream != null)
+        {
             await htmlFileStream.DisposeAsync();
+        }
     }
 
     private async Task<string> RenderTextTemplate(List<Vm.Article> articles)

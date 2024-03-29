@@ -11,25 +11,39 @@ using Nellebot.Services.Loggers;
 namespace Nellebot.NotificationHandlers;
 
 public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotification>,
-                                    INotificationHandler<SessionCreatedOrResumedNotification>,
-                                    INotificationHandler<ClientDisconnected>
+    INotificationHandler<SessionCreatedOrResumedNotification>,
+    INotificationHandler<ClientDisconnected>
 {
     // POC: Make better
-    public static bool IsClientActuallyReady = false;
+    private static bool IsClientActuallyReady;
 
     private readonly BotSettingsService _botSettingsService;
-    private readonly MessageRefsService _messageRefsService;
     private readonly DiscordLogger _discordLogger;
     private readonly ILogger<ClientStatusHandler> _logger;
+    private readonly MessageRefsService _messageRefsService;
     private readonly BotOptions _options;
 
-    public ClientStatusHandler(BotSettingsService botSettingsService, MessageRefsService messageRefsService, DiscordLogger discordLogger, ILogger<ClientStatusHandler> logger, IOptions<BotOptions> options)
+    public ClientStatusHandler(
+        BotSettingsService botSettingsService,
+        MessageRefsService messageRefsService,
+        DiscordLogger discordLogger,
+        ILogger<ClientStatusHandler> logger,
+        IOptions<BotOptions> options)
     {
         _botSettingsService = botSettingsService;
         _messageRefsService = messageRefsService;
         _discordLogger = discordLogger;
         _logger = logger;
         _options = options.Value;
+    }
+
+    public Task Handle(ClientDisconnected notification, CancellationToken cancellationToken)
+    {
+        IsClientActuallyReady = false;
+
+        _logger.LogInformation($"Bot disconected {notification.EventArgs.CloseMessage}");
+
+        return Task.CompletedTask;
     }
 
     public Task Handle(ClientHeartbeatNotification notification, CancellationToken cancellationToken)
@@ -58,7 +72,7 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
 
             _logger.LogDebug(message);
 
-            _discordLogger.LogExtendedActivityMessage(message.ToString());
+            _discordLogger.LogExtendedActivityMessage(message);
         }
 
         if (_options.AutoPopulateMessagesOnReadyEnabled)
@@ -73,14 +87,5 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
         }
 
         IsClientActuallyReady = true;
-    }
-
-    public Task Handle(ClientDisconnected notification, CancellationToken cancellationToken)
-    {
-        IsClientActuallyReady = false;
-
-        _logger.LogInformation($"Bot disconected {notification.EventArgs.CloseMessage}");
-
-        return Task.CompletedTask;
     }
 }

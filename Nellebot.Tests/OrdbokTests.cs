@@ -8,41 +8,40 @@ using Nellebot.Services.Ordbok;
 using NSubstitute;
 using OrdbokApi = Nellebot.Common.Models.Ordbok.Api;
 
-namespace Nellebot.Tests
+namespace Nellebot.Tests;
+
+[TestClass]
+[Ignore]
+public class OrdbokTests
 {
-    [TestClass]
-    [Ignore]
-    public class OrdbokTests
+    [TestMethod]
+    public async Task TestArticleDeserialization()
     {
-        [TestMethod]
-        public async Task TestArticleDeserialization()
+        var directory = AppDomain.CurrentDomain.BaseDirectory;
+
+        var file = Path.Combine(directory, "TestFiles/test.json");
+
+        var json = await File.ReadAllTextAsync(file);
+
+        try
         {
-            var directory = AppDomain.CurrentDomain.BaseDirectory;
+            var result = JsonSerializer.Deserialize<OrdbokApi.Article>(json);
 
-            var file = Path.Combine(directory, "TestFiles/test.json");
+            var localizationService = Substitute.For<ILocalizationService>();
 
-            var json = await File.ReadAllTextAsync(file);
+            localizationService
+                .GetString(Arg.Any<string>(), Arg.Any<LocalizationResource>(), Arg.Any<string>())
+                .Returns(x => x[0]);
 
-            try
-            {
-                var result = JsonSerializer.Deserialize<OrdbokApi.Article>(json);
+            var ordbokContentParser = new OrdbokContentParser(localizationService);
 
-                var localizationService = Substitute.For<ILocalizationService>();
+            var modelMapper = new OrdbokModelMapper(ordbokContentParser, localizationService);
 
-                localizationService
-                    .GetString(Arg.Any<string>(), Arg.Any<LocalizationResource>(), Arg.Any<string>())
-                    .Returns(x => x[0]);
-
-                var ordbokContentParser = new OrdbokContentParser(localizationService);
-
-                var modelMapper = new OrdbokModelMapper(ordbokContentParser, localizationService);
-
-                var article = modelMapper.MapArticle(result!, "bm");
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail(ex.ToString());
-            }
+            var article = modelMapper.MapArticle(result!, "bm");
+        }
+        catch (Exception ex)
+        {
+            Assert.Fail(ex.ToString());
         }
     }
 }

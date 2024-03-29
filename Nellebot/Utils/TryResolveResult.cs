@@ -1,39 +1,40 @@
 ﻿using System;
 
-namespace Nellebot.Utils
+namespace Nellebot.Utils;
+
+public class TryResolveResult<T>
 {
-    public class TryResolveResult<T>
+    private T _value = default!;
+
+    private TryResolveResult(bool resolved, string errorMessage)
     {
-        private T _value = default!;
+        Resolved = resolved;
+        ErrorMessage = errorMessage;
+    }
 
-        public bool Resolved { get; private set; }
-        public string ErrorMessage { get; private set; } = string.Empty;
-        public T Value
-        {
-            get => _value ?? throw new NullReferenceException();
-            private set => _value = value;
-        }
+    private TryResolveResult(T value)
+    {
+        Resolved = true;
+        Value = value;
+    }
 
-        private TryResolveResult(bool resolved, string errorMessage)
-        {
-            Resolved = resolved;
-            ErrorMessage = errorMessage;
-        }
+    public bool Resolved { get; private set; }
 
-        private TryResolveResult(T value)
-        {
-            Resolved = true;
-            Value = value;
-        }
+    public string ErrorMessage { get; private set; } = string.Empty;
 
-        public static TryResolveResult<T> FromValue(T result)
-        {
-            return new TryResolveResult<T>(result);
-        }
+    public T Value
+    {
+        get => _value ?? throw new NullReferenceException();
+        private set => _value = value;
+    }
 
-        public static TryResolveResult<T> FromError(string errorMessage)
-        {
-            return new TryResolveResult<T>(false, errorMessage);
-        }
+    public static TryResolveResult<T> FromValue(T result)
+    {
+        return new TryResolveResult<T>(result);
+    }
+
+    public static TryResolveResult<T> FromError(string errorMessage)
+    {
+        return new TryResolveResult<T>(false, errorMessage);
     }
 }
