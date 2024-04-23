@@ -68,7 +68,10 @@ public class AdminModule : BaseCommandModule
         DiscordChannel channel = ctx.Guild.GetChannel(channelId);
 
         var messagesToDelete = new List<DiscordMessage>();
-        await foreach (DiscordMessage m in channel.GetMessagesAfterAsync(messageId, 1000)) messagesToDelete.Add(m);
+        await foreach (DiscordMessage m in channel.GetMessagesAfterAsync(messageId, 1000))
+        {
+            messagesToDelete.Add(m);
+        }
 
         await channel.DeleteMessagesAsync(messagesToDelete);
 
@@ -81,7 +84,9 @@ public class AdminModule : BaseCommandModule
         List<ModmailTicket> expiredTickets = await _modmailTicketRepo.GetOpenExpiredTickets(TimeSpan.FromSeconds(1));
 
         foreach (ModmailTicket ticket in expiredTickets)
+        {
             await _mediator.Send(new CloseInactiveModmailTicketCommand(ticket));
+        }
 
         await ctx.Channel.SendMessageAsync($"Closed {expiredTickets.Count} tickets");
     }

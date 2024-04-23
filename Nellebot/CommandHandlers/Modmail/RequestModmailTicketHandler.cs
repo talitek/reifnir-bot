@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity;
@@ -213,7 +212,10 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             """;
 
         var realNameButton = new DiscordButtonComponent(DiscordButtonStyle.Primary, RealNameButtonId, realName);
-        var pseudonymButton = new DiscordButtonComponent(DiscordButtonStyle.Primary, PseudonymButtonId, "Random pseudonym");
+        var pseudonymButton = new DiscordButtonComponent(
+            DiscordButtonStyle.Primary,
+            PseudonymButtonId,
+            "Random pseudonym");
         var cancelButton = new DiscordButtonComponent(DiscordButtonStyle.Secondary, CancelButtonId, "Cancel");
 
         DiscordMessageBuilder introMessageBuilder = new DiscordMessageBuilder()

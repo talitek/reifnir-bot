@@ -152,3 +152,42 @@ dotnet_diagnostic.CS1591.severity   = none        # Missing XML comment for publ
 # Source-generated code
 
 dotnet_diagnostic.SYSLIB1045.severity   = none     # Convert to 'GeneratedRegexAttribute'.
+
+### Rider auto-generated rules ###
+
+# Microsoft .NET properties
+csharp_preferred_modifier_order = public, protected, private, internal, file, new, static, abstract, virtual, sealed, override, async, extern, unsafe, volatile, readonly, required:suggestion
+csharp_preserve_single_line_blocks = true
+csharp_style_var_elsewhere = false:none
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:none
+dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity:none
+dotnet_style_parentheses_in_other_binary_operators = always_for_clarity:none
+dotnet_style_parentheses_in_relational_binary_operators = never_if_unnecessary:none
+
+# ReSharper properties
+resharper_blank_lines_after_control_transfer_statements = 1
+resharper_blank_lines_around_single_line_auto_property = 1
+resharper_braces_for_for = required
+resharper_braces_for_foreach = required
+resharper_braces_for_ifelse = not_required
+resharper_braces_for_while = required
+resharper_braces_redundant = false
+resharper_csharp_empty_block_style = together
+resharper_csharp_insert_final_newline = true
+resharper_csharp_wrap_after_declaration_lpar = true
+resharper_csharp_wrap_arguments_style = chop_if_long
+resharper_csharp_wrap_before_binary_opsign = true
+resharper_csharp_wrap_extends_list_style = chop_always
+resharper_csharp_wrap_parameters_style = chop_if_long
+resharper_for_built_in_types = use_var_when_evident
+resharper_instance_members_qualify_declared_in =
+resharper_keep_existing_embedded_block_arrangement = false
+resharper_keep_existing_enum_arrangement = false
+resharper_nested_ternary_style = expanded
+resharper_parentheses_same_type_operations = true
+resharper_place_accessorholder_attribute_on_same_line = false
+resharper_place_expr_property_on_single_line = true
+resharper_place_simple_embedded_statement_on_same_line = true
+resharper_place_simple_initializer_on_single_line = false
+resharper_trailing_comma_in_multiline_lists = true

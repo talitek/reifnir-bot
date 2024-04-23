@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity;
@@ -151,7 +150,11 @@ public class RoleModule : ApplicationCommandModule
             bool isMandatory = roleGroup == roleGroups.First();
 
             const string skipButtonId = "skip_button";
-            var skipButton = new DiscordButtonComponent(DiscordButtonStyle.Secondary, skipButtonId, "Skip", isMandatory);
+            var skipButton = new DiscordButtonComponent(
+                DiscordButtonStyle.Secondary,
+                skipButtonId,
+                "Skip",
+                isMandatory);
 
             DiscordMessage theMessage = await PresentRolesDropdown(ctx, roleGroup, user, roleDropdownId, skipButton);
 
@@ -191,9 +194,15 @@ public class RoleModule : ApplicationCommandModule
             rolesToRemove.AddRange(rolesFromGroupToRemove);
         }
 
-        foreach (ulong roleToAdd in rolesToAdd) await GrantDiscordRole(ctx, roleToAdd);
+        foreach (ulong roleToAdd in rolesToAdd)
+        {
+            await GrantDiscordRole(ctx, roleToAdd);
+        }
 
-        foreach (ulong roleToRemove in rolesToRemove) await RevokeDiscordRole(ctx, roleToRemove);
+        foreach (ulong roleToRemove in rolesToRemove)
+        {
+            await RevokeDiscordRole(ctx, roleToRemove);
+        }
 
         // Respond by editing the deferred message with a thank you message
         DiscordWebhookBuilder responseBuilder = new DiscordWebhookBuilder().WithContent("Enjoy your new roles!");
@@ -277,13 +286,19 @@ public class RoleModule : ApplicationCommandModule
                 .Except(user.Roles.Select(r => r.Id))
                 .ToList();
 
-            foreach (ulong roleToAdd in rolesToAdd) await GrantDiscordRole(ctx, roleToAdd);
+            foreach (ulong roleToAdd in rolesToAdd)
+            {
+                await GrantDiscordRole(ctx, roleToAdd);
+            }
 
             IEnumerable<ulong> rolesToRemove = user.Roles.Select(r => r.Id)
                 .Intersect(roleGroupToChange.ToList().Select(r => r.RoleId))
                 .Except(chosenRoleIds);
 
-            foreach (ulong roleToRemove in rolesToRemove) await RevokeDiscordRole(ctx, roleToRemove);
+            foreach (ulong roleToRemove in rolesToRemove)
+            {
+                await RevokeDiscordRole(ctx, roleToRemove);
+            }
         }
 
         // Respond by editing the deferred message with a thank you message

@@ -35,7 +35,10 @@ public class MessageBuffer
         {
             var allMessages = new List<string>();
 
-            while (_messageQueue.TryDequeue(out string? message)) allMessages.Add(message);
+            while (_messageQueue.TryDequeue(out string? message))
+            {
+                allMessages.Add(message);
+            }
 
             _ = InvokeCallbackAsync(allMessages);
         }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
@@ -59,7 +58,10 @@ public class TrustedMemberModule : BaseCommandModule
             IEnumerable<DiscordChannel> textChannelsForCategory =
                 guildChannels.Where(c => c.Type == DiscordChannelType.Text && c.ParentId == category.Id);
 
-            foreach (DiscordChannel channel in textChannelsForCategory) sb.AppendLine($"#{channel.Name}");
+            foreach (DiscordChannel channel in textChannelsForCategory)
+            {
+                sb.AppendLine($"#{channel.Name}");
+            }
 
             sb.AppendLine();
         }

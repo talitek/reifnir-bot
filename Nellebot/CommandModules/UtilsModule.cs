@@ -49,13 +49,19 @@ public class UtilsModule : BaseCommandModule
         byte[] bytes = unicodeEncoding.GetBytes(emoji.Name);
 
         var sb = new StringBuilder();
-        for (var i = 0; i < bytes.Length; i++) sb.AppendFormat("{0:X2}", bytes[i]);
+        for (var i = 0; i < bytes.Length; i++)
+        {
+            sb.AppendFormat("{0:X2}", bytes[i]);
+        }
 
         var bytesAsString = sb.ToString();
 
         var formattedSb = new StringBuilder();
 
-        for (var i = 0; i < sb.Length; i += 4) formattedSb.Append($"\\u{bytesAsString.Substring(i, 4)}");
+        for (var i = 0; i < sb.Length; i += 4)
+        {
+            formattedSb.Append($"\\u{bytesAsString.Substring(i, 4)}");
+        }
 
         var result = formattedSb.ToString();
 
