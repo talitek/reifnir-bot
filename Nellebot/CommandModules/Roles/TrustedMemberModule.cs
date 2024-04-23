@@ -49,7 +49,7 @@ public class TrustedMemberModule : BaseCommandModule
 
         IEnumerable<DiscordChannel> categoryChannels = guildChannels
             .Where(
-                c => c.Type == ChannelType.Category
+                c => c.Type == DiscordChannelType.Category
                      && groupIds.Contains(c.Id));
 
         foreach (DiscordChannel category in categoryChannels)
@@ -57,7 +57,7 @@ public class TrustedMemberModule : BaseCommandModule
             sb.AppendLine($"**{category.Name}**");
 
             IEnumerable<DiscordChannel> textChannelsForCategory =
-                guildChannels.Where(c => c.Type == ChannelType.Text && c.ParentId == category.Id);
+                guildChannels.Where(c => c.Type == DiscordChannelType.Text && c.ParentId == category.Id);
 
             foreach (DiscordChannel channel in textChannelsForCategory) sb.AppendLine($"#{channel.Name}");
 

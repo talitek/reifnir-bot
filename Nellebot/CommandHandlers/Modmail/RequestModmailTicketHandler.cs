@@ -212,9 +212,9 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
             Would you like to send the message as **{realName}** or do you want to use a random pseudonym?
             """;
 
-        var realNameButton = new DiscordButtonComponent(ButtonStyle.Primary, RealNameButtonId, realName);
-        var pseudonymButton = new DiscordButtonComponent(ButtonStyle.Primary, PseudonymButtonId, "Random pseudonym");
-        var cancelButton = new DiscordButtonComponent(ButtonStyle.Secondary, CancelButtonId, "Cancel");
+        var realNameButton = new DiscordButtonComponent(DiscordButtonStyle.Primary, RealNameButtonId, realName);
+        var pseudonymButton = new DiscordButtonComponent(DiscordButtonStyle.Primary, PseudonymButtonId, "Random pseudonym");
+        var cancelButton = new DiscordButtonComponent(DiscordButtonStyle.Secondary, CancelButtonId, "Cancel");
 
         DiscordMessageBuilder introMessageBuilder = new DiscordMessageBuilder()
             .WithContent(introMessageContent)
@@ -234,7 +234,7 @@ public class RequestModmailTicketHandler : IRequestHandler<RequestModmailTicketC
         choiceInteractionResponseBuilder.ClearComponents();
 
         await interactionResult.Result.Interaction.CreateResponseAsync(
-            InteractionResponseType.UpdateMessage,
+            DiscordInteractionResponseType.UpdateMessage,
             choiceInteractionResponseBuilder);
 
         return interactionResult.Result.Id;

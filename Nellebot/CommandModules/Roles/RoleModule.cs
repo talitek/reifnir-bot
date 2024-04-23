@@ -66,7 +66,7 @@ public class RoleModule : ApplicationCommandModule
     {
         // Respond with either CreateResponseAsync directly
         // Or DeferAsync + EditResponseAsync
-        var aButton = new DiscordButtonComponent(ButtonStyle.Primary, "aButton", "Click me");
+        var aButton = new DiscordButtonComponent(DiscordButtonStyle.Primary, "aButton", "Click me");
 
         DiscordInteractionResponseBuilder interactionBuilder = new DiscordInteractionResponseBuilder()
             .WithContent("I does da test")
@@ -98,7 +98,7 @@ public class RoleModule : ApplicationCommandModule
             .WithContent("Thanks for clicking me");
 
         await interactionResult.Result.Interaction.CreateResponseAsync(
-            InteractionResponseType.UpdateMessage,
+            DiscordInteractionResponseType.UpdateMessage,
             responseBuilder);
     }
 
@@ -151,7 +151,7 @@ public class RoleModule : ApplicationCommandModule
             bool isMandatory = roleGroup == roleGroups.First();
 
             const string skipButtonId = "skip_button";
-            var skipButton = new DiscordButtonComponent(ButtonStyle.Secondary, skipButtonId, "Skip", isMandatory);
+            var skipButton = new DiscordButtonComponent(DiscordButtonStyle.Secondary, skipButtonId, "Skip", isMandatory);
 
             DiscordMessage theMessage = await PresentRolesDropdown(ctx, roleGroup, user, roleDropdownId, skipButton);
 
@@ -169,7 +169,7 @@ public class RoleModule : ApplicationCommandModule
             // Acknowledge the interaction.
             // This deferred message will be handled either in the next interation or outside the loop when we're done
             await roleDropdownInteractionResult.Result.Interaction.CreateResponseAsync(
-                InteractionResponseType
+                DiscordInteractionResponseType
                     .DeferredMessageUpdate);
 
             bool isSkipped = roleDropdownInteractionResult.Result.Id == skipButtonId;
@@ -234,7 +234,7 @@ public class RoleModule : ApplicationCommandModule
 
             // Acknowledge the interaction
             await theMessageInteractivityResult.Result.Interaction.CreateResponseAsync(
-                InteractionResponseType
+                DiscordInteractionResponseType
                     .DeferredMessageUpdate);
 
             string chosenButtonId = theMessageInteractivityResult.Result.Id;
@@ -247,7 +247,7 @@ public class RoleModule : ApplicationCommandModule
                 ? roleGroups.Single(g => g.Key?.Id == uint.Parse(chosenButtonId))
                 : roleGroups.Single(g => g.Key == null);
 
-            var backButton = new DiscordButtonComponent(ButtonStyle.Secondary, backButtonId, "Back");
+            var backButton = new DiscordButtonComponent(DiscordButtonStyle.Secondary, backButtonId, "Back");
 
             theMessage = await PresentRolesDropdown(ctx, roleGroupToChange, user, roleDropdownId, backButton);
 
@@ -264,7 +264,7 @@ public class RoleModule : ApplicationCommandModule
 
             // Just acknowledge interaction
             await roleDropdownInteractionResult.Result.Interaction.CreateResponseAsync(
-                InteractionResponseType
+                DiscordInteractionResponseType
                     .DeferredMessageUpdate);
 
             bool isBackOption = roleDropdownInteractionResult.Result.Id == backButtonId;
@@ -304,10 +304,10 @@ public class RoleModule : ApplicationCommandModule
             string buttonId = roleGroup.Key?.Id.ToString() ?? "none";
             string buttonLabel = roleGroup.Key != null ? $"{roleGroup.Key.Name} roles" : "Ungrouped roles";
 
-            categoryButtonRow.Add(new DiscordButtonComponent(ButtonStyle.Primary, buttonId, buttonLabel));
+            categoryButtonRow.Add(new DiscordButtonComponent(DiscordButtonStyle.Primary, buttonId, buttonLabel));
         }
 
-        var exitButton = new DiscordButtonComponent(ButtonStyle.Secondary, exitButtonId, "Exit");
+        var exitButton = new DiscordButtonComponent(DiscordButtonStyle.Secondary, exitButtonId, "Exit");
 
         DiscordWebhookBuilder roleGroupButtonsResponse = new DiscordWebhookBuilder()
             .WithContent("Select a role group")

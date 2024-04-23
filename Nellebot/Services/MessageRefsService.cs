@@ -35,7 +35,7 @@ public class MessageRefsService
     {
         DiscordGuild guild = _discordResolver.ResolveGuild();
 
-        List<DiscordChannel>? channels = guild.Channels.Values.Where(c => c.Type == ChannelType.Text).ToList();
+        List<DiscordChannel>? channels = guild.Channels.Values.Where(c => c.Type == DiscordChannelType.Text).ToList();
 
         if (channels == null || !channels.Any())
         {
@@ -113,7 +113,7 @@ public class MessageRefsService
     {
         var createdMessages = new List<DiscordMessage>();
 
-        List<DiscordChannel> channels = guild.Channels.Values.Where(c => c.Type == ChannelType.Text).ToList();
+        List<DiscordChannel> channels = guild.Channels.Values.Where(c => c.Type == DiscordChannelType.Text).ToList();
 
         const int messageBatchSize = 1000;
 
