@@ -65,7 +65,7 @@ public class AdminModule : BaseCommandModule
     [Command("delete-spam-after")]
     public async Task DeleteSpam(CommandContext ctx, ulong channelId, ulong messageId)
     {
-        DiscordChannel channel = ctx.Guild.GetChannel(channelId);
+        DiscordChannel channel = await ctx.Guild.GetChannelAsync(channelId);
 
         var messagesToDelete = new List<DiscordMessage>();
         await foreach (DiscordMessage m in channel.GetMessagesAfterAsync(messageId, 1000))
