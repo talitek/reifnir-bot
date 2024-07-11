@@ -5,7 +5,6 @@ using Nellebot.Common.Models;
 using Nellebot.Common.Models.Modmail;
 using Nellebot.Common.Models.Ordbok.Store;
 using Nellebot.Common.Models.UserLogs;
-using Nellebot.Common.Models.UserRoles;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 namespace Nellebot.Data;
@@ -35,30 +34,6 @@ public class BotDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
-        builder.Entity<UserRole>()
-            .HasIndex(x => x.RoleId)
-            .IsUnique();
-
-        builder.Entity<UserRole>()
-            .Property(x => x.Name)
-            .HasMaxLength(256);
-
-        builder.Entity<UserRoleAlias>()
-            .HasIndex(x => x.Alias)
-            .IsUnique();
-
-        builder.Entity<UserRoleAlias>()
-            .Property(x => x.Alias)
-            .HasMaxLength(256);
-
-        builder.Entity<UserRoleGroup>()
-            .Property(x => x.Id)
-            .ValueGeneratedNever();
-
-        builder.Entity<UserRoleGroup>()
-            .Property(x => x.Name)
-            .HasMaxLength(256);
-
         builder.Entity<AwardMessage>()
             .HasIndex(x => x.OriginalMessageId)
             .IsUnique();
@@ -124,12 +99,6 @@ public class BotDbContext : DbContext
             .HasMaxLength(256);
     }
 #pragma warning disable SA1201 // Elements should appear in the correct order
-    public DbSet<UserRole> UserRoles { get; set; }
-
-    public DbSet<UserRoleAlias> UserRoleAliases { get; set; }
-
-    public DbSet<UserRoleGroup> UserRoleGroups { get; set; }
-
     public DbSet<AwardMessage> AwardMessages { get; set; }
 
     public DbSet<BotSettting> GuildSettings { get; set; }

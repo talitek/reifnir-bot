@@ -93,7 +93,6 @@ public class BotWorker : IHostedService
             _client.UseSlashCommands(new SlashCommandsConfiguration { Services = _serviceProvider });
 
         slashCommands.RegisterCommands<GlobalSlashModule>();
-        slashCommands.RegisterCommands<RoleModule>(_options.GuildId);
         slashCommands.RegisterCommands<ModmailModule>(_options.GuildId);
         slashCommands.RegisterCommands<OrdbokSlashModule>(_options.GuildId);
     }
