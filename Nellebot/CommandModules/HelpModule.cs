@@ -52,7 +52,6 @@ public class HelpModule : BaseCommandModule
 
         sb.AppendLine();
         sb.AppendLine("Staff commands:");
-        sb.AppendLine($"`{commandPrefix}help user-role`");
         sb.AppendLine($"`{commandPrefix}help admin-misc`");
 
         sb.AppendLine();
@@ -60,39 +59,6 @@ public class HelpModule : BaseCommandModule
             "Reifnir source code: [github.com/NELLE-reifnir-bot/reifnir-bot](https://github.com/NELLE-reifnir-bot/reifnir-bot)");
 
         DiscordEmbed eb = EmbedBuilderHelper.BuildSimpleEmbed("Help", sb.ToString());
-
-        return ctx.RespondAsync(eb);
-    }
-
-    [Command("user-role")]
-    public Task HelpUserRole(CommandContext ctx)
-    {
-        var sb = new StringBuilder();
-
-        var command = $"{_options.CommandPrefix}user-role";
-
-        sb.AppendLine($"`{command} list-roles`");
-        sb.AppendLine($"`{command} create-role [role] [?alias-list]`");
-        sb.AppendLine($"`{command} delete-role [role]`");
-        sb.AppendLine($"`{command} add-alias [role] [alias-name]`");
-        sb.AppendLine($"`{command} remove-alias [role] [alias-name]`");
-        sb.AppendLine($"`{command} set-group [role] [group-number]`");
-        sb.AppendLine($"`{command} unset-group [role]`");
-        sb.AppendLine($"`{command} set-group-name [group-number] [group-name]`");
-        sb.AppendLine($"`{command} set-group-mutex [group-number] [true/false]`");
-        sb.AppendLine($"`{command} delete-group [group-number]`");
-        sb.AppendLine($"`{command} sync-roles`");
-
-        sb.AppendLine();
-        sb.AppendLine("Command arguments:");
-        sb.AppendLine("`role           .. Discord role name, Discord role Id`");
-        sb.AppendLine("`                  or Discord role @mention`");
-        sb.AppendLine("`alias-name     .. User role alias (used when assigning role)`");
-        sb.AppendLine("`alias-list     .. Alias names (comma separated values, optional)`");
-        sb.AppendLine("`group-number   .. User role group number (positive whole number)`");
-        sb.AppendLine("`group-name     .. User role group name`");
-
-        DiscordEmbed eb = EmbedBuilderHelper.BuildSimpleEmbed("User role commands", sb.ToString());
 
         return ctx.RespondAsync(eb);
     }

@@ -122,7 +122,6 @@ public class Program
 
     private static void AddRepositories(IServiceCollection services)
     {
-        services.AddTransient<IUserRoleRepository, UserRoleRepository>();
         services.AddTransient<AwardMessageRepository>();
         services.AddTransient<BotSettingsRepository>();
         services.AddTransient<MessageRefRepository>();
@@ -137,8 +136,6 @@ public class Program
         services.AddTransient<AuthorizationService>();
         services.AddTransient<IDiscordErrorLogger, DiscordErrorLogger>();
         services.AddTransient<DiscordLogger>();
-        services.AddTransient<UserRoleService>();
-        services.AddTransient<RoleService>();
         services.AddTransient<AwardMessageService>();
         services.AddTransient<DiscordResolver>();
         services.AddTransient<ScribanTemplateLoader>();

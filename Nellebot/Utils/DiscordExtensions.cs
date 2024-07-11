@@ -7,11 +7,6 @@ namespace Nellebot.Utils;
 
 public static class DiscordExtensions
 {
-    public static string GetDetailedUserIdentifier(this DiscordUser user)
-    {
-        return $"{user.GetFullUsername()} ({user.Id})";
-    }
-
     public static string GetDetailedMemberIdentifier(this DiscordMember member, bool useMention = false)
     {
         string memberUsername = member.Username;
