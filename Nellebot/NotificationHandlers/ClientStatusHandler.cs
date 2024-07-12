@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using DSharpPlus;
+using DSharpPlus.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -11,7 +13,9 @@ using Nellebot.Services.Loggers;
 namespace Nellebot.NotificationHandlers;
 
 public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotification>,
-    INotificationHandler<SessionCreatedOrResumedNotification>,
+    INotificationHandler<SessionCreatedNotification>,
+    INotificationHandler<SessionResumedOrDownloadCompletedNotification>,
+    INotificationHandler<ClientConnected>,
     INotificationHandler<ClientDisconnected>
 {
     // POC: Make better
@@ -20,6 +24,7 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
     private readonly BotSettingsService _botSettingsService;
     private readonly DiscordLogger _discordLogger;
     private readonly ILogger<ClientStatusHandler> _logger;
+    private readonly DiscordClient _client;
     private readonly MessageRefsService _messageRefsService;
     private readonly BotOptions _options;
 
@@ -28,22 +33,15 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
         MessageRefsService messageRefsService,
         DiscordLogger discordLogger,
         ILogger<ClientStatusHandler> logger,
-        IOptions<BotOptions> options)
+        IOptions<BotOptions> options,
+        DiscordClient client)
     {
         _botSettingsService = botSettingsService;
         _messageRefsService = messageRefsService;
         _discordLogger = discordLogger;
         _logger = logger;
+        _client = client;
         _options = options.Value;
-    }
-
-    public Task Handle(ClientDisconnected notification, CancellationToken cancellationToken)
-    {
-        IsClientActuallyReady = false;
-
-        _logger.LogInformation("Bot disconnected {message}", notification.EventArgs.CloseMessage);
-
-        return Task.CompletedTask;
     }
 
     public async Task Handle(ClientHeartbeatNotification notification, CancellationToken cancellationToken)
@@ -62,7 +60,25 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
         await _botSettingsService.SetLastHeartbeat(notification.Timestamp);
     }
 
-    public async Task Handle(SessionCreatedOrResumedNotification notification, CancellationToken cancellationToken)
+    public async Task Handle(SessionCreatedNotification notification, CancellationToken cancellationToken)
+    {
+        try
+        {
+            string commandPrefix = _options.CommandPrefix;
+
+            var activity = new DiscordActivity($"\"{commandPrefix}help\" for help", DiscordActivityType.Playing);
+
+            await _client.UpdateStatusAsync(activity);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "OnSessionCreated");
+        }
+    }
+
+    public async Task Handle(
+        SessionResumedOrDownloadCompletedNotification notification,
+        CancellationToken cancellationToken)
     {
         DateTimeOffset lastHeartbeat = await _botSettingsService.GetLastHeartbeat() ?? DateTimeOffset.UtcNow;
 
@@ -90,5 +106,20 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
         }
 
         IsClientActuallyReady = true;
+    }
+
+    public Task Handle(ClientConnected notification, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Bot connected");
+        return Task.CompletedTask;
+    }
+
+    public Task Handle(ClientDisconnected notification, CancellationToken cancellationToken)
+    {
+        IsClientActuallyReady = false;
+
+        _logger.LogInformation("Bot disconnected {message}", notification.EventArgs.CloseMessage);
+
+        return Task.CompletedTask;
     }
 }

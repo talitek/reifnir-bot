@@ -15,7 +15,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.CommandModules;
 using Nellebot.CommandModules.Messages;
-using Nellebot.NotificationHandlers;
 
 namespace Nellebot.Workers;
 
@@ -23,7 +22,6 @@ public class BotWorker : IHostedService
 {
     private readonly DiscordClient _client;
     private readonly CommandEventHandler _commandEventHandler;
-    private readonly EventQueueChannel _eventQueue;
     private readonly ILogger<BotWorker> _logger;
     private readonly BotOptions _options;
     private readonly IServiceProvider _serviceProvider;
@@ -33,15 +31,13 @@ public class BotWorker : IHostedService
         ILogger<BotWorker> logger,
         DiscordClient client,
         IServiceProvider serviceProvider,
-        CommandEventHandler commandEventHandler,
-        EventQueueChannel eventQueue)
+        CommandEventHandler commandEventHandler)
     {
         _options = options.Value;
         _logger = logger;
         _client = client;
         _serviceProvider = serviceProvider;
         _commandEventHandler = commandEventHandler;
-        _eventQueue = eventQueue;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -53,11 +49,6 @@ public class BotWorker : IHostedService
         RegisterSlashCommands();
 
         ConfigureInteractivity();
-
-        RegisterLifecycleEventHandlers();
-
-        RegisterMessageHandlers();
-        RegisterGuildEventHandlers();
 
         await _client.ConnectAsync();
     }
@@ -102,86 +93,5 @@ public class BotWorker : IHostedService
             {
                 PaginationBehaviour = PaginationBehaviour.Ignore,
             });
-    }
-
-    private void RegisterMessageHandlers()
-    {
-        _client.MessageReactionAdded += (_, args) =>
-            _eventQueue.Writer.WriteAsync(new MessageReactionAddedNotification(args)).AsTask();
-        _client.MessageReactionRemoved += (_, args) =>
-            _eventQueue.Writer.WriteAsync(new MessageReactionRemovedNotification(args)).AsTask();
-        _client.MessageCreated += (_, args) =>
-            _eventQueue.Writer.WriteAsync(new MessageCreatedNotification(args)).AsTask();
-        _client.MessageUpdated += (_, args) =>
-            _eventQueue.Writer.WriteAsync(new MessageUpdatedNotification(args)).AsTask();
-        _client.MessageDeleted += (_, args) =>
-            _eventQueue.Writer.WriteAsync(new MessageDeletedNotification(args)).AsTask();
-        _client.MessagesBulkDeleted += (_, args) =>
-            _eventQueue.Writer.WriteAsync(new MessageBulkDeletedNotification(args)).AsTask();
-    }
-
-    private void RegisterGuildEventHandlers()
-    {
-        _client.GuildMemberAdded += (_, args) =>
-            _eventQueue.Writer.WriteAsync(new GuildMemberAddedNotification(args)).AsTask();
-        _client.GuildMemberRemoved += (_, args) =>
-            _eventQueue.Writer.WriteAsync(new GuildMemberRemovedNotification(args)).AsTask();
-        _client.GuildMemberUpdated += (_, args) =>
-            _eventQueue.Writer.WriteAsync(new GuildMemberUpdatedNotification(args)).AsTask();
-        _client.GuildBanAdded += (_, args) =>
-            _eventQueue.Writer.WriteAsync(new GuildBanAddedNotification(args)).AsTask();
-        _client.GuildBanRemoved += (_, args) =>
-            _eventQueue.Writer.WriteAsync(new GuildBanRemovedNotification(args)).AsTask();
-    }
-
-    private void RegisterLifecycleEventHandlers()
-    {
-        _client.SocketOpened += OnClientConnected;
-        _client.SocketClosed += OnClientDisconnected;
-        _client.SessionCreated += OnSessionCreated;
-        _client.SessionResumed += OnSessionResumed;
-        _client.GuildDownloadCompleted += OnGuildDownloadCompleted;
-    }
-
-    private Task OnClientDisconnected(DiscordClient sender, SocketClosedEventArgs e)
-    {
-        return _eventQueue.Writer.WriteAsync(new ClientDisconnected(e)).AsTask();
-    }
-
-    private Task OnClientConnected(DiscordClient sender, SocketEventArgs e)
-    {
-        _logger.LogInformation("Bot connected");
-
-        return Task.CompletedTask;
-    }
-
-    private async Task OnSessionCreated(DiscordClient sender, SessionCreatedEventArgs e)
-    {
-        try
-        {
-            string commandPrefix = _options.CommandPrefix;
-
-            var activity = new DiscordActivity($"\"{commandPrefix}help\" for help", DiscordActivityType.Playing);
-
-            await _client.UpdateStatusAsync(activity);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "OnClientReady");
-        }
-    }
-
-    private Task OnSessionResumed(DiscordClient sender, SessionResumedEventArgs e)
-    {
-        _logger.LogInformation("Bot resumed");
-
-        return _eventQueue.Writer.WriteAsync(new SessionCreatedOrResumedNotification(nameof(OnSessionResumed)))
-            .AsTask();
-    }
-
-    private Task OnGuildDownloadCompleted(DiscordClient sender, GuildDownloadCompletedEventArgs args)
-    {
-        return _eventQueue.Writer.WriteAsync(new SessionCreatedOrResumedNotification(nameof(OnGuildDownloadCompleted)))
-            .AsTask();
     }
 }

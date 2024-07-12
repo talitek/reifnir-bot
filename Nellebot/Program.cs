@@ -1,15 +1,11 @@
 using System;
 using System.Threading.Channels;
-using DSharpPlus;
-using DSharpPlus.Clients;
-using DSharpPlus.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Nellebot.CommandHandlers;
 using Nellebot.CommandModules;
 using Nellebot.Data;
@@ -71,31 +67,9 @@ public class Program
 
                     AddDbContext(hostContext, services);
 
-                    AddDiscordClient(hostContext, services);
+                    services.AddDiscordClient(hostContext);
                 })
             .UseSystemd();
-    }
-
-    private static void AddDiscordClient(HostBuilderContext hostContext, IServiceCollection services)
-    {
-        string defaultLogLevel =
-            hostContext.Configuration.GetValue<string>("Logging:LogLevel:Default") ?? "Warning";
-        string botToken = hostContext.Configuration.GetValue<string>("Nellebot:BotToken") ??
-                          throw new Exception("Bot token not found");
-
-        var logLevel = Enum.Parse<LogLevel>(defaultLogLevel);
-
-        var builder = DiscordClientBuilder.CreateDefault(botToken, DiscordIntents.All, services);
-
-        builder.SetLogLevel(logLevel);
-
-        // This replacement has to happen after the DiscordClientBuilder.CreateDefault call
-        // and before the DiscordClient is built.
-        services.Replace<IGatewayController, NoWayGateway>();
-
-        DiscordClient client = builder.Build();
-
-        services.AddSingleton(client);
     }
 
     private static void AddDbContext(HostBuilderContext hostContext, IServiceCollection services)

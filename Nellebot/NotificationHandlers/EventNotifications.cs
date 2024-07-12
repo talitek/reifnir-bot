@@ -33,7 +33,11 @@ public record MessageBulkDeletedNotification(MessagesBulkDeletedEventArgs EventA
 
 public record ClientHeartbeatNotification(DateTime Timestamp, TimeSpan Ping) : EventNotification;
 
-public record SessionCreatedOrResumedNotification(string EventSource) : EventNotification;
+public record SessionCreatedNotification() : EventNotification;
+
+public record SessionResumedOrDownloadCompletedNotification(string EventSource) : EventNotification;
+
+public record ClientConnected(SocketOpenedEventArgs EventArgs) : EventNotification;
 
 public record ClientDisconnected(SocketClosedEventArgs EventArgs) : EventNotification;
 

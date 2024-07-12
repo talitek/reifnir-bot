@@ -1,4 +1,6 @@
-﻿using System.Threading.Channels;
+﻿using System;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 using MediatR;
 using Nellebot.CommandHandlers;
 
@@ -6,15 +8,7 @@ using Nellebot.CommandHandlers;
 
 namespace Nellebot.Workers;
 
-public interface IQueueChannel<T>
-    where T : class
-{
-    public ChannelWriter<T> Writer { get; }
-
-    public ChannelReader<T> Reader { get; }
-}
-
-public abstract class AbstractQueueChannel<T> : IQueueChannel<T>
+public abstract class AbstractQueueChannel<T> : IAsyncDisposable
     where T : class
 {
     private readonly Channel<T> _channel;
@@ -27,6 +21,13 @@ public abstract class AbstractQueueChannel<T> : IQueueChannel<T>
     public ChannelWriter<T> Writer => _channel.Writer;
 
     public ChannelReader<T> Reader => _channel.Reader;
+
+    public async ValueTask DisposeAsync()
+    {
+        _channel.Writer.TryComplete();
+        await _channel.Reader.Completion;
+        GC.SuppressFinalize(this);
+    }
 }
 
 public class RequestQueueChannel : AbstractQueueChannel<IRequest>
