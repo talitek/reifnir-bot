@@ -1,47 +1,47 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <UserSecretsId>dotnet-Nellebot-A35E98EA-550A-4966-AD77-530BC4395F56</UserSecretsId>
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <UserSecretsId>dotnet-Nellebot-A35E98EA-550A-4966-AD77-530BC4395F56</UserSecretsId>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02245" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="5.0.0-nightly-02245" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02245" />
-    <PackageReference Include="DSharpPlus.SlashCommands" Version="5.0.0-nightly-02245" />
-    <PackageReference Include="MediatR" Version="12.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Abstractions" Version="8.0.4" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="8.0.4" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.20.1" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.2" />
-    <PackageReference Include="PuppeteerSharp" Version="10.1.4" />
-    <PackageReference Include="Scriban" Version="5.10.0" />
-    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="ZooIds" Version="0.1.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02312"/>
+        <PackageReference Include="DSharpPlus.CommandsNext" Version="5.0.0-nightly-02312"/>
+        <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02312"/>
+        <PackageReference Include="DSharpPlus.SlashCommands" Version="5.0.0-nightly-02312"/>
+        <PackageReference Include="MediatR" Version="12.3.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.Abstractions" Version="8.0.7"/>
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="8.0.7"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="8.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0"/>
+        <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4"/>
+        <PackageReference Include="PuppeteerSharp" Version="10.1.4"/>
+        <PackageReference Include="Scriban" Version="5.10.0"/>
+        <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="ZooIds" Version="0.1.0"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Nellebot.Common\Nellebot.Common.csproj" />
-    <ProjectReference Include="..\Nellebot.Data\Nellebot.Data.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Nellebot.Common\Nellebot.Common.csproj"/>
+        <ProjectReference Include="..\Nellebot.Data\Nellebot.Data.csproj"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Update="Resources\ScribanTemplates\OrdbokArticleV2.sbntxt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\ScribanTemplates\OrdbokArticle.sbnhtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\ScribanTemplates\OrdbokArticle.sbntxt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+    <ItemGroup>
+        <None Update="Resources\ScribanTemplates\OrdbokArticleV2.sbntxt">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Resources\ScribanTemplates\OrdbokArticle.sbnhtml">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Resources\ScribanTemplates\OrdbokArticle.sbntxt">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 </Project>

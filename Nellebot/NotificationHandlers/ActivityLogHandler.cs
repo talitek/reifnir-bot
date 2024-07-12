@@ -53,7 +53,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
     public async Task Handle(GuildBanAddedNotification notification, CancellationToken cancellationToken)
     {
-        GuildBanAddEventArgs args = notification.EventArgs;
+        GuildBanAddedEventArgs args = notification.EventArgs;
 
         string memberName = args.Member.GetDetailedMemberIdentifier();
 
@@ -77,7 +77,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
     public async Task Handle(GuildBanRemovedNotification notification, CancellationToken cancellationToken)
     {
-        GuildBanRemoveEventArgs args = notification.EventArgs;
+        GuildBanRemovedEventArgs args = notification.EventArgs;
 
         string memberName = args.Member.GetDetailedMemberIdentifier();
 
@@ -100,7 +100,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
     public async Task Handle(GuildMemberAddedNotification notification, CancellationToken cancellationToken)
     {
-        GuildMemberAddEventArgs args = notification.EventArgs;
+        GuildMemberAddedEventArgs args = notification.EventArgs;
 
         DiscordMember member = args.Member;
 
@@ -114,7 +114,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
     public async Task Handle(GuildMemberRemovedNotification notification, CancellationToken cancellationToken)
     {
-        GuildMemberRemoveEventArgs args = notification.EventArgs;
+        GuildMemberRemovedEventArgs args = notification.EventArgs;
 
         DiscordMember member = args.Member;
         DiscordGuild guild = args.Guild;
@@ -165,7 +165,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
     {
         var totalChanges = 0;
 
-        GuildMemberUpdateEventArgs args = notification.EventArgs;
+        GuildMemberUpdatedEventArgs args = notification.EventArgs;
 
         int roleChanges = CheckForRolesUpdate(args);
         totalChanges += roleChanges;
@@ -186,7 +186,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
     public async Task Handle(MessageBulkDeletedNotification notification, CancellationToken cancellationToken)
     {
-        MessageBulkDeleteEventArgs args = notification.EventArgs;
+        var args = notification.EventArgs;
 
         if (args.Messages.Count == 0)
         {
@@ -276,7 +276,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
     public async Task Handle(MessageDeletedNotification notification, CancellationToken cancellationToken)
     {
-        MessageDeleteEventArgs args = notification.EventArgs;
+        var args = notification.EventArgs;
 
         DiscordGuild guild = args.Guild;
         DiscordChannel channel = args.Channel;
@@ -327,9 +327,9 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
             // Could not find any audit log entry for the author
             var warningMessage = $"""
-                Could not find any audit log entry for {authorNameMaybe} of type {DiscordAuditLogActionType.MessageDelete}.
-                The user likely deleted own message.
-                """;
+                                  Could not find any audit log entry for {authorNameMaybe} of type {DiscordAuditLogActionType.MessageDelete}.
+                                  The user likely deleted own message.
+                                  """;
             _discordErrorLogger.LogWarning($"{nameof(MessageDeletedNotification)}", warningMessage);
 
             return;
@@ -378,7 +378,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         _discordLogger.LogExtendedActivityMessage(logMessage);
     }
 
-    private async Task<bool> CheckForUsernameUpdate(GuildMemberUpdateEventArgs args)
+    private async Task<bool> CheckForUsernameUpdate(GuildMemberUpdatedEventArgs args)
     {
         string? usernameAfter = args.MemberAfter.GetFullUsername();
         string? usernameBefore = args.MemberBefore?.GetFullUsername();
@@ -399,7 +399,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         return true;
     }
 
-    private async Task<bool> CheckForNicknameUpdate(GuildMemberUpdateEventArgs args)
+    private async Task<bool> CheckForNicknameUpdate(GuildMemberUpdatedEventArgs args)
     {
         string? nicknameAfter = args.NicknameAfter;
         string? nicknameBefore = args.NicknameBefore;
@@ -423,7 +423,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
         return true;
     }
 
-    private int CheckForRolesUpdate(GuildMemberUpdateEventArgs args)
+    private int CheckForRolesUpdate(GuildMemberUpdatedEventArgs args)
     {
         List<DiscordRole> addedRoles = args.RolesAfter.ExceptBy(args.RolesBefore.Select(r => r.Id), x => x.Id).ToList();
         List<DiscordRole> removedRoles =

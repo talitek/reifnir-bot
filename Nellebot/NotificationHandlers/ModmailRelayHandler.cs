@@ -35,7 +35,7 @@ public class ModmailRelayHandler : INotificationHandler<MessageCreatedNotificati
 
     public Task Handle(MessageCreatedNotification notification, CancellationToken cancellationToken)
     {
-        MessageCreateEventArgs args = notification.EventArgs;
+        MessageCreatedEventArgs args = notification.EventArgs;
 
         DiscordChannel channel = args.Channel;
         DiscordUser user = args.Author;

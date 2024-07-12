@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Channels;
 using DSharpPlus;
+using DSharpPlus.Clients;
+using DSharpPlus.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
@@ -76,28 +78,24 @@ public class Program
 
     private static void AddDiscordClient(HostBuilderContext hostContext, IServiceCollection services)
     {
-        services.AddSingleton(
-            _ =>
-            {
-                string defaultLogLevel =
-                    hostContext.Configuration.GetValue<string>("Logging:LogLevel:Default") ?? "Warning";
-                string botToken = hostContext.Configuration.GetValue<string>("Nellebot:BotToken") ??
-                                  throw new Exception("Bot token not found");
+        string defaultLogLevel =
+            hostContext.Configuration.GetValue<string>("Logging:LogLevel:Default") ?? "Warning";
+        string botToken = hostContext.Configuration.GetValue<string>("Nellebot:BotToken") ??
+                          throw new Exception("Bot token not found");
 
-                var logLevel = Enum.Parse<LogLevel>(defaultLogLevel);
+        var logLevel = Enum.Parse<LogLevel>(defaultLogLevel);
 
-                var socketConfig = new DiscordConfiguration
-                {
-                    MinimumLogLevel = logLevel,
-                    TokenType = TokenType.Bot,
-                    Token = botToken,
-                    Intents = DiscordIntents.All,
-                };
+        var builder = DiscordClientBuilder.CreateDefault(botToken, DiscordIntents.All, services);
 
-                var client = new DiscordClient(socketConfig);
+        builder.SetLogLevel(logLevel);
 
-                return client;
-            });
+        // This replacement has to happen after the DiscordClientBuilder.CreateDefault call
+        // and before the DiscordClient is built.
+        services.Replace<IGatewayController, NoWayGateway>();
+
+        DiscordClient client = builder.Build();
+
+        services.AddSingleton(client);
     }
 
     private static void AddDbContext(HostBuilderContext hostContext, IServiceCollection services)
@@ -156,11 +154,11 @@ public class Program
     {
         const int channelSize = 1024;
 
-        services.AddSingleton(_ => new RequestQueueChannel(Channel.CreateBounded<IRequest>(channelSize)));
-        services.AddSingleton(_ => new CommandQueueChannel(Channel.CreateBounded<ICommand>(channelSize)));
-        services.AddSingleton(_ => new CommandParallelQueueChannel(Channel.CreateBounded<ICommand>(channelSize)));
-        services.AddSingleton(_ => new EventQueueChannel(Channel.CreateBounded<INotification>(channelSize)));
-        services.AddSingleton(_ => new DiscordLogChannel(Channel.CreateBounded<BaseDiscordLogItem>(channelSize)));
+        services.AddSingleton(new RequestQueueChannel(Channel.CreateBounded<IRequest>(channelSize)));
+        services.AddSingleton(new CommandQueueChannel(Channel.CreateBounded<ICommand>(channelSize)));
+        services.AddSingleton(new CommandParallelQueueChannel(Channel.CreateBounded<ICommand>(channelSize)));
+        services.AddSingleton(new EventQueueChannel(Channel.CreateBounded<INotification>(channelSize)));
+        services.AddSingleton(new DiscordLogChannel(Channel.CreateBounded<BaseDiscordLogItem>(channelSize)));
     }
 
     private static void AddWorkers(IServiceCollection services)

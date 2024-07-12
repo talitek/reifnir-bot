@@ -15,7 +15,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nellebot.CommandModules;
 using Nellebot.CommandModules.Messages;
-using Nellebot.CommandModules.Roles;
 using Nellebot.NotificationHandlers;
 
 namespace Nellebot.Workers;
@@ -78,7 +77,6 @@ public class BotWorker : IHostedService
             new CommandsNextConfiguration
             {
                 StringPrefixes = new[] { commandPrefix },
-                Services = _serviceProvider,
                 EnableDefaultHelp = false,
             });
 
@@ -142,16 +140,10 @@ public class BotWorker : IHostedService
         _client.SocketClosed += OnClientDisconnected;
         _client.SessionCreated += OnSessionCreated;
         _client.SessionResumed += OnSessionResumed;
-        _client.Heartbeated += OnClientHeartbeat;
         _client.GuildDownloadCompleted += OnGuildDownloadCompleted;
     }
 
-    private Task OnClientHeartbeat(DiscordClient sender, HeartbeatEventArgs e)
-    {
-        return _eventQueue.Writer.WriteAsync(new ClientHeartbeatNotification(e)).AsTask();
-    }
-
-    private Task OnClientDisconnected(DiscordClient sender, SocketCloseEventArgs e)
+    private Task OnClientDisconnected(DiscordClient sender, SocketClosedEventArgs e)
     {
         return _eventQueue.Writer.WriteAsync(new ClientDisconnected(e)).AsTask();
     }
@@ -163,7 +155,7 @@ public class BotWorker : IHostedService
         return Task.CompletedTask;
     }
 
-    private async Task OnSessionCreated(DiscordClient sender, SessionReadyEventArgs e)
+    private async Task OnSessionCreated(DiscordClient sender, SessionCreatedEventArgs e)
     {
         try
         {
@@ -179,7 +171,7 @@ public class BotWorker : IHostedService
         }
     }
 
-    private Task OnSessionResumed(DiscordClient sender, SessionReadyEventArgs e)
+    private Task OnSessionResumed(DiscordClient sender, SessionResumedEventArgs e)
     {
         _logger.LogInformation("Bot resumed");
 

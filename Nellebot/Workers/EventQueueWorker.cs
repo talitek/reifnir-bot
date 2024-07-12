@@ -35,21 +35,17 @@ public class EventQueueWorker : BackgroundService
         {
             await foreach (INotification notification in _channel.Reader.ReadAllAsync(stoppingToken))
             {
-                INotification? @event = notification;
-
-                if (@event == null) continue;
-
                 _logger.LogDebug("Dequeued event. {RemainingMessageCount} left in queue", _channel.Reader.Count);
 
                 try
                 {
-                    await _publisher.Publish(@event, stoppingToken);
+                    await _publisher.Publish(notification, stoppingToken);
                 }
                 catch (AggregateException ex)
                 {
                     foreach (Exception innerEx in ex.InnerExceptions)
                     {
-                        if (@event is not null and EventNotification eventNotification)
+                        if (notification is EventNotification eventNotification)
                         {
                             // TODO extract relevant information from notification object
                             // and pass to LogEventError

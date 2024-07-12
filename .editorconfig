@@ -156,10 +156,9 @@ dotnet_diagnostic.SYSLIB1045.severity   = none     # Convert to 'GeneratedRegexA
 ### Rider auto-generated rules ###
 
 # Microsoft .NET properties
-csharp_preferred_modifier_order = public, protected, private, internal, file, new, static, abstract, virtual, sealed, override, async, extern, unsafe, volatile, readonly, required:suggestion
 csharp_preserve_single_line_blocks = true
 csharp_style_var_elsewhere = false:none
-csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_for_built_in_types = false:none
 csharp_style_var_when_type_is_apparent = true:none
 dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity:none
 dotnet_style_parentheses_in_other_binary_operators = always_for_clarity:none
@@ -181,7 +180,8 @@ resharper_csharp_wrap_before_binary_opsign = true
 resharper_csharp_wrap_extends_list_style = chop_always
 resharper_csharp_wrap_parameters_style = chop_if_long
 resharper_for_built_in_types = use_var_when_evident
-resharper_instance_members_qualify_declared_in =
+resharper_for_other_types = use_var_when_evident
+resharper_instance_members_qualify_declared_in = 
 resharper_keep_existing_embedded_block_arrangement = false
 resharper_keep_existing_enum_arrangement = false
 resharper_nested_ternary_style = expanded

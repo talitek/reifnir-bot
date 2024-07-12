@@ -33,7 +33,7 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
 
     public async Task Handle(MessageDeletedNotification notification, CancellationToken cancellationToken)
     {
-        MessageDeleteEventArgs eventArgs = notification.EventArgs;
+        MessageDeletedEventArgs eventArgs = notification.EventArgs;
         DiscordChannel channel = eventArgs.Channel;
         ulong messageId = eventArgs.Message.Id;
 
@@ -51,7 +51,7 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
 
     public async Task Handle(MessageReactionAddedNotification notification, CancellationToken cancellationToken)
     {
-        MessageReactionAddEventArgs eventArgs = notification.EventArgs;
+        MessageReactionAddedEventArgs eventArgs = notification.EventArgs;
         DiscordChannel channel = eventArgs.Channel;
         DiscordMessage message = eventArgs.Message;
         DiscordUser user = eventArgs.User;
@@ -70,7 +70,7 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
 
     public async Task Handle(MessageReactionRemovedNotification notification, CancellationToken cancellationToken)
     {
-        MessageReactionRemoveEventArgs eventArgs = notification.EventArgs;
+        MessageReactionRemovedEventArgs eventArgs = notification.EventArgs;
         DiscordChannel channel = eventArgs.Channel;
         DiscordMessage message = eventArgs.Message;
         DiscordEmoji emoji = eventArgs.Emoji;
@@ -88,7 +88,7 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
 
     public async Task Handle(MessageUpdatedNotification notification, CancellationToken cancellationToken)
     {
-        MessageUpdateEventArgs eventArgs = notification.EventArgs;
+        MessageUpdatedEventArgs eventArgs = notification.EventArgs;
         DiscordChannel channel = eventArgs.Channel;
         DiscordMessage? message = eventArgs.Message;
         DiscordUser user = eventArgs.Author;

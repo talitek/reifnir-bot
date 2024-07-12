@@ -17,7 +17,7 @@ public class UntitledHandler : INotificationHandler<MessageCreatedNotification>
 
     public Task Handle(MessageCreatedNotification notification, CancellationToken cancellationToken)
     {
-        MessageCreateEventArgs args = notification.EventArgs;
+        MessageCreatedEventArgs args = notification.EventArgs;
 
         return _messageRefRepo.CreateMessageRef(args.Message.Id, args.Channel.Id, args.Author.Id);
     }

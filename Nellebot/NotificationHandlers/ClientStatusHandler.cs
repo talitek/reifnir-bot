@@ -41,22 +41,25 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
     {
         IsClientActuallyReady = false;
 
-        _logger.LogInformation($"Bot disconected {notification.EventArgs.CloseMessage}");
+        _logger.LogInformation("Bot disconnected {message}", notification.EventArgs.CloseMessage);
 
         return Task.CompletedTask;
     }
 
-    public Task Handle(ClientHeartbeatNotification notification, CancellationToken cancellationToken)
+    public async Task Handle(ClientHeartbeatNotification notification, CancellationToken cancellationToken)
     {
-        _logger.LogTrace($"Heartbeated: {notification.EventArgs.Timestamp.ToIsoDateTimeString()}");
+        _logger.LogTrace(
+            "Heartbeat: {heartbeat}, Ping: {ping}ms",
+            notification.Timestamp.ToIsoDateTimeString(),
+            notification.Ping.TotalMilliseconds);
 
         if (!IsClientActuallyReady)
         {
             _logger.LogDebug("Client not actually ready. Skipping heartbeat save.");
-            return Task.CompletedTask;
+            return;
         }
 
-        return _botSettingsService.SetLastHeartbeat(notification.EventArgs.Timestamp);
+        await _botSettingsService.SetLastHeartbeat(notification.Timestamp);
     }
 
     public async Task Handle(SessionCreatedOrResumedNotification notification, CancellationToken cancellationToken)
@@ -70,7 +73,7 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
             var message = $"Client ready or resumed. Last heartbeat: {lastHeartbeat.ToIsoDateTimeString()}.";
             message += $" More than {timeSinceLastHeartbeat.TotalMinutes:0.00} minutes since last heartbeat.";
 
-            _logger.LogDebug(message);
+            _logger.LogDebug("{message}", message);
 
             _discordLogger.LogExtendedActivityMessage(message);
         }
@@ -81,7 +84,7 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
 
             if (createdCount > 0)
             {
-                _logger.LogDebug($"Populated {createdCount} message refs");
+                _logger.LogDebug("Populated {createdCount} message refs", createdCount);
                 _discordLogger.LogExtendedActivityMessage($"Populated {createdCount} message refs");
             }
         }
