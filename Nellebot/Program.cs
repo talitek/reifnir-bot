@@ -2,13 +2,11 @@ using System;
 using System.Threading.Channels;
 using MediatR;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Nellebot.CommandHandlers;
 using Nellebot.CommandModules;
-using Nellebot.Data;
 using Nellebot.Data.Repositories;
 using Nellebot.Infrastructure;
 using Nellebot.Services;
@@ -33,7 +31,9 @@ public class Program
             .ConfigureServices(
                 (hostContext, services) =>
                 {
-                    services.Configure<BotOptions>(hostContext.Configuration.GetSection(BotOptions.OptionsKey));
+                    IConfiguration configuration = hostContext.Configuration;
+
+                    services.Configure<BotOptions>(configuration.GetSection(BotOptions.OptionsKey));
 
                     services.AddDataProtection()
                         .SetApplicationName(nameof(Nellebot))
@@ -65,31 +65,11 @@ public class Program
 
                     AddRepositories(services);
 
-                    AddDbContext(hostContext, services);
+                    services.AddDbContext(configuration);
 
-                    services.AddDiscordClient(hostContext);
+                    services.AddDiscordClient(configuration);
                 })
             .UseSystemd();
-    }
-
-    private static void AddDbContext(HostBuilderContext hostContext, IServiceCollection services)
-    {
-        services.AddDbContext<BotDbContext>(
-            builder =>
-            {
-                var dbConnString =
-                    hostContext.Configuration
-                        .GetValue<string>("Nellebot:ConnectionString");
-                var logLevel =
-                    hostContext.Configuration
-                        .GetValue<string>("Logging:LogLevel:Default");
-
-                builder.EnableSensitiveDataLogging(logLevel == "Debug");
-
-                builder.UseNpgsql(dbConnString);
-            },
-            ServiceLifetime.Transient,
-            ServiceLifetime.Singleton);
     }
 
     private static void AddRepositories(IServiceCollection services)

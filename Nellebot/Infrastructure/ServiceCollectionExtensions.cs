@@ -3,10 +3,11 @@ using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.Clients;
 using DSharpPlus.Extensions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Nellebot.Data;
 using Nellebot.NotificationHandlers;
 using Nellebot.Workers;
 
@@ -14,28 +15,42 @@ namespace Nellebot.Infrastructure;
 
 public static class ServiceCollectionExtensions
 {
-    public static void AddDiscordClient(this IServiceCollection services, HostBuilderContext hostContext)
+    public static void AddDiscordClient(this IServiceCollection services, IConfiguration configuration)
     {
-        string defaultLogLevel =
-            hostContext.Configuration.GetValue<string>("Logging:LogLevel:Default") ?? "Warning";
-        string botToken = hostContext.Configuration.GetValue<string>("Nellebot:BotToken") ??
-                          throw new Exception("Bot token not found");
+        string defaultLogLevel = configuration.GetValue<string>("Logging:LogLevel:Default") ?? "Warning";
+        string botToken = configuration.GetValue<string>("Nellebot:BotToken")
+                          ?? throw new Exception("Bot token not found");
 
         var logLevel = Enum.Parse<LogLevel>(defaultLogLevel);
 
-        var builder = DiscordClientBuilder.CreateDefault(botToken, DiscordIntents.All, services);
+        var clientBuilder = DiscordClientBuilder.CreateDefault(botToken, DiscordIntents.All, services);
 
-        builder.SetLogLevel(logLevel);
+        clientBuilder.SetLogLevel(logLevel);
 
-        builder.RegisterEventHandlers();
+        clientBuilder.RegisterEventHandlers();
 
         // This replacement has to happen after the DiscordClientBuilder.CreateDefault call
         // and before the DiscordClient is built.
         services.Replace<IGatewayController, NoWayGateway>();
 
-        DiscordClient client = builder.Build();
+        // Calling build registers the DiscordClient as a singleton in the service collection
+        clientBuilder.Build();
+    }
 
-        //services.AddSingleton(client);
+    public static void AddDbContext(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddDbContext<BotDbContext>(
+            builder =>
+            {
+                var dbConnString = configuration.GetValue<string>("Nellebot:ConnectionString");
+                var logLevel = configuration.GetValue<string>("Logging:LogLevel:Default");
+
+                builder.EnableSensitiveDataLogging(logLevel == "Debug");
+
+                builder.UseNpgsql(dbConnString);
+            },
+            ServiceLifetime.Transient,
+            ServiceLifetime.Singleton);
     }
 
     private static void RegisterEventHandlers(this DiscordClientBuilder builder)
