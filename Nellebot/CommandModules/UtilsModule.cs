@@ -1,16 +1,19 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.Processors.TextCommands;
+using DSharpPlus.Commands.Trees.Metadata;
 using DSharpPlus.Entities;
 using Nellebot.Attributes;
 using Nellebot.Utils;
 
 namespace Nellebot.CommandModules;
 
-[BaseCommandCheck]
-[Group("utils")]
-public class UtilsModule : BaseCommandModule
+[BaseCommandCheckV2]
+[Command("utils")]
+[AllowedProcessors(typeof(TextCommandProcessor))]
+public class UtilsModule
 {
     private readonly DiscordResolver _discordResolver;
 
@@ -22,7 +25,9 @@ public class UtilsModule : BaseCommandModule
     [Command("role-id")]
     public async Task GetRoleId(CommandContext ctx, string roleName)
     {
-        TryResolveResult<DiscordRole> resolveResult = _discordResolver.TryResolveRoleByName(ctx.Guild, roleName);
+        DiscordGuild discordGuild = ctx.Guild ?? throw new InvalidOperationException("This shouldn't happen");
+
+        TryResolveResult<DiscordRole> resolveResult = _discordResolver.TryResolveRoleByName(discordGuild, roleName);
 
         if (!resolveResult.Resolved)
         {

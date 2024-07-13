@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Text;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.Processors.TextCommands;
+using DSharpPlus.Commands.Trees.Metadata;
 using DSharpPlus.Entities;
 using Nellebot.Attributes;
 using Nellebot.Common.Models;
@@ -12,10 +13,10 @@ using Nellebot.Utils;
 
 namespace Nellebot.CommandModules;
 
-[BaseCommandCheck]
-[Group("cookie-stats")]
-[ModuleLifespan(ModuleLifespan.Transient)]
-public class AwardStatsModule : BaseCommandModule
+[BaseCommandCheckV2]
+[Command("cookie-stats")]
+[AllowedProcessors(typeof(TextCommandProcessor))]
+public class AwardStatsModule
 {
     private const int MaxMessageLength = 50;
     private readonly AwardMessageRepository _awardMessageRepo;
@@ -47,7 +48,8 @@ public class AwardStatsModule : BaseCommandModule
         await GetUserAwardStats(ctx, member);
     }
 
-    [GroupCommand]
+    [DefaultGroupCommand]
+    [Command("user")]
     public async Task GetUserAwardStatsOtherUser(CommandContext ctx, DiscordUser user)
     {
         DiscordMember? member = await _discordResolver.ResolveGuildMember(ctx.Guild, user.Id);

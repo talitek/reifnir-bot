@@ -1,46 +1,69 @@
-﻿using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
+﻿using System.ComponentModel;
+using System.Threading.Tasks;
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.ArgumentModifiers;
+using DSharpPlus.Commands.Processors.SlashCommands;
+using DSharpPlus.Commands.Processors.TextCommands;
+using DSharpPlus.Commands.Trees.Metadata;
 using DSharpPlus.Entities;
 using Nellebot.Attributes;
 
 namespace Nellebot.CommandModules;
 
-[BaseCommandCheck]
-public class RandomModule : BaseCommandModule
+public class RandomModule
 {
-    [Command("oi")]
-    public Task Oi(CommandContext ctx)
+    [BaseCommandCheckV2]
+    [Command("Oi")]
+    [Description("Oi!")]
+    public static ValueTask Oi(CommandContext ctx)
     {
         return ctx.RespondAsync("Oi!");
     }
 
-    [Command("ban")]
-    public Task Ban(CommandContext ctx, [RemainingText] string str)
+    [BaseCommandCheckV2]
+    [Command("Meowdy")]
+    [Description("Say meowdy!")]
+    public static ValueTask Meowdy(CommandContext ctx)
     {
-        return ctx.RespondAsync("Why ban them when I can ban you instead?");
+        const string meowdy = @".
+                 <:meowdy:993855998601220166> are u gonna say meowdy
+　＿ノ ヽ ノ＼＿ back or are we
+/      / ⌒ Ｙ ⌒ Ｙ     ヽ gonna have a
+( 　(三ヽ人　 /　　 | heckin problem
+|　ﾉ⌒＼ ￣￣ヽ　 ノ here purrdner?
+ヽ＿＿＿＞､＿＿_／
+　　 ｜( 王 ﾉ〈
+　　 /ﾐ`ー―彡
+      /      ╰  ╯
+";
+
+        return ctx.RespondAsync(meowdy);
     }
 
-    [Command("taco")]
-    public Task Taco(CommandContext ctx)
-    {
-        return ctx.RespondAsync(
-            ".\n                :cowboy: are u gonna say howdy\n　＿ノ ヽ ノ＼＿ back or are we\n/      / ⌒ Ｙ ⌒ Ｙ     ヽ gonna have a\n( 　(三ヽ人　 /　　 | fuckin problem\n|　ﾉ⌒＼ ￣￣ヽ　 ノ here partner?\nヽ＿＿＿＞､＿＿_／\n　　 ｜( 王 ﾉ〈\n　　 /ﾐ`ー―彡\n      /      ╰  ╯");
-    }
-
-    [Command("meowdy")]
-    public Task Meowdy(CommandContext ctx)
-    {
-        return ctx.RespondAsync(
-            ".\n                <:meowcowboy:993855998601220166> are u gonna say meowdy\n　＿ノ ヽ ノ＼＿ back or are we\n/      / ⌒ Ｙ ⌒ Ｙ     ヽ gonna have a\n( 　(三ヽ人　 /　　 | heckin problem\n|　ﾉ⌒＼ ￣￣ヽ　 ノ here purrdner?\nヽ＿＿＿＞､＿＿_／\n　　 ｜( 王 ﾉ〈\n　　 /ﾐ`ー―彡\n      /      ╰  ╯");
-    }
-
-    [Command("slap")]
-    public Task Slap(CommandContext ctx, DiscordMember member)
+    [BaseCommandCheckV2]
+    [Command("Slap")]
+    [Description("Slap someone with a large trout")]
+    [SlashCommandTypes(DiscordApplicationCommandType.SlashCommand, DiscordApplicationCommandType.UserContextMenu)]
+    public static async ValueTask Slap(
+        CommandContext ctx,
+        [Parameter("slapee")] [Description("The receiver of the slap")]
+        DiscordMember member)
     {
         string slapper = ctx.Member?.DisplayName ?? ctx.User.Username;
         string slapee = member.DisplayName;
 
-        return ctx.Channel.SendMessageAsync($"_**{slapper}** slaps **{slapee}** around a bit with a large trout_");
+        await ctx.RespondAsync($"_**{slapper}** slaps **{slapee}** around a bit with a large trout_");
+    }
+
+    [BaseCommandCheckV2]
+    [Command("ban")]
+    [Description("Ban someone. For realzies!")]
+    [AllowedProcessors(typeof(TextCommandProcessor))]
+    public static ValueTask Ban(
+        CommandContext ctx,
+        [Parameter("name")] [Description("Someone you don't like")] [RemainingText]
+        string str)
+    {
+        return ctx.RespondAsync($"Why ban **{str}** when I can ban you instead?");
     }
 }

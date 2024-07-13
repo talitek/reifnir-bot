@@ -1,18 +1,23 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.Processors.TextCommands;
+using DSharpPlus.Commands.Trees.Metadata;
 using DSharpPlus.Entities;
 using Nellebot.Attributes;
 
 namespace Nellebot.CommandModules;
 
-[BaseCommandCheck]
-[Group("prep")]
-public class PrepModule : BaseCommandModule
+[BaseCommandCheckV2]
+[Command("Prep")]
+[Description("Get a random preposition")]
+[AllowedProcessors(typeof(TextCommandProcessor))]
+public class PrepModule
 {
     [Command("me")]
-    public Task GetRandomPrep(CommandContext ctx)
+    [Description("Help yourself to a random preposition")]
+    public ValueTask GetRandomPrep(CommandContext ctx)
     {
         string prep = GetRandomPrep();
         string scale = GetRandomScale();
@@ -23,8 +28,9 @@ public class PrepModule : BaseCommandModule
         return ctx.RespondAsync(message);
     }
 
-    [GroupCommand]
-    public Task GetRandomPrep(CommandContext ctx, DiscordUser user)
+    [DefaultGroupCommand]
+    [Command("user")]
+    public ValueTask GetRandomPrep(CommandContext ctx, DiscordUser user)
     {
         string prep = GetRandomPrep();
         string scale = GetRandomScale();
@@ -37,7 +43,7 @@ public class PrepModule : BaseCommandModule
         return ctx.RespondAsync(message);
     }
 
-    private string GetRandomPrep()
+    private static string GetRandomPrep()
     {
         var preps = new[] { "På", "For", "Av", "Til", "Om", "I", "Mot" };
 
@@ -46,7 +52,7 @@ public class PrepModule : BaseCommandModule
         return preps[prepIdx];
     }
 
-    private string GetRandomScale()
+    private static string GetRandomScale()
     {
         var scaleLimit = new[] { "Helvete", "Kva faen", "Kjempebra", "Uff a meg" };
 
