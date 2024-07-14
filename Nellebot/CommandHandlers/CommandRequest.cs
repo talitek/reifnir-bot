@@ -1,5 +1,5 @@
-﻿using DSharpPlus.CommandsNext;
-using DSharpPlus.SlashCommands;
+﻿using DSharpPlus.Commands.Processors.SlashCommands;
+using DSharpPlus.CommandsNext;
 using MediatR;
 
 namespace Nellebot.CommandHandlers;
@@ -30,6 +30,16 @@ public record MessageCommand : ICommand
     public MessageContext Ctx { get; init; }
 }
 
+public record BotSlashCommand : ICommand
+{
+    public BotSlashCommand(SlashCommandContext ctx)
+    {
+        Ctx = ctx;
+    }
+
+    public SlashCommandContext Ctx { get; init; }
+}
+
 public record BotCommandCommand : ICommand
 {
     public BotCommandCommand(CommandContext ctx)
@@ -38,16 +48,6 @@ public record BotCommandCommand : ICommand
     }
 
     public CommandContext Ctx { get; init; }
-}
-
-public record InteractionCommand : ICommand
-{
-    public InteractionCommand(InteractionContext ctx)
-    {
-        Ctx = ctx;
-    }
-
-    public InteractionContext Ctx { get; init; }
 }
 
 public record BotCommandQuery : IQuery

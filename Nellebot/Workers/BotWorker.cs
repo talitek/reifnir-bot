@@ -50,8 +50,6 @@ public class BotWorker : IHostedService
 
         RegisterClassicCommands();
 
-        RegisterSlashCommands();
-
         ConfigureInteractivity();
 
         await RegisterNewCommands();
@@ -81,15 +79,6 @@ public class BotWorker : IHostedService
         commands.RegisterCommands(Assembly.GetExecutingAssembly());
 
         _commandEventHandler.RegisterHandlers(commands);
-    }
-
-    private void RegisterSlashCommands()
-    {
-        SlashCommandsExtension slashCommands =
-            _client.UseSlashCommands(new SlashCommandsConfiguration { Services = _serviceProvider });
-
-        slashCommands.RegisterCommands<ModmailModule>(_options.GuildId);
-        slashCommands.RegisterCommands<OrdbokSlashModule>(_options.GuildId);
     }
 
     private async Task RegisterNewCommands()

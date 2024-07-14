@@ -1,5 +1,5 @@
-﻿using DSharpPlus.Entities;
-using DSharpPlus.SlashCommands;
+﻿using DSharpPlus.Commands;
+using DSharpPlus.Entities;
 
 namespace Nellebot.CommandHandlers;
 
@@ -12,7 +12,7 @@ public class BaseContext
 
     public DiscordGuild? Guild { get; init; }
 
-    public static BaseContext FromInteractionContext(InteractionContext ctx)
+    public static BaseContext FromCommandContext(CommandContext ctx)
     {
         var newCtx = new BaseContext
         {

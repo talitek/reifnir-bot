@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
-using DSharpPlus.SlashCommands;
 using MediatR;
 using Nellebot.Common.Models.Ordbok;
 using Nellebot.Common.Models.Ordbok.ViewModels;
@@ -18,9 +18,9 @@ using Api = Nellebot.Common.Models.Ordbok.Api;
 
 namespace Nellebot.CommandHandlers.Ordbok;
 
-public record SearchOrdbokQueryV2 : InteractionCommand
+public record SearchOrdbokQueryV2 : BotSlashCommand
 {
-    public SearchOrdbokQueryV2(InteractionContext ctx)
+    public SearchOrdbokQueryV2(SlashCommandContext ctx)
         : base(ctx)
     { }
 
@@ -51,12 +51,12 @@ public class SearchOrdbokHandlerV2 : IRequestHandler<SearchOrdbokQueryV2>
 
     public async Task Handle(SearchOrdbokQueryV2 request, CancellationToken cancellationToken)
     {
-        InteractionContext ctx = request.Ctx;
+        SlashCommandContext ctx = request.Ctx;
         string query = request.Query;
         string dictionary = request.Dictionary;
         DiscordUser user = ctx.User;
 
-        await ctx.DeferAsync();
+        await ctx.DeferResponseAsync();
 
         Api.OrdbokSearchResponse? searchResponse = await _ordbokClient.Search(
             request.Dictionary,
@@ -84,7 +84,12 @@ public class SearchOrdbokHandlerV2 : IRequestHandler<SearchOrdbokQueryV2>
 
         IEnumerable<Page> messagePages = await BuildPages(articles, title, queryUrl);
 
-        await ctx.Interaction.SendPaginatedResponseAsync(false, user, messagePages, asEditResponse: true);
+        await ctx.Interaction.SendPaginatedResponseAsync(
+            false,
+            user,
+            messagePages,
+            asEditResponse: true,
+            token: cancellationToken);
     }
 
     private async Task<IEnumerable<Page>> BuildPages(List<Article> articles, string title, string queryUrl)
