@@ -24,7 +24,7 @@ public class TrustedMemberModule
         _options = options.Value;
     }
 
-    [BaseCommandCheckV2]
+    [BaseCommandCheck]
     [RequireTrustedMemberV2]
     [Command("vkick")]
     public async Task ValhallKick(CommandContext ctx, DiscordMember member, [RemainingText] string reason)
@@ -32,7 +32,7 @@ public class TrustedMemberModule
         await _commandQueue.Writer.WriteAsync(new ValhallKickUserCommand(ctx, member, reason));
     }
 
-    [BaseCommandCheckV2]
+    [BaseCommandCheck]
     [RequireTrustedMemberV2]
     [Command("list-award-channels")]
     public async Task ListCookieChannels(CommandContext ctx)

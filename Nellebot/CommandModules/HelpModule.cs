@@ -12,7 +12,7 @@ namespace Nellebot.CommandModules;
 
 // TODO rewrite help module to only have a single /help command
 // and use interactive help command to show all commands
-[BaseCommandCheckV2]
+[BaseCommandCheck]
 [Command("help")]
 [AllowedProcessors(typeof(TextCommandProcessor))]
 public class HelpModule

@@ -98,7 +98,9 @@ public class BotDbContext : DbContext
             .Property(x => x.Message)
             .HasMaxLength(256);
     }
+
 #pragma warning disable SA1201 // Elements should appear in the correct order
+
     public DbSet<AwardMessage> AwardMessages { get; set; }
 
     public DbSet<BotSettting> GuildSettings { get; set; }

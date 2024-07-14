@@ -12,7 +12,7 @@ namespace Nellebot.CommandModules;
 
 public class RandomModule
 {
-    [BaseCommandCheckV2]
+    [BaseCommandCheck]
     [Command("Oi")]
     [Description("Oi!")]
     public static ValueTask Oi(CommandContext ctx)
@@ -20,7 +20,7 @@ public class RandomModule
         return ctx.RespondAsync("Oi!");
     }
 
-    [BaseCommandCheckV2]
+    [BaseCommandCheck]
     [Command("Meowdy")]
     [Description("Say meowdy!")]
     public static ValueTask Meowdy(CommandContext ctx)
@@ -40,7 +40,7 @@ public class RandomModule
         return ctx.RespondAsync(meowdy);
     }
 
-    [BaseCommandCheckV2]
+    [BaseCommandCheck]
     [Command("Slap")]
     [Description("Slap someone with a large trout")]
     [SlashCommandTypes(DiscordApplicationCommandType.SlashCommand, DiscordApplicationCommandType.UserContextMenu)]
@@ -55,7 +55,7 @@ public class RandomModule
         await ctx.RespondAsync($"_**{slapper}** slaps **{slapee}** around a bit with a large trout_");
     }
 
-    [BaseCommandCheckV2]
+    [BaseCommandCheck]
     [Command("ban")]
     [Description("Ban someone. For realzies!")]
     [AllowedProcessors(typeof(TextCommandProcessor))]

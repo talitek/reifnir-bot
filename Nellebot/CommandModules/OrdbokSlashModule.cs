@@ -18,7 +18,7 @@ public class OrdbokSlashModule
         _requestQueue = commandQueue;
     }
 
-    [BaseCommandCheckV2]
+    [BaseCommandCheck]
     [Command("bm")]
     [Description("Search Bokmål dictionary")]
     public Task OrdbokSearchBokmal(
@@ -35,7 +35,7 @@ public class OrdbokSlashModule
         return _requestQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
     }
 
-    [BaseCommandCheckV2]
+    [BaseCommandCheck]
     [Command("nn")]
     [Description("Search Nynorsk dictionary")]
     public Task OrdbokSearchNynorsk(

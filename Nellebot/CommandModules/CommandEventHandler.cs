@@ -110,7 +110,7 @@ public class CommandEventHandler
             {
                 ContextCheckAttribute contextCheckAttribute = failedCheck.ContextCheckAttribute;
 
-                if (contextCheckAttribute is BaseCommandCheckV2Attribute)
+                if (contextCheckAttribute is BaseCommandCheckAttribute)
                 {
                     errorMessage = "I do not care for DM commands.";
                 }

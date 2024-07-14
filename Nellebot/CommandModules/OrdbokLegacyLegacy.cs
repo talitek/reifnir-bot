@@ -19,7 +19,7 @@ public class OrdbokLegacyLegacy
         _requestQueue = commandQueue;
     }
 
-    [BaseCommandCheckV2]
+    [BaseCommandCheck]
     [Command("bm-legacy")]
     ////[Aliases("nb")]
     [AllowedProcessors(typeof(TextCommandProcessor))]
@@ -34,7 +34,7 @@ public class OrdbokLegacyLegacy
         return _requestQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
     }
 
-    [BaseCommandCheckV2]
+    [BaseCommandCheck]
     [Command("nn-legacy")]
     [AllowedProcessors(typeof(TextCommandProcessor))]
     public Task OrdbokSearchNynorsk(CommandContext ctx, [RemainingText] string query)
@@ -48,7 +48,7 @@ public class OrdbokLegacyLegacy
         return _requestQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
     }
 
-    [BaseCommandCheckV2]
+    [BaseCommandCheck]
     [Command("bm-t-legacy")]
     [AllowedProcessors(typeof(TextCommandProcessor))]
     public Task OrdbokSearchBokmalDebugTemplate(CommandContext ctx, [RemainingText] string query)
@@ -63,7 +63,7 @@ public class OrdbokLegacyLegacy
         return _requestQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
     }
 
-    [BaseCommandCheckV2]
+    [BaseCommandCheck]
     [Command("nn-t-legacy")]
     [AllowedProcessors(typeof(TextCommandProcessor))]
     public Task OrdbokSearchNynorskDebugTemplate(CommandContext ctx, [RemainingText] string query)
@@ -78,7 +78,7 @@ public class OrdbokLegacyLegacy
         return _requestQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
     }
 
-    [BaseCommandCheckV2]
+    [BaseCommandCheck]
     [Command("gibb")]
     [AllowedProcessors(typeof(TextCommandProcessor))]
     public Task Gibb(CommandContext ctx)

@@ -7,7 +7,7 @@ using Nellebot.Workers;
 
 namespace Nellebot.CommandModules.Messages;
 
-[BaseCommandCheckV2]
+[BaseCommandCheck]
 [RequireTrustedMemberV2]
 [Command("goodbye-msg")]
 public class GoodbyeMessageModule

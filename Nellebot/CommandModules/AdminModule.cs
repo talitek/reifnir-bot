@@ -19,7 +19,7 @@ using Nellebot.Workers;
 
 namespace Nellebot.CommandModules;
 
-[BaseCommandCheckV2]
+[BaseCommandCheck]
 [RequirePermissions(DiscordPermissions.None, UserPermissions = DiscordPermissions.Administrator)]
 [Command("admin")]
 public class AdminModule

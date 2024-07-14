@@ -13,7 +13,7 @@ using Nellebot.Utils;
 
 namespace Nellebot.CommandModules;
 
-[BaseCommandCheckV2]
+[BaseCommandCheck]
 [Command("cookie-stats")]
 [AllowedProcessors(typeof(TextCommandProcessor))]
 public class AwardStatsModule

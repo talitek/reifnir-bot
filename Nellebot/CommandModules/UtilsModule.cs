@@ -10,7 +10,7 @@ using Nellebot.Utils;
 
 namespace Nellebot.CommandModules;
 
-[BaseCommandCheckV2]
+[BaseCommandCheck]
 [Command("utils")]
 [AllowedProcessors(typeof(TextCommandProcessor))]
 public class UtilsModule

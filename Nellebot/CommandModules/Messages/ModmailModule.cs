@@ -17,7 +17,7 @@ public class ModmailModule
         _channel = channel;
     }
 
-    [BaseCommandCheckV2]
+    [BaseCommandCheck]
     [Command("modmail")]
     [Description("Initiate a private conversation with the moderators (will continue in DMs)")]
     public async Task RequestModmailTicket(CommandContext ctx)

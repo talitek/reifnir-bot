@@ -9,7 +9,7 @@ using Nellebot.Attributes;
 
 namespace Nellebot.CommandModules;
 
-[BaseCommandCheckV2]
+[BaseCommandCheck]
 [Command("Prep")]
 [Description("Get a random preposition")]
 [AllowedProcessors(typeof(TextCommandProcessor))]
