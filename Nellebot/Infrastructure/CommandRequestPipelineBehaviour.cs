@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
+using DSharpPlus.Commands;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Nellebot.CommandHandlers;
@@ -32,7 +32,7 @@ public class CommandRequestPipelineBehaviour<TRequest, TResponse> : IPipelineBeh
         {
             return await next().ConfigureAwait(false);
         }
-        catch (Exception ex) when (request is BotCommandCommand commandCommand)
+        catch (Exception ex) when (request is BotCommandV2Command commandCommand)
         {
             await HandeCommandCommandException(commandCommand, ex);
             return default!;
@@ -51,7 +51,7 @@ public class CommandRequestPipelineBehaviour<TRequest, TResponse> : IPipelineBeh
         _logger.LogError(ex, nameof(HandeCommandCommandException));
     }
 
-    private async Task HandeCommandCommandException(BotCommandCommand request, Exception ex)
+    private async Task HandeCommandCommandException(BotCommandV2Command request, Exception ex)
     {
         CommandContext ctx = request.Ctx;
 
