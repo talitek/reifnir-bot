@@ -4,5 +4,5 @@ namespace Nellebot.Common.AppDiscordModels;
 
 public class AppDiscordApplication
 {
-    public IEnumerable<AppDiscordUser> Owners { get; set; } = null!;
+    public IEnumerable<AppDiscordUser>? Owners { get; set; }
 }

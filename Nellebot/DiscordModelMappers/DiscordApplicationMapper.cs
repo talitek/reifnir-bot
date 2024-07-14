@@ -10,7 +10,9 @@ public static class DiscordApplicationMapper
     {
         var appDiscordApplication = new AppDiscordApplication();
 
-        appDiscordApplication.Owners = discordApplication.Owners.Select(DiscordUserMapper.Map);
+        // The owner list can be empty due to a bug in the DSharp library
+        // Should be fixed soon. TODO: Remove this check when fixed.
+        appDiscordApplication.Owners = discordApplication.Owners?.Select(DiscordUserMapper.Map);
 
         return appDiscordApplication;
     }

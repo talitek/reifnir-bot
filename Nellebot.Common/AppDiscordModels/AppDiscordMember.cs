@@ -25,16 +25,4 @@ public class AppDiscordMember : AppDiscordUser
             Roles = [],
         };
     }
-
-    public string GetDetailedMemberIdentifier()
-    {
-        string memberUsername = Username;
-        string memberDisplayName = DisplayName;
-
-        string memberFormattedDisplayName = memberUsername != memberDisplayName
-            ? $"{DisplayName} ({GetFullUsername()}, {Id})"
-            : $"{GetFullUsername()} ({Id})";
-
-        return memberFormattedDisplayName;
-    }
 }

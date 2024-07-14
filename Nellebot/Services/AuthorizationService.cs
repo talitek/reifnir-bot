@@ -17,7 +17,7 @@ public class AuthorizationService
     {
         AppDiscordMember currentMember = member;
 
-        bool isBotOwner = discordApplication.Owners.Any(x => x.Id == currentMember.Id);
+        bool isBotOwner = discordApplication.Owners?.Any(x => x.Id == currentMember.Id) ?? false;
 
         if (isBotOwner)
         {
