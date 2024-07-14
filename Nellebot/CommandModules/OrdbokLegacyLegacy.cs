@@ -1,6 +1,8 @@
 ﻿using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.ArgumentModifiers;
+using DSharpPlus.Commands.Processors.TextCommands;
+using DSharpPlus.Commands.Trees.Metadata;
 using Nellebot.Attributes;
 using Nellebot.CommandHandlers.Ordbok;
 using Nellebot.Common.Models.Ordbok;
@@ -8,9 +10,7 @@ using Nellebot.Workers;
 
 namespace Nellebot.CommandModules;
 
-[BaseCommandCheck]
-[ModuleLifespan(ModuleLifespan.Transient)]
-public class OrdbokLegacyLegacy : BaseCommandModule
+public class OrdbokLegacyLegacy
 {
     private readonly RequestQueueChannel _requestQueue;
 
@@ -19,8 +19,10 @@ public class OrdbokLegacyLegacy : BaseCommandModule
         _requestQueue = commandQueue;
     }
 
-    [Command("bm")]
-    [Aliases("nb")]
+    [BaseCommandCheckV2]
+    [Command("bm-legacy")]
+    ////[Aliases("nb")]
+    [AllowedProcessors(typeof(TextCommandProcessor))]
     public Task OrdbokSearchBokmal(CommandContext ctx, [RemainingText] string query)
     {
         var searchOrdbokRequest = new SearchOrdbokQuery(ctx)
@@ -32,7 +34,9 @@ public class OrdbokLegacyLegacy : BaseCommandModule
         return _requestQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
     }
 
-    [Command("nn")]
+    [BaseCommandCheckV2]
+    [Command("nn-legacy")]
+    [AllowedProcessors(typeof(TextCommandProcessor))]
     public Task OrdbokSearchNynorsk(CommandContext ctx, [RemainingText] string query)
     {
         var searchOrdbokRequest = new SearchOrdbokQuery(ctx)
@@ -44,7 +48,9 @@ public class OrdbokLegacyLegacy : BaseCommandModule
         return _requestQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
     }
 
-    [Command("bm-t")]
+    [BaseCommandCheckV2]
+    [Command("bm-t-legacy")]
+    [AllowedProcessors(typeof(TextCommandProcessor))]
     public Task OrdbokSearchBokmalDebugTemplate(CommandContext ctx, [RemainingText] string query)
     {
         var searchOrdbokRequest = new SearchOrdbokQuery(ctx)
@@ -57,7 +63,9 @@ public class OrdbokLegacyLegacy : BaseCommandModule
         return _requestQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
     }
 
-    [Command("nn-t")]
+    [BaseCommandCheckV2]
+    [Command("nn-t-legacy")]
+    [AllowedProcessors(typeof(TextCommandProcessor))]
     public Task OrdbokSearchNynorskDebugTemplate(CommandContext ctx, [RemainingText] string query)
     {
         var searchOrdbokRequest = new SearchOrdbokQuery(ctx)
@@ -70,7 +78,9 @@ public class OrdbokLegacyLegacy : BaseCommandModule
         return _requestQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
     }
 
+    [BaseCommandCheckV2]
     [Command("gibb")]
+    [AllowedProcessors(typeof(TextCommandProcessor))]
     public Task Gibb(CommandContext ctx)
     {
         var gibbCommand = new GibbCommand(ctx);

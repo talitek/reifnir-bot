@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
+using DSharpPlus.Commands;
 using DSharpPlus.Entities;
 using MediatR;
 using Microsoft.Extensions.Options;
 
 namespace Nellebot.CommandHandlers;
 
-public record AddMissingMemberRolesCommand : BotCommandCommand
+public record AddMissingMemberRolesCommand : BotCommandV2Command
 {
     public AddMissingMemberRolesCommand(CommandContext ctx)
         : base(ctx)

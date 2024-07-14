@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
+using DSharpPlus.Commands;
 using DSharpPlus.Entities;
 using MediatR;
 using Nellebot.Common.Models.Ordbok;
@@ -14,7 +14,7 @@ using Nellebot.Services.Ordbok;
 
 namespace Nellebot.CommandHandlers.Ordbok;
 
-public record RebuildArticleStoreCommand : BotCommandCommand
+public record RebuildArticleStoreCommand : BotCommandV2Command
 {
     public RebuildArticleStoreCommand(CommandContext ctx)
         : base(ctx)

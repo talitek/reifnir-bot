@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
+using DSharpPlus.Commands;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Enums;
@@ -17,7 +17,7 @@ using Nellebot.Utils;
 
 namespace Nellebot.CommandHandlers.MessageTemplates;
 
-public record GetGoodbyeMessagesCommand(CommandContext Ctx) : BotCommandCommand(Ctx);
+public record GetGoodbyeMessagesCommand(CommandContext Ctx) : BotCommandV2Command(Ctx);
 
 public class GetGoodbyeMessagesHandler : IRequestHandler<GetGoodbyeMessagesCommand>
 {

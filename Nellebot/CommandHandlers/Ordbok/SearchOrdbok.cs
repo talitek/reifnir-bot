@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
+using DSharpPlus.Commands;
 using DSharpPlus.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -25,11 +25,11 @@ public record SearchOrdbokQuery : BotCommandQuery
         : base(ctx)
     { }
 
-    public string Query { get; set; } = string.Empty;
+    public string Query { get; init; } = string.Empty;
 
-    public string Dictionary { get; set; } = string.Empty;
+    public string Dictionary { get; init; } = string.Empty;
 
-    public bool AttachTemplate { get; set; } = false;
+    public bool AttachTemplate { get; init; }
 }
 
 public class SearchOrdbokHandler : IRequestHandler<SearchOrdbokQuery>

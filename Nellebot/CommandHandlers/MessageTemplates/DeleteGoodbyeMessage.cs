@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
+using DSharpPlus.Commands;
 using DSharpPlus.Entities;
 using MediatR;
 using Nellebot.Common.AppDiscordModels;
@@ -13,7 +13,7 @@ using Nellebot.Services;
 
 namespace Nellebot.CommandHandlers.MessageTemplates;
 
-public record DeleteGoodbyeMessageCommand(CommandContext Ctx, string Id) : BotCommandCommand(Ctx);
+public record DeleteGoodbyeMessageCommand(CommandContext Ctx, string Id) : BotCommandV2Command(Ctx);
 
 public class DeleteGoodbyeMessageHandler : IRequestHandler<DeleteGoodbyeMessageCommand>
 {

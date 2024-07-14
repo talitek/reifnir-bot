@@ -1,22 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.ArgumentModifiers;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
 using Nellebot.CommandHandlers;
+using Nellebot.Utils;
 using Nellebot.Workers;
 
 namespace Nellebot.CommandModules.Roles;
 
-[BaseCommandCheck]
-[RequireTrustedMember]
-[ModuleLifespan(ModuleLifespan.Transient)]
-public class TrustedMemberModule : BaseCommandModule
+public class TrustedMemberModule
 {
     private readonly CommandParallelQueueChannel _commandQueue;
     private readonly BotOptions _options;
@@ -27,24 +24,26 @@ public class TrustedMemberModule : BaseCommandModule
         _options = options.Value;
     }
 
+    [BaseCommandCheckV2]
+    [RequireTrustedMemberV2]
     [Command("vkick")]
     public async Task ValhallKick(CommandContext ctx, DiscordMember member, [RemainingText] string reason)
     {
         await _commandQueue.Writer.WriteAsync(new ValhallKickUserCommand(ctx, member, reason));
     }
 
+    [BaseCommandCheckV2]
+    [RequireTrustedMemberV2]
     [Command("list-award-channels")]
     public async Task ListCookieChannels(CommandContext ctx)
     {
-        ulong[]? groupIds = _options.AwardVoteGroupIds;
+        ctx.Guild.ThrowIfNull();
 
-        if (groupIds == null) return;
+        ulong[] groupIds = _options.AwardVoteGroupIds;
 
         var sb = new StringBuilder();
 
-        IReadOnlyList<DiscordChannel> guildChannels = await ctx.Guild.GetChannelsAsync();
-
-        var channelGroups = new List<Tuple<string, List<DiscordChannel>>>();
+        IReadOnlyList<DiscordChannel> guildChannels = await ctx.Guild!.GetChannelsAsync();
 
         IEnumerable<DiscordChannel> categoryChannels = guildChannels
             .Where(

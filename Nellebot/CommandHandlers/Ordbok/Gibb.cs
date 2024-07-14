@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
+using DSharpPlus.Commands;
 using MediatR;
 using Nellebot.Common.Models.Ordbok.Api;
 using Nellebot.Data.Repositories;
@@ -10,7 +10,7 @@ using Nellebot.Services.Ordbok;
 
 namespace Nellebot.CommandHandlers.Ordbok;
 
-public record GibbCommand : BotCommandCommand
+public record GibbCommand : BotCommandV2Command
 {
     public GibbCommand(CommandContext ctx)
         : base(ctx)

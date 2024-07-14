@@ -24,9 +24,9 @@ public record SearchOrdbokQueryV2 : BotSlashCommand
         : base(ctx)
     { }
 
-    public string Query { get; set; } = string.Empty;
+    public string Query { get; init; } = string.Empty;
 
-    public string Dictionary { get; set; } = string.Empty;
+    public string Dictionary { get; init; } = string.Empty;
 }
 
 public class SearchOrdbokHandlerV2 : IRequestHandler<SearchOrdbokQueryV2>

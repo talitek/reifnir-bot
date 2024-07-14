@@ -1,13 +1,13 @@
 ﻿using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
+using DSharpPlus.Commands;
 using MediatR;
 using Nellebot.Services;
 
 namespace Nellebot.CommandHandlers;
 
-public record SetGreetingMessageCommand : BotCommandCommand
+public record SetGreetingMessageCommand : BotCommandV2Command
 {
     public SetGreetingMessageCommand(CommandContext ctx, string greetingMessage)
         : base(ctx)

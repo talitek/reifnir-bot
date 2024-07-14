@@ -55,7 +55,7 @@ public class RelayMessageHandlers : IRequestHandler<RelayRequesterMessageCommand
         DiscordMember requesterMember = await _resolver.ResolveGuildMember(request.Ticket.RequesterId)
                                         ?? throw new Exception("Could not resolve member");
 
-        DiscordMessage relayedMessage = await requesterMember.SendMessageAsync(relayMessageContent);
+        _ = await requesterMember.SendMessageAsync(relayMessageContent);
 
         await messageToRelay.CreateSuccessReactionAsync();
 

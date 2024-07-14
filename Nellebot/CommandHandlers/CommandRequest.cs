@@ -1,5 +1,5 @@
-﻿using DSharpPlus.Commands.Processors.SlashCommands;
-using DSharpPlus.CommandsNext;
+﻿using DSharpPlus.Commands;
+using DSharpPlus.Commands.Processors.SlashCommands;
 using MediatR;
 
 namespace Nellebot.CommandHandlers;
@@ -12,50 +12,50 @@ public interface IQuery : IRequest
 
 public record BaseCommand : ICommand
 {
-    public BaseCommand(BaseContext ctx)
+    protected BaseCommand(BaseContext ctx)
     {
         Ctx = ctx;
     }
 
-    public BaseContext Ctx { get; init; }
+    public BaseContext Ctx { get; }
 }
 
 public record MessageCommand : ICommand
 {
-    public MessageCommand(MessageContext ctx)
+    protected MessageCommand(MessageContext ctx)
     {
         Ctx = ctx;
     }
 
-    public MessageContext Ctx { get; init; }
+    public MessageContext Ctx { get; }
 }
 
 public record BotSlashCommand : ICommand
 {
-    public BotSlashCommand(SlashCommandContext ctx)
+    protected BotSlashCommand(SlashCommandContext ctx)
     {
         Ctx = ctx;
     }
 
-    public SlashCommandContext Ctx { get; init; }
+    public SlashCommandContext Ctx { get; }
 }
 
-public record BotCommandCommand : ICommand
+public record BotCommandV2Command : ICommand
 {
-    public BotCommandCommand(CommandContext ctx)
+    protected BotCommandV2Command(CommandContext ctx)
     {
         Ctx = ctx;
     }
 
-    public CommandContext Ctx { get; init; }
+    public CommandContext Ctx { get; }
 }
 
 public record BotCommandQuery : IQuery
 {
-    public BotCommandQuery(CommandContext ctx)
+    protected BotCommandQuery(CommandContext ctx)
     {
         Ctx = ctx;
     }
 
-    public CommandContext Ctx { get; init; }
+    public CommandContext Ctx { get; }
 }
