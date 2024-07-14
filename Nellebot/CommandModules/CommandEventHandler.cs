@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.CommandsNext.Exceptions;
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.ContextChecks;
+using DSharpPlus.Commands.EventArgs;
+using DSharpPlus.Commands.Exceptions;
+using DSharpPlus.Commands.Processors.SlashCommands;
+using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -27,20 +31,38 @@ public class CommandEventHandler
         _discordErrorLogger = discordErrorLogger;
     }
 
-    public void RegisterHandlers(CommandsNextExtension commands)
+    public void RegisterHandlers(CommandsExtension commands)
     {
         commands.CommandExecuted += OnCommandExecuted;
         commands.CommandErrored += OnCommandErrored;
     }
 
-    private Task OnCommandExecuted(CommandsNextExtension sender, CommandExecutionEventArgs e)
+    private Task OnCommandExecuted(CommandsExtension sender, CommandExecutedEventArgs e)
     {
-        DiscordMessage message = e.Context.Message;
+        CommandContext ctx = e.Context;
+        string user = ctx.Member?.DisplayName ?? ctx.User.Username;
 
-        string messageContent = message.Content;
-        string username = message.Author.Username;
+        switch (ctx)
+        {
+            case TextCommandContext textCtx:
+                DiscordMessage message = textCtx.Message;
 
-        _logger.LogDebug($"Command: {username} -> {messageContent}");
+                string messageContent = message.Content;
+
+                _logger.LogDebug("Text command: {user} -> {messageContent}", user, messageContent);
+                break;
+
+            case SlashCommandContext slashCtx:
+                // TODO implement a ToString method for Command that includes the command and its arguments
+                string commandName = slashCtx.Command.FullName;
+
+                _logger.LogDebug("Slash command: {user} -> {commandName}", user, commandName);
+                break;
+
+            default:
+                _logger.LogCritical("Unknown command context type");
+                break;
+        }
 
         return Task.CompletedTask;
     }
@@ -50,35 +72,21 @@ public class CommandEventHandler
     ///     Log error to discord logger.
     /// </summary>
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-    private async Task OnCommandErrored(CommandsNextExtension sender, CommandErrorEventArgs e)
+    private async Task OnCommandErrored(CommandsExtension sender, CommandErroredEventArgs e)
     {
         CommandContext ctx = e.Context;
-        DiscordMessage message = ctx.Message;
         Exception exception = e.Exception;
+
+        var errorMessage = string.Empty;
+        var appendHelpText = false;
 
         string commandPrefix = _options.CommandPrefix;
         var commandHelpText = $"Type \"{commandPrefix}help\" to get some help.";
 
-        var errorMessage = string.Empty;
-
-        // Flag unknown commands and not return any error message in this case
-        // as it's easy for users to accidentally trigger commands using the prefix
-        var isUnknownCommand = false;
-        var appendHelpText = false;
-
-        const string unknownSubcommandErrorString =
-            "No matching subcommands were found, and this group is not executable.";
-        const string unknownOverloadErrorString = "Could not find a suitable overload for the command.";
+        string message = ctx is TextCommandContext textCtx ? textCtx.Message.Content : string.Empty;
 
         bool isChecksFailedException = exception is ChecksFailedException;
-
         bool isUnknownCommandException = exception is CommandNotFoundException;
-        bool isUnknownSubcommandException = exception.Message == unknownSubcommandErrorString;
-        bool isUnknownOverloadException = exception.Message == unknownOverloadErrorString;
-
-        bool isCommandConfigException = exception is DuplicateCommandException
-                                        || exception is DuplicateOverloadException
-                                        || exception is InvalidOverloadException;
 
         // TODO: If this isn't enough, create a custom exception class for validation errors
         bool isPossiblyValidationException = exception is ArgumentException;
@@ -86,41 +94,34 @@ public class CommandEventHandler
         if (isUnknownCommandException)
         {
             errorMessage = "I do not recognize your command.";
-            isUnknownCommand = true;
-            appendHelpText = true;
-        }
-        else if (isUnknownSubcommandException)
-        {
-            errorMessage = "I do not recognize your command.";
-            appendHelpText = true;
-        }
-        else if (isUnknownOverloadException)
-        {
-            errorMessage = "Command arguments are (probably) incorrect.";
-            appendHelpText = true;
-        }
-        else if (isCommandConfigException)
-        {
-            errorMessage = "Something's not quite right.";
             appendHelpText = true;
         }
         else if (isChecksFailedException)
         {
             var checksFailedException = (ChecksFailedException)exception;
 
-            CheckBaseAttribute failedCheck = checksFailedException.FailedChecks[0];
+            ContextCheckFailedData? failedCheck = checksFailedException.Errors.FirstOrDefault();
 
-            if (failedCheck is BaseCommandCheck)
+            if (failedCheck is null)
             {
-                errorMessage = "I do not care for DM commands.";
-            }
-            else if (failedCheck is RequireOwnerOrAdmin || failedCheck is RequireTrustedMember)
-            {
-                errorMessage = "You do not have permission to do that.";
+                errorMessage = "An unknown check failed.";
             }
             else
             {
-                errorMessage = "Preexecution check failed.";
+                ContextCheckAttribute contextCheckAttribute = failedCheck.ContextCheckAttribute;
+
+                if (contextCheckAttribute is BaseCommandCheckV2Attribute)
+                {
+                    errorMessage = "I do not care for DM commands.";
+                }
+                else if (contextCheckAttribute is RequirePermissionsAttribute or RequireTrustedMemberV2Attribute)
+                {
+                    errorMessage = "You do not have permission to do that.";
+                }
+                else
+                {
+                    errorMessage = "Preexecution check failed.";
+                }
             }
         }
         else if (isPossiblyValidationException)
@@ -129,25 +130,16 @@ public class CommandEventHandler
             appendHelpText = true;
         }
 
-        if (!isUnknownCommand)
-        {
-            if (string.IsNullOrWhiteSpace(errorMessage)) errorMessage = "Something went wrong.";
+        if (string.IsNullOrWhiteSpace(errorMessage))
+            errorMessage = "Something went wrong.";
 
-            if (appendHelpText) errorMessage += $" {commandHelpText}";
+        if (appendHelpText)
+            errorMessage += $" {commandHelpText}";
 
-            await message.RespondAsync(errorMessage);
-        }
+        await ctx.RespondAsync(errorMessage);
 
-        // Log any unhandled exception
-        bool shouldLogDiscordError =
-            !isUnknownCommandException
-            && !isUnknownSubcommandException
-            && !isCommandConfigException
-            && !isChecksFailedException
-            && !isPossiblyValidationException;
+        _discordErrorLogger.LogCommandError(ctx, exception.ToString());
 
-        if (shouldLogDiscordError) _discordErrorLogger.LogCommandError(ctx, exception.ToString());
-
-        _logger.LogWarning($"Message: {message.Content}\r\nCommand failed: {exception})");
+        _logger.LogWarning("Message: {message}\r\nCommand failed: {exception})", message, exception);
     }
 }

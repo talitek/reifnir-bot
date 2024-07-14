@@ -1,4 +1,5 @@
 ﻿using System;
+using DSharpPlus.Commands;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Entities;
@@ -6,8 +7,6 @@ using Microsoft.Extensions.Options;
 using Nellebot.CommandHandlers;
 using Nellebot.Utils;
 using Nellebot.Workers;
-using CommandContext = DSharpPlus.CommandsNext.CommandContext;
-using CommandContextV2 = DSharpPlus.Commands.CommandContext;
 
 namespace Nellebot.Services.Loggers;
 
@@ -23,21 +22,6 @@ public class DiscordErrorLogger : IDiscordErrorLogger
     }
 
     public void LogCommandError(CommandContext ctx, string errorMessage)
-    {
-        var user = $"{ctx.User.Username}#{ctx.User.Discriminator}";
-        string channelName = ctx.Channel.Name;
-        string guildName = ctx.Guild.Name;
-        string command = EscapeTicks(ctx.Message.Content);
-
-        var contextMessage = $"`{command}` by `{user}` in `{channelName}`(`{guildName}`)";
-        var escapedErrorMessage = $"`{EscapeTicks(errorMessage)}`";
-
-        var fullErrorMessage = $"{contextMessage}{Environment.NewLine}{escapedErrorMessage}";
-
-        LogError("Failed command", fullErrorMessage);
-    }
-
-    public void LogCommandError(CommandContextV2 ctx, string errorMessage)
     {
         var user = $"{ctx.User.Username}#{ctx.User.Discriminator}";
         string channelName = ctx.Channel.Name;

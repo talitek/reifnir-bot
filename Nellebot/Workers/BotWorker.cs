@@ -10,23 +10,27 @@ using DSharpPlus.Interactivity.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Nellebot.CommandModules;
 
 namespace Nellebot.Workers;
 
 public class BotWorker : IHostedService
 {
     private readonly DiscordClient _client;
+    private readonly CommandEventHandler _commandEventHandler;
     private readonly ILogger<BotWorker> _logger;
     private readonly BotOptions _options;
 
     public BotWorker(
         IOptions<BotOptions> options,
         ILogger<BotWorker> logger,
-        DiscordClient client)
+        DiscordClient client,
+        CommandEventHandler commandEventHandler)
     {
         _options = options.Value;
         _logger = logger;
         _client = client;
+        _commandEventHandler = commandEventHandler;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -51,12 +55,14 @@ public class BotWorker : IHostedService
     private async Task RegisterCommands()
     {
         ulong guildId = _options.GuildId;
+
         CommandsExtension commands = _client.UseCommands(
             new CommandsConfiguration
             {
-                // TODO adapt old error handling to new commands api
-                UseDefaultCommandErrorHandler = true,
+                UseDefaultCommandErrorHandler = false,
             });
+
+        _commandEventHandler.RegisterHandlers(commands);
 
         commands.AddCommands(typeof(Program).Assembly, guildId);
 
