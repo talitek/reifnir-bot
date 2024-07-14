@@ -84,24 +84,26 @@ public class BotWorker : IHostedService
     private async Task RegisterNewCommands()
     {
         ulong guildId = _options.GuildId;
-        CommandsExtension commands = _client.UseCommands(new CommandsConfiguration
-        {
-            // TODO adapt old error handling to new commands api
-            UseDefaultCommandErrorHandler = true,
-        });
+        CommandsExtension commands = _client.UseCommands(
+            new CommandsConfiguration
+            {
+                // TODO adapt old error handling to new commands api
+                UseDefaultCommandErrorHandler = true,
+            });
 
         commands.AddCommands(typeof(Program).Assembly, guildId);
 
         string commandPrefix = _options.CommandPrefix;
-        var textCommandProcessor = new TextCommandProcessor(new TextCommandConfiguration()
-        {
-            IgnoreBots = true,
-            PrefixResolver = new DefaultPrefixResolver(false, commandPrefix).ResolvePrefixAsync,
-        });
+        var textCommandProcessor = new TextCommandProcessor(
+            new TextCommandConfiguration()
+            {
+                IgnoreBots = true,
+                PrefixResolver = new DefaultPrefixResolver(false, commandPrefix).ResolvePrefixAsync,
+            });
 
         await commands.AddProcessorsAsync(textCommandProcessor);
 
-        commands.AddCheck<BaseCommandCheckV2>();
+        commands.AddChecks(typeof(Program).Assembly);
     }
 
     private void ConfigureInteractivity()
