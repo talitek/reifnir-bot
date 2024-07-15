@@ -1,12 +1,14 @@
 ﻿using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
 using MediatR;
 using Microsoft.Extensions.Options;
+using Nellebot.Common.AppDiscordModels;
 using Nellebot.Common.Models.Modmail;
 using Nellebot.Data.Repositories;
+using Nellebot.DiscordModelMappers;
+using Nellebot.Services;
 using Nellebot.Utils;
 
 namespace Nellebot.CommandHandlers.Modmail;
@@ -15,17 +17,20 @@ public class RelayMessageHandlers : IRequestHandler<RelayRequesterMessageCommand
     IRequestHandler<RelayModeratorMessageCommand>
 {
     private readonly ModmailTicketRepository _modmailTicketRepo;
+    private readonly AuthorizationService _authService;
     private readonly BotOptions _options;
     private readonly DiscordResolver _resolver;
 
     public RelayMessageHandlers(
         IOptions<BotOptions> options,
         DiscordResolver resolver,
-        ModmailTicketRepository modmailTicketRepo)
+        ModmailTicketRepository modmailTicketRepo,
+        AuthorizationService authService)
     {
         _options = options.Value;
         _resolver = resolver;
         _modmailTicketRepo = modmailTicketRepo;
+        _authService = authService;
     }
 
     /// <summary>
@@ -36,12 +41,14 @@ public class RelayMessageHandlers : IRequestHandler<RelayRequesterMessageCommand
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
     public async Task Handle(RelayModeratorMessageCommand request, CancellationToken cancellationToken)
     {
-        DiscordMember moderatorMember = await _resolver.ResolveGuildMember(request.Ctx.User.Id)
-                                        ?? throw new Exception("Could not resolve member");
+        DiscordMember member = await _resolver.ResolveGuildMember(request.Ctx.User.Id)
+                               ?? throw new Exception("Could not resolve member");
+
+        AppDiscordMember appMember = DiscordMemberMapper.Map(member);
 
         DiscordMessage messageToRelay = request.Ctx.Message;
 
-        if (!moderatorMember.Roles.Any(r => r.Id == _options.AdminRoleId))
+        if (!_authService.IsAdminOrMod(appMember))
         {
             await messageToRelay.CreateFailureReactionAsync();
             return;
