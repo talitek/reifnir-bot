@@ -46,11 +46,10 @@ public class DeleteGoodbyeMessageHandler : IRequestHandler<DeleteGoodbyeMessageC
         }
 
         AppDiscordMember appMember = DiscordMemberMapper.Map(ctx.Member);
-        AppDiscordApplication appApplication = DiscordApplicationMapper.Map(ctx.Client.CurrentApplication);
 
-        bool isOwnerOrAdmin = _authService.IsOwnerOrAdmin(appMember, appApplication);
+        bool isAuthorized = _authService.IsAdminOrMod(appMember);
 
-        if (!isOwnerOrAdmin && messageTemplate.AuthorId != author.Id)
+        if (!isAuthorized && messageTemplate.AuthorId != author.Id)
         {
             throw new ArgumentException("Hey! Nacho cheese! Uh, I mean, nacho goodbye message.");
         }

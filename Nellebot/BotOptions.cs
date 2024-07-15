@@ -15,14 +15,9 @@ public class BotOptions
     public ulong GuildId { get; init; }
 
     /// <summary>
-    ///     Gets discord user with access to admin commands.
-    /// </summary>
-    public ulong CoOwnerUserId { get; init; }
-
-    /// <summary>
     ///     Gets discord role with access to admin commands.
     /// </summary>
-    public ulong AdminRoleId { get; init; }
+    public ulong ModRoleId { get; init; }
 
     /// <summary>
     ///     Gets the most shameful discord role.

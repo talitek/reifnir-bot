@@ -7,10 +7,12 @@ public static class DiscordRoleMapper
 {
     public static AppDiscordRole Map(DiscordRole discordRole)
     {
-        var appDiscordRole = new AppDiscordRole();
-
-        appDiscordRole.Id = discordRole.Id;
-        appDiscordRole.Name = discordRole.Name;
+        var appDiscordRole = new AppDiscordRole
+        {
+            Id = discordRole.Id,
+            Name = discordRole.Name,
+            HasAdminPermission = discordRole.Permissions.HasPermission(DiscordPermissions.Administrator),
+        };
 
         return appDiscordRole;
     }

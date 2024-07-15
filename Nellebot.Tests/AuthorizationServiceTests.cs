@@ -21,13 +21,29 @@ public class AuthorizationServiceTests
     }
 
     [TestMethod]
-    public void IsOwnerOrAdmin_WhenAdmin_ReturnTrue()
+    public void IsAdminOrMod_WhenAdmin_ReturnTrue()
+    {
+        // Arrange
+        _optionsMock.Value.Returns(new BotOptions());
+        _sut = new AuthorizationService(_optionsMock);
+
+        AppDiscordMember member = BuildAdminMember(1);
+
+        // Act
+        bool result = _sut.IsAdminOrMod(member);
+
+        // Assert
+        Assert.IsTrue(result);
+    }
+
+    [TestMethod]
+    public void IsAdminOrMod_WhenMod_ReturnTrue()
     {
         // Arrange
         _optionsMock.Value.Returns(
             new BotOptions
             {
-                AdminRoleId = 1,
+                ModRoleId = 1,
             });
 
         _sut = new AuthorizationService(_optionsMock);
@@ -35,65 +51,21 @@ public class AuthorizationServiceTests
         // Member with admin role
         AppDiscordMember member = BuildMember(1, 1);
 
-        AppDiscordApplication discordApplication = BuildApplication(0);
-
         // Act
-        bool result = _sut.IsOwnerOrAdmin(member, discordApplication);
+        bool result = _sut.IsAdminOrMod(member);
 
         // Assert
         Assert.IsTrue(result);
     }
 
     [TestMethod]
-    public void IsOwnerOrAdmin_WhenOwner_ReturnTrue()
-    {
-        // Arrange
-        _sut = new AuthorizationService(_optionsMock);
-
-        AppDiscordMember member = BuildMember(1, 0);
-
-        // App with member as owner
-        AppDiscordApplication discordApplication = BuildApplication(1);
-
-        // Act
-        bool result = _sut.IsOwnerOrAdmin(member, discordApplication);
-
-        // Assert
-        Assert.IsTrue(result);
-    }
-
-    [TestMethod]
-    public void IsOwnerOrAdmin_WhenCoOwner_ReturnTrue()
+    public void IsAdminOrMod_WhenNeitherAdminNorMod_ReturnFalse()
     {
         // Arrange
         _optionsMock.Value.Returns(
             new BotOptions
             {
-                CoOwnerUserId = 1,
-            });
-
-        _sut = new AuthorizationService(_optionsMock);
-
-        // Member with co-owner id
-        AppDiscordMember member = BuildMember(1, 0);
-
-        AppDiscordApplication discordApplication = BuildApplication(0);
-
-        // Act
-        bool result = _sut.IsOwnerOrAdmin(member, discordApplication);
-
-        // Assert
-        Assert.IsTrue(result);
-    }
-
-    [TestMethod]
-    public void IsOwnerOrAdmin_WhenNeitherAdminOrOwner_ReturnFalse()
-    {
-        // Arrange
-        _optionsMock.Value.Returns(
-            new BotOptions
-            {
-                AdminRoleId = 1,
+                ModRoleId = 1,
             });
 
         _sut = new AuthorizationService(_optionsMock);
@@ -101,11 +73,8 @@ public class AuthorizationServiceTests
         // Member without admin role
         AppDiscordMember member = BuildMember(1, 2);
 
-        // App without member as owner
-        AppDiscordApplication discordApplication = BuildApplication(2);
-
         // Act
-        bool result = _sut.IsOwnerOrAdmin(member, discordApplication);
+        bool result = _sut.IsAdminOrMod(member);
 
         // Assert
         Assert.IsFalse(result);
@@ -115,63 +84,15 @@ public class AuthorizationServiceTests
     public void IsTrustedMember_WhenHasTrustedMemberRole_ReturnTrue()
     {
         // Arrange
-        _optionsMock.Value.Returns(new BotOptions { TrustedRoleIds = new ulong[] { 1 } });
+        _optionsMock.Value.Returns(new BotOptions { TrustedRoleIds = [1] });
 
         _sut = new AuthorizationService(_optionsMock);
 
         // Member with trusted role
         AppDiscordMember member = BuildMember(1, 1);
 
-        AppDiscordApplication discordApplication = BuildApplication(0);
-
         // Act
-        bool result = _sut.IsTrustedMember(member, discordApplication);
-
-        // Assert
-        Assert.IsTrue(result);
-    }
-
-    [TestMethod]
-    public void IsTrustedMember_WhenIsOwner_ReturnTrue()
-    {
-        // Arrange
-        _optionsMock.Value.Returns(new BotOptions());
-
-        _sut = new AuthorizationService(_optionsMock);
-
-        // Member without trusted role
-        AppDiscordMember member = BuildMember(1, 2);
-
-        // App with member as owner
-        AppDiscordApplication discordApplication = BuildApplication(1);
-
-        // Act
-        bool result = _sut.IsTrustedMember(member, discordApplication);
-
-        // Assert
-        Assert.IsTrue(result);
-    }
-
-    [TestMethod]
-    public void IsTrustedMember_WhenIsCoOwner_ReturnTrue()
-    {
-        // Arrange
-        _optionsMock.Value.Returns(
-            new BotOptions
-            {
-                CoOwnerUserId = 1,
-            });
-
-        _sut = new AuthorizationService(_optionsMock);
-
-        // Member without trusted role
-        AppDiscordMember member = BuildMember(1, 0);
-
-        // App without member as owner
-        AppDiscordApplication discordApplication = BuildApplication(0);
-
-        // Act
-        bool result = _sut.IsTrustedMember(member, discordApplication);
+        bool result = _sut.IsTrustedMember(member);
 
         // Assert
         Assert.IsTrue(result);
@@ -181,17 +102,33 @@ public class AuthorizationServiceTests
     public void IsTrustedMember_WhenIsAdmin_ReturnTrue()
     {
         // Arrange
-        _optionsMock.Value.Returns(new BotOptions { AdminRoleId = 1 });
+        _optionsMock.Value.Returns(new BotOptions());
+
+        _sut = new AuthorizationService(_optionsMock);
+
+        // Member without trusted role
+        AppDiscordMember member = BuildAdminMember(1);
+
+        // Act
+        bool result = _sut.IsTrustedMember(member);
+
+        // Assert
+        Assert.IsTrue(result);
+    }
+
+    [TestMethod]
+    public void IsTrustedMember_WhenIsMod_ReturnTrue()
+    {
+        // Arrange
+        _optionsMock.Value.Returns(new BotOptions { ModRoleId = 1 });
 
         _sut = new AuthorizationService(_optionsMock);
 
         // Member with trusted role
         AppDiscordMember member = BuildMember(1, 1);
 
-        AppDiscordApplication discordApplication = BuildApplication(0);
-
         // Act
-        bool result = _sut.IsTrustedMember(member, discordApplication);
+        bool result = _sut.IsTrustedMember(member);
 
         // Assert
         Assert.IsTrue(result);
@@ -201,17 +138,15 @@ public class AuthorizationServiceTests
     public void IsTrustedMember_WhenDoesNotHaveTrustedRole_ReturnFalse()
     {
         // Arrange
-        _optionsMock.Value.Returns(new BotOptions { TrustedRoleIds = new ulong[] { 1 } });
+        _optionsMock.Value.Returns(new BotOptions { TrustedRoleIds = [1] });
 
         _sut = new AuthorizationService(_optionsMock);
 
         // Member with trusted role
         AppDiscordMember member = BuildMember(1, 2);
 
-        AppDiscordApplication discordApplication = BuildApplication(0);
-
         // Act
-        bool result = _sut.IsTrustedMember(member, discordApplication);
+        bool result = _sut.IsTrustedMember(member);
 
         // Assert
         Assert.IsFalse(result);
@@ -232,15 +167,17 @@ public class AuthorizationServiceTests
         };
     }
 
-    private static AppDiscordApplication BuildApplication(ulong ownerId)
+    private static AppDiscordMember BuildAdminMember(ulong id)
     {
-        return new AppDiscordApplication
+        return new AppDiscordMember
         {
-            Owners = new List<AppDiscordUser>
+            Id = id,
+            Roles = new List<AppDiscordRole>
             {
                 new()
                 {
-                    Id = ownerId,
+                    Id = 0,
+                    HasAdminPermission = true,
                 },
             },
         };

@@ -20,9 +20,8 @@ public class RequireTrustedMemberCheck : IContextCheck<RequireTrustedMemberV2Att
         if (ctx.Member is null) return ValueTask.FromResult<string?>("This command must be executed in a guild.");
 
         AppDiscordMember appMember = DiscordMemberMapper.Map(ctx.Member);
-        AppDiscordApplication appApplication = DiscordApplicationMapper.Map(ctx.Client.CurrentApplication);
 
-        bool isAuthorized = authorizationService.IsTrustedMember(appMember, appApplication);
+        bool isAuthorized = authorizationService.IsTrustedMember(appMember);
 
         return ValueTask.FromResult<string?>(isAuthorized ? null : "You are not authorized to use this command.");
     }
