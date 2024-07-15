@@ -60,20 +60,10 @@ public class ClientStatusHandler : INotificationHandler<ClientHeartbeatNotificat
         await _botSettingsService.SetLastHeartbeat(notification.Timestamp);
     }
 
-    public async Task Handle(SessionCreatedNotification notification, CancellationToken cancellationToken)
+    public Task Handle(SessionCreatedNotification notification, CancellationToken cancellationToken)
     {
-        try
-        {
-            string commandPrefix = _options.CommandPrefix;
-
-            var activity = new DiscordActivity($"\"{commandPrefix}help\" for help", DiscordActivityType.Playing);
-
-            await _client.UpdateStatusAsync(activity);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "OnSessionCreated");
-        }
+        _logger.LogInformation("Session Created");
+        return Task.CompletedTask;
     }
 
     public async Task Handle(

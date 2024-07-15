@@ -4,6 +4,7 @@ using DSharpPlus;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Commands.Processors.TextCommands.Parsing;
+using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
@@ -41,8 +42,7 @@ public class BotWorker : IHostedService
 
         await RegisterCommands();
 
-        // TODO Set up the bot's activity here instead of the connected event handler
-        await _client.ConnectAsync();
+        await ConnectToGateway();
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
@@ -50,6 +50,15 @@ public class BotWorker : IHostedService
         _logger.LogInformation("Stopping bot");
 
         return _client.DisconnectAsync();
+    }
+
+    private async Task ConnectToGateway()
+    {
+        string commandPrefix = _options.CommandPrefix;
+
+        var activity = new DiscordActivity($"\"{commandPrefix}help\" for help", DiscordActivityType.Playing);
+
+        await _client.ConnectAsync(activity);
     }
 
     private async Task RegisterCommands()
