@@ -1,7 +1,8 @@
 ﻿using System.Text;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.Processors.TextCommands;
+using DSharpPlus.Commands.Trees.Metadata;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Options;
 using Nellebot.Attributes;
@@ -9,9 +10,12 @@ using Nellebot.Utils;
 
 namespace Nellebot.CommandModules;
 
+// TODO rewrite help module to only have a single /help command
+// and use interactive help command to show all commands
 [BaseCommandCheck]
-[Group("help")]
-public class HelpModule : BaseCommandModule
+[Command("help")]
+[AllowedProcessors(typeof(TextCommandProcessor))]
+public class HelpModule
 {
     private readonly BotOptions _options;
 
@@ -20,25 +24,14 @@ public class HelpModule : BaseCommandModule
         _options = options.Value;
     }
 
-    [GroupCommand]
-    public Task Help(CommandContext ctx)
+    [DefaultGroupCommand]
+    [Command("index")]
+    public ValueTask Help(CommandContext ctx)
     {
         var sb = new StringBuilder();
 
         string commandPrefix = _options.CommandPrefix;
         const string slashPrefix = DiscordConstants.SlashCommandPrefix;
-
-        sb.AppendLine($"On NELLE, you can manage your roles using the `{slashPrefix}roles` command.");
-        sb.AppendLine(
-            $"Alternatively, you can use the `{slashPrefix}role` command followed by the `name` of the role. For example: `{slashPrefix}role beginner`");
-        sb.AppendLine("Use the same command to unassign a role from yourself.");
-        sb.AppendLine("A complete overview of the server roles can be found in #roles channel.");
-
-        sb.AppendLine();
-        sb.AppendLine("If you have any problems, you can always ask the moderators for help.");
-        sb.AppendLine(
-            $"You can privately message the moderator team either by using the `{slashPrefix}modmail` command");
-        sb.AppendLine("or by sending me a DM. I will then pass your message on to the moderators.");
 
         sb.AppendLine();
         sb.AppendLine("Dictionary commands:");
@@ -53,6 +46,17 @@ public class HelpModule : BaseCommandModule
         sb.AppendLine();
         sb.AppendLine("Staff commands:");
         sb.AppendLine($"`{commandPrefix}help admin-misc`");
+        sb.AppendLine($"`{commandPrefix}help valhall`");
+
+        sb.AppendLine();
+        sb.AppendLine($"Most of the commands are also available as slash commands.");
+        sb.AppendLine($"Try typing `{slashPrefix}` in the chat to see them.");
+
+        sb.AppendLine();
+        sb.AppendLine("If you have any problems, you can always ask the moderators for help.");
+        sb.AppendLine(
+            $"You can privately message the moderator team either by using the `{slashPrefix}modmail` command");
+        sb.AppendLine("or by sending me a DM. I will then pass your message on to the moderators.");
 
         sb.AppendLine();
         sb.AppendLine(
@@ -64,7 +68,7 @@ public class HelpModule : BaseCommandModule
     }
 
     [Command("admin-misc")]
-    public Task HelpAdminMisc(CommandContext ctx)
+    public ValueTask HelpAdminMisc(CommandContext ctx)
     {
         var sb = new StringBuilder();
 
@@ -85,7 +89,7 @@ public class HelpModule : BaseCommandModule
     }
 
     [Command("valhall")]
-    public Task HelpValhallMisc(CommandContext ctx)
+    public ValueTask HelpValhallMisc(CommandContext ctx)
     {
         var sb = new StringBuilder();
 

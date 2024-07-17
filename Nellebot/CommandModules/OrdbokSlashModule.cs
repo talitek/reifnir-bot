@@ -1,12 +1,15 @@
-﻿using System.Threading.Tasks;
-using DSharpPlus.SlashCommands;
+﻿using System.ComponentModel;
+using System.Threading.Tasks;
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.Processors.SlashCommands;
+using Nellebot.Attributes;
 using Nellebot.CommandHandlers.Ordbok;
 using Nellebot.Common.Models.Ordbok;
 using Nellebot.Workers;
 
 namespace Nellebot.CommandModules;
 
-public class OrdbokSlashModule : ApplicationCommandModule
+public class OrdbokSlashModule
 {
     private readonly RequestQueueChannel _requestQueue;
 
@@ -15,8 +18,13 @@ public class OrdbokSlashModule : ApplicationCommandModule
         _requestQueue = commandQueue;
     }
 
-    [SlashCommand("bm", "Search Bokmål dictionary")]
-    public Task OrdbokSearchBokmal(InteractionContext ctx, [Option("query", "What to search for")] string query)
+    [BaseCommandCheck]
+    [Command("bm")]
+    [Description("Search Bokmål dictionary")]
+    public Task OrdbokSearchBokmal(
+        SlashCommandContext ctx,
+        [Parameter("query")] [Description("What to search for")]
+        string query)
     {
         var searchOrdbokRequest = new SearchOrdbokQueryV2(ctx)
         {
@@ -27,8 +35,13 @@ public class OrdbokSlashModule : ApplicationCommandModule
         return _requestQueue.Writer.WriteAsync(searchOrdbokRequest).AsTask();
     }
 
-    [SlashCommand("nn", "Search Nynorsk dictionary")]
-    public Task OrdbokSearchNynorsk(InteractionContext ctx, [Option("query", "What to search for")] string query)
+    [BaseCommandCheck]
+    [Command("nn")]
+    [Description("Search Nynorsk dictionary")]
+    public Task OrdbokSearchNynorsk(
+        SlashCommandContext ctx,
+        [Parameter("query")] [Description("What to search for")]
+        string query)
     {
         var searchOrdbokRequest = new SearchOrdbokQueryV2(ctx)
         {

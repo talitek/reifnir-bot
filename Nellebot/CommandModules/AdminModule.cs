@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.ArgumentModifiers;
+using DSharpPlus.Commands.ContextChecks;
+using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
 using MediatR;
 using Nellebot.Attributes;
@@ -12,15 +14,15 @@ using Nellebot.CommandHandlers.Ordbok;
 using Nellebot.Common.Extensions;
 using Nellebot.Common.Models.Modmail;
 using Nellebot.Data.Repositories;
+using Nellebot.Utils;
 using Nellebot.Workers;
 
 namespace Nellebot.CommandModules;
 
 [BaseCommandCheck]
-[RequireOwnerOrAdmin]
-[Group("admin")]
-[ModuleLifespan(ModuleLifespan.Transient)]
-public class AdminModule : BaseCommandModule
+[RequirePermissions(DiscordPermissions.None, UserPermissions = DiscordPermissions.Administrator)]
+[Command("admin")]
+public class AdminModule
 {
     private readonly CommandQueueChannel _commandQueue;
     private readonly IMediator _mediator;
@@ -37,11 +39,19 @@ public class AdminModule : BaseCommandModule
     }
 
     [Command("nickname")]
-    public Task ChangeNickname(CommandContext ctx, [RemainingText] string name)
+    public async Task ChangeNickname(CommandContext ctx, [RemainingText] string name)
     {
+        ctx.Guild.ThrowIfNull();
+
         name = name.RemoveQuotes();
 
-        return ctx.Guild.CurrentMember.ModifyAsync(props => { props.Nickname = name; });
+        await ctx.Guild.CurrentMember.ModifyAsync(x => x.Nickname = name);
+
+        // TODO implement a more general way to respond to commands
+        if (ctx is SlashCommandContext slashCtx)
+        {
+            await slashCtx.RespondAsync("Nickname changed", true);
+        }
     }
 
     [Command("add-missing-members")]
@@ -65,6 +75,8 @@ public class AdminModule : BaseCommandModule
     [Command("delete-spam-after")]
     public async Task DeleteSpam(CommandContext ctx, ulong channelId, ulong messageId)
     {
+        ctx.Guild.ThrowIfNull();
+
         DiscordChannel channel = await ctx.Guild.GetChannelAsync(channelId);
 
         var messagesToDelete = new List<DiscordMessage>();

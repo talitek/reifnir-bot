@@ -13,41 +13,32 @@ public class AuthorizationService
         _options = options.Value;
     }
 
-    public bool IsOwnerOrAdmin(AppDiscordMember member, AppDiscordApplication discordApplication)
+    public bool IsAdminOrMod(AppDiscordMember member)
     {
-        AppDiscordMember currentMember = member;
+        bool currentUserIsAdmin = member.Roles.Any(r => r.HasAdminPermission);
 
-        bool isBotOwner = discordApplication.Owners.Any(x => x.Id == currentMember.Id);
-
-        if (isBotOwner)
+        if (currentUserIsAdmin)
         {
             return true;
         }
 
-        ulong coOwnerUserId = _options.CoOwnerUserId;
+        ulong modRoleId = _options.ModRoleId;
 
-        if (member.Id == coOwnerUserId)
-        {
-            return true;
-        }
+        bool currentUserIsMod = member.Roles.Select(r => r.Id).Contains(modRoleId);
 
-        ulong adminRoleId = _options.AdminRoleId;
-
-        bool currentUserIsAdmin = currentMember.Roles.Select(r => r.Id).Contains(adminRoleId);
-
-        return currentUserIsAdmin;
+        return currentUserIsMod;
     }
 
-    public bool IsTrustedMember(AppDiscordMember appMember, AppDiscordApplication appApplication)
+    public bool IsTrustedMember(AppDiscordMember member)
     {
-        if (IsOwnerOrAdmin(appMember, appApplication))
+        if (IsAdminOrMod(member))
         {
             return true;
         }
 
         ulong[] trustedRoleIds = _options.TrustedRoleIds;
 
-        bool currentUserIsTrusted = appMember.Roles.Select(r => r.Id).Intersect(trustedRoleIds).Any();
+        bool currentUserIsTrusted = member.Roles.Select(r => r.Id).Intersect(trustedRoleIds).Any();
 
         return currentUserIsTrusted;
     }

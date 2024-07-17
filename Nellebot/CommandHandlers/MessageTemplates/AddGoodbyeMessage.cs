@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
+using DSharpPlus.Commands;
 using DSharpPlus.Entities;
 using MediatR;
 using Nellebot.Data.Repositories;
@@ -11,7 +11,7 @@ using Nellebot.Infrastructure;
 
 namespace Nellebot.CommandHandlers.MessageTemplates;
 
-public record AddGoodbyeMessageCommand(CommandContext Ctx, string Message) : BotCommandCommand(Ctx);
+public record AddGoodbyeMessageCommand(CommandContext Ctx, string Message) : BotCommandV2Command(Ctx);
 
 public class AddGoodbyeMessageHandler : IRequestHandler<AddGoodbyeMessageCommand>
 {

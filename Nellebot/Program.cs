@@ -1,16 +1,12 @@
 using System;
 using System.Threading.Channels;
-using DSharpPlus;
 using MediatR;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Nellebot.CommandHandlers;
 using Nellebot.CommandModules;
-using Nellebot.Data;
 using Nellebot.Data.Repositories;
 using Nellebot.Infrastructure;
 using Nellebot.Services;
@@ -35,7 +31,9 @@ public class Program
             .ConfigureServices(
                 (hostContext, services) =>
                 {
-                    services.Configure<BotOptions>(hostContext.Configuration.GetSection(BotOptions.OptionsKey));
+                    IConfiguration configuration = hostContext.Configuration;
+
+                    services.Configure<BotOptions>(configuration.GetSection(BotOptions.OptionsKey));
 
                     services.AddDataProtection()
                         .SetApplicationName(nameof(Nellebot))
@@ -67,57 +65,11 @@ public class Program
 
                     AddRepositories(services);
 
-                    AddDbContext(hostContext, services);
+                    services.AddDbContext(configuration);
 
-                    AddDiscordClient(hostContext, services);
+                    services.AddDiscordClient(configuration);
                 })
             .UseSystemd();
-    }
-
-    private static void AddDiscordClient(HostBuilderContext hostContext, IServiceCollection services)
-    {
-        services.AddSingleton(
-            _ =>
-            {
-                string defaultLogLevel =
-                    hostContext.Configuration.GetValue<string>("Logging:LogLevel:Default") ?? "Warning";
-                string botToken = hostContext.Configuration.GetValue<string>("Nellebot:BotToken") ??
-                                  throw new Exception("Bot token not found");
-
-                var logLevel = Enum.Parse<LogLevel>(defaultLogLevel);
-
-                var socketConfig = new DiscordConfiguration
-                {
-                    MinimumLogLevel = logLevel,
-                    TokenType = TokenType.Bot,
-                    Token = botToken,
-                    Intents = DiscordIntents.All,
-                };
-
-                var client = new DiscordClient(socketConfig);
-
-                return client;
-            });
-    }
-
-    private static void AddDbContext(HostBuilderContext hostContext, IServiceCollection services)
-    {
-        services.AddDbContext<BotDbContext>(
-            builder =>
-            {
-                var dbConnString =
-                    hostContext.Configuration
-                        .GetValue<string>("Nellebot:ConnectionString");
-                var logLevel =
-                    hostContext.Configuration
-                        .GetValue<string>("Logging:LogLevel:Default");
-
-                builder.EnableSensitiveDataLogging(logLevel == "Debug");
-
-                builder.UseNpgsql(dbConnString);
-            },
-            ServiceLifetime.Transient,
-            ServiceLifetime.Singleton);
     }
 
     private static void AddRepositories(IServiceCollection services)
@@ -156,11 +108,11 @@ public class Program
     {
         const int channelSize = 1024;
 
-        services.AddSingleton(_ => new RequestQueueChannel(Channel.CreateBounded<IRequest>(channelSize)));
-        services.AddSingleton(_ => new CommandQueueChannel(Channel.CreateBounded<ICommand>(channelSize)));
-        services.AddSingleton(_ => new CommandParallelQueueChannel(Channel.CreateBounded<ICommand>(channelSize)));
-        services.AddSingleton(_ => new EventQueueChannel(Channel.CreateBounded<INotification>(channelSize)));
-        services.AddSingleton(_ => new DiscordLogChannel(Channel.CreateBounded<BaseDiscordLogItem>(channelSize)));
+        services.AddSingleton(new RequestQueueChannel(Channel.CreateBounded<IRequest>(channelSize)));
+        services.AddSingleton(new CommandQueueChannel(Channel.CreateBounded<ICommand>(channelSize)));
+        services.AddSingleton(new CommandParallelQueueChannel(Channel.CreateBounded<ICommand>(channelSize)));
+        services.AddSingleton(new EventQueueChannel(Channel.CreateBounded<INotification>(channelSize)));
+        services.AddSingleton(new DiscordLogChannel(Channel.CreateBounded<BaseDiscordLogItem>(channelSize)));
     }
 
     private static void AddWorkers(IServiceCollection services)

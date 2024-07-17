@@ -18,7 +18,7 @@ public class SuggestionHandler : INotificationHandler<MessageCreatedNotification
 
     public async Task Handle(MessageCreatedNotification notification, CancellationToken cancellationToken)
     {
-        ulong suggestionsForumChannelId = _options.SuggestionsChannelId2;
+        ulong suggestionsForumChannelId = _options.SuggestionsChannelId;
 
         DiscordChannel channel = notification.EventArgs.Channel;
         DiscordMessage message = notification.EventArgs.Message;

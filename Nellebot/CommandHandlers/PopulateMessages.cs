@@ -2,14 +2,14 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
+using DSharpPlus.Commands;
 using DSharpPlus.Entities;
 using MediatR;
 using Nellebot.Services;
 
 namespace Nellebot.CommandHandlers;
 
-public record PopulateMessagesCommand : BotCommandCommand
+public record PopulateMessagesCommand : BotCommandV2Command
 {
     public PopulateMessagesCommand(CommandContext ctx)
         : base(ctx)

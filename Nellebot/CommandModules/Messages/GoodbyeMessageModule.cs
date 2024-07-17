@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.ArgumentModifiers;
 using Nellebot.Attributes;
 using Nellebot.CommandHandlers.MessageTemplates;
 using Nellebot.Workers;
@@ -8,10 +8,9 @@ using Nellebot.Workers;
 namespace Nellebot.CommandModules.Messages;
 
 [BaseCommandCheck]
-[RequireTrustedMember]
-[Group("goodbye-msg")]
-[ModuleLifespan(ModuleLifespan.Transient)]
-public class GoodbyeMessageModule : BaseCommandModule
+[RequireTrustedMemberV2]
+[Command("goodbye-msg")]
+public class GoodbyeMessageModule
 {
     private readonly CommandParallelQueueChannel _commandParallelQueue;
     private readonly CommandQueueChannel _commandQueue;

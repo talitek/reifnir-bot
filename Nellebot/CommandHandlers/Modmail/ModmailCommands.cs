@@ -1,12 +1,13 @@
-﻿using DSharpPlus.Entities;
+﻿using DSharpPlus.Commands;
+using DSharpPlus.Entities;
 using Nellebot.Common.Models.Modmail;
 
 namespace Nellebot.CommandHandlers.Modmail;
 
 public record RequestModmailTicketCommand : BaseCommand
 {
-    public RequestModmailTicketCommand(BaseContext ctx)
-        : base(ctx)
+    public RequestModmailTicketCommand(CommandContext ctx)
+        : base(BaseContext.FromCommandContext(ctx))
     { }
 
     public RequestModmailTicketCommand(BaseContext ctx, DiscordMessage requestMessage)

@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
+#pragma warning disable SA1413
 
 namespace Nellebot.Data.Migrations.Migrations
 {

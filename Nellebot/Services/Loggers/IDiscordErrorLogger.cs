@@ -1,5 +1,5 @@
 ﻿using System;
-using DSharpPlus.CommandsNext;
+using DSharpPlus.Commands;
 using Nellebot.CommandHandlers;
 
 namespace Nellebot.Services.Loggers;

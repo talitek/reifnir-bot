@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
+using DSharpPlus.Commands;
 using DSharpPlus.Entities;
 using MediatR;
 using Nellebot.Common.AppDiscordModels;
@@ -13,7 +13,7 @@ using Nellebot.Services;
 
 namespace Nellebot.CommandHandlers.MessageTemplates;
 
-public record DeleteGoodbyeMessageCommand(CommandContext Ctx, string Id) : BotCommandCommand(Ctx);
+public record DeleteGoodbyeMessageCommand(CommandContext Ctx, string Id) : BotCommandV2Command(Ctx);
 
 public class DeleteGoodbyeMessageHandler : IRequestHandler<DeleteGoodbyeMessageCommand>
 {
@@ -46,11 +46,10 @@ public class DeleteGoodbyeMessageHandler : IRequestHandler<DeleteGoodbyeMessageC
         }
 
         AppDiscordMember appMember = DiscordMemberMapper.Map(ctx.Member);
-        AppDiscordApplication appApplication = DiscordApplicationMapper.Map(ctx.Client.CurrentApplication);
 
-        bool isOwnerOrAdmin = _authService.IsOwnerOrAdmin(appMember, appApplication);
+        bool isAuthorized = _authService.IsAdminOrMod(appMember);
 
-        if (!isOwnerOrAdmin && messageTemplate.AuthorId != author.Id)
+        if (!isAuthorized && messageTemplate.AuthorId != author.Id)
         {
             throw new ArgumentException("Hey! Nacho cheese! Uh, I mean, nacho goodbye message.");
         }

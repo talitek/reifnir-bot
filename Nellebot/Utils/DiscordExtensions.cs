@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
@@ -52,5 +54,10 @@ public static class DiscordExtensions
     public static string NullOrWhiteSpaceTo(this string input, string fallback)
     {
         return !string.IsNullOrWhiteSpace(input) ? input : fallback;
+    }
+
+    public static void ThrowIfNull([NotNull] this DiscordGuild? guild)
+    {
+        _ = guild ?? throw new InvalidOperationException("Guild null null");
     }
 }

@@ -1,13 +1,14 @@
-﻿using System.Threading.Tasks;
+﻿using System.ComponentModel;
+using System.Threading.Tasks;
+using DSharpPlus.Commands;
 using DSharpPlus.Entities;
-using DSharpPlus.SlashCommands;
+using Nellebot.Attributes;
 using Nellebot.CommandHandlers.Modmail;
 using Nellebot.Workers;
-using BaseContext = Nellebot.CommandHandlers.BaseContext;
 
 namespace Nellebot.CommandModules.Messages;
 
-public class ModmailModule : ApplicationCommandModule
+public class ModmailModule
 {
     private readonly CommandParallelQueueChannel _channel;
 
@@ -16,18 +17,20 @@ public class ModmailModule : ApplicationCommandModule
         _channel = channel;
     }
 
-    [SlashCommand("modmail", "Send a message via the modmail")]
-    public async Task RequestModmailTicket(InteractionContext ctx)
+    [BaseCommandCheck]
+    [Command("modmail")]
+    [Description("Initiate a private conversation with the moderators (will continue in DMs)")]
+    public async Task RequestModmailTicket(CommandContext ctx)
     {
-        var messageContent = "I'll just slip into your DMs";
+        const string messageContent = "I'll just slip into your DMs";
 
         DiscordInteractionResponseBuilder responseBuilder = new DiscordInteractionResponseBuilder()
             .WithContent(messageContent)
             .AsEphemeral();
 
-        await ctx.CreateResponseAsync(responseBuilder);
+        await ctx.RespondAsync(responseBuilder);
 
-        var command = new RequestModmailTicketCommand(BaseContext.FromInteractionContext(ctx));
+        var command = new RequestModmailTicketCommand(ctx);
 
         await _channel.Writer.WriteAsync(command);
     }

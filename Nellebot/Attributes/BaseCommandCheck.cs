@@ -1,58 +1,35 @@
-﻿using System;
-using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
+﻿using System.Threading.Tasks;
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Nellebot.Services.Loggers;
 
 namespace Nellebot.Attributes;
 
 /// <summary>
 ///     Reject commands coming from DM or from other guild (if it exists).
 /// </summary>
-public class BaseCommandCheck : CheckBaseAttribute
+// ReSharper disable once ClassNeverInstantiated.Global
+public class BaseCommandCheck : IContextCheck<BaseCommandCheckAttribute>
 {
-    public override Task<bool> ExecuteCheckAsync(CommandContext ctx, bool help)
+    public ValueTask<string?> ExecuteCheckAsync(BaseCommandCheckAttribute attribute, CommandContext ctx)
     {
-        object? botOptionsObj = ctx.Services.GetService(typeof(IOptions<BotOptions>));
-
-        if (botOptionsObj == null)
-        {
-            var error = $"Could not fetch {typeof(IOptions<BotOptions>).Name}";
-
-            object? discordErrorLoggerObj = ctx.Services.GetService(typeof(IDiscordErrorLogger));
-
-            if (discordErrorLoggerObj == null)
-            {
-                throw new Exception($"Could not fetch {typeof(IDiscordErrorLogger).Name}");
-            }
-
-            var discordErrorLogger = (IDiscordErrorLogger)discordErrorLoggerObj;
-
-            discordErrorLogger.LogError("WTF", error);
-
-            return Task.FromResult(false);
-        }
-
-        BotOptions botOptions = ((IOptions<BotOptions>)botOptionsObj).Value;
+        BotOptions botOptions = ctx.Client.ServiceProvider.GetRequiredService<IOptions<BotOptions>>().Value;
 
         ulong guildId = botOptions.GuildId;
 
         DiscordChannel channel = ctx.Channel;
 
-        if (IsPrivateMessageChannel(channel)) return Task.FromResult(false);
+        if (channel.IsPrivate)
+            return ValueTask.FromResult<string?>("This command must be executed in a guild.");
 
-        return !IsGuildChannel(channel, guildId) ? Task.FromResult(false) : Task.FromResult(true);
-    }
+        bool isHomeGuildChannel = channel.GuildId == guildId;
 
-    private bool IsGuildChannel(DiscordChannel channel, ulong botGuildId)
-    {
-        return channel.GuildId == botGuildId;
-    }
-
-    private bool IsPrivateMessageChannel(DiscordChannel channel)
-    {
-        return channel.IsPrivate;
+        return isHomeGuildChannel
+            ? ValueTask.FromResult<string?>(null)
+            : ValueTask.FromResult<string?>("Hmm. Weird.");
     }
 }
+
+public class BaseCommandCheckAttribute : ContextCheckAttribute;
