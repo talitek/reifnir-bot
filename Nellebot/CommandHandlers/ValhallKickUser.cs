@@ -2,8 +2,10 @@
 using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus.Commands;
+using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
 using MediatR;
+using Microsoft.Extensions.Options;
 using Nellebot.Utils;
 
 namespace Nellebot.CommandHandlers;
@@ -11,11 +13,14 @@ namespace Nellebot.CommandHandlers;
 public record ValhallKickUserCommand(CommandContext Ctx, DiscordMember Member, string Reason)
     : BotCommandV2Command(Ctx);
 
-// TODO: Consider removing the account age restriction
 public class ValhallKickUserHandler : IRequestHandler<ValhallKickUserCommand>
 {
-    private const int MaxAccountAgeForKickInDays = 7;
-    private const int MaxGuildAgeForKickInDays = 1;
+    private readonly BotOptions _options;
+
+    public ValhallKickUserHandler(IOptions<BotOptions> options)
+    {
+        _options = options.Value;
+    }
 
     public async Task Handle(ValhallKickUserCommand request, CancellationToken cancellationToken)
     {
@@ -25,17 +30,21 @@ public class ValhallKickUserHandler : IRequestHandler<ValhallKickUserCommand>
 
         if (ctx.Member?.Id == targetMember.Id)
         {
-            await ctx.RespondAsync("Hmm");
+            await TryRespondEphemeral(ctx, "Hmm");
             return;
         }
 
-        TimeSpan accountAge = DateTimeOffset.UtcNow - targetMember.CreationTimestamp;
         TimeSpan guildAge = DateTimeOffset.UtcNow - targetMember.JoinedAt;
 
-        if (accountAge.TotalDays >= MaxAccountAgeForKickInDays || guildAge.TotalDays >= MaxGuildAgeForKickInDays)
+        int maxAgeHours = _options.ValhallKickMaxMemberAgeInHours;
+
+        if (guildAge.TotalHours >= maxAgeHours)
         {
-            await ctx.RespondAsync(
-                "At this juncture in the temporal continuum, the window of opportunity for rectifying or influencing the current circumstances has lamentably and irrevocably elapsed, rendering any further attempts to alter the outcome both futile and inconsequential.");
+            var content =
+                $"You cannot vkick this user. They have been a member of the server for more than {maxAgeHours} hours.";
+
+            await TryRespondEphemeral(ctx, content);
+
             return;
         }
 
@@ -43,5 +52,15 @@ public class ValhallKickUserHandler : IRequestHandler<ValhallKickUserCommand>
             $"Kicked on behalf of {currentMember.DisplayName}. Reason: {request.Reason.NullOrWhiteSpaceTo("/shrug")}";
 
         await targetMember.RemoveAsync(kickReason);
+
+        await TryRespondEphemeral(ctx, "User vkicked successfully");
+    }
+
+    private static async Task TryRespondEphemeral(CommandContext ctx, string successMessage)
+    {
+        if (ctx is SlashCommandContext slashCtx)
+            await slashCtx.RespondAsync(successMessage, true);
+        else
+            await ctx.RespondAsync(successMessage);
     }
 }

@@ -62,4 +62,6 @@ public class BotOptions
     public ulong ModmailChannelId { get; init; }
 
     public int ModmailTicketInactiveThresholdInHours { get; init; }
+
+    public int ValhallKickMaxMemberAgeInHours { get; init; }
 }
