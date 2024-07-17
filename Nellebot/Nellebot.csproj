@@ -7,16 +7,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02314" />
-        <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02314" />
-        <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02314" />
+        <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02317" />
+        <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02317" />
+        <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02317" />
         <PackageReference Include="MediatR" Version="12.3.0" />
         <PackageReference Include="Microsoft.AspNetCore.DataProtection.Abstractions" Version="8.0.7" />
         <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="8.0.7" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
         <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="8.0.0" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-        <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
         <PackageReference Include="PuppeteerSharp" Version="10.1.4" />
         <PackageReference Include="Scriban" Version="5.10.0" />
