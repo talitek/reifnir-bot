@@ -186,7 +186,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
     public async Task Handle(MessageBulkDeletedNotification notification, CancellationToken cancellationToken)
     {
-        var args = notification.EventArgs;
+        MessagesBulkDeletedEventArgs args = notification.EventArgs;
 
         if (args.Messages.Count == 0)
         {
@@ -276,7 +276,7 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
     public async Task Handle(MessageDeletedNotification notification, CancellationToken cancellationToken)
     {
-        var args = notification.EventArgs;
+        MessageDeletedEventArgs args = notification.EventArgs;
 
         DiscordGuild guild = args.Guild;
         DiscordChannel channel = args.Channel;
@@ -320,18 +320,9 @@ public class ActivityLogHandler : INotificationHandler<GuildBanAddedNotification
 
         DiscordAuditLogMessageEntry? auditMessageDeleteEntry = null;
 
-        // User deleted their own message
         if (!auditResolveResult.Resolved)
         {
-            string authorNameMaybe = message.Author.GetDetailedUserIdentifier();
-
-            // Could not find any audit log entry for the author
-            var warningMessage = $"""
-                                  Could not find any audit log entry for {authorNameMaybe} of type {DiscordAuditLogActionType.MessageDelete}.
-                                  The user likely deleted own message.
-                                  """;
-            _discordErrorLogger.LogWarning($"{nameof(MessageDeletedNotification)}", warningMessage);
-
+            // User, likely, deleted their own message
             return;
         }
 
