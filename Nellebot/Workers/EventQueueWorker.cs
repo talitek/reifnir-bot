@@ -69,6 +69,7 @@ public class EventQueueWorker : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, nameof(EventQueueWorker));
+            _discordErrorLogger.LogError(ex.Message);
         }
     }
 }

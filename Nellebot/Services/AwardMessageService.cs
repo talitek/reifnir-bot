@@ -49,6 +49,12 @@ public class AwardMessageService
             return;
         }
 
+        if (message.Author is null)
+        {
+            _logger.LogDebug("Could not resolve message author");
+            return;
+        }
+
         DiscordMember? messageAuthor = await _discordResolver.ResolveGuildMember(guild, message.Author.Id);
 
         if (messageAuthor is null)
@@ -100,7 +106,7 @@ public class AwardMessageService
         }
         else
         {
-            _logger.LogDebug($"Message ({message.Id}) exists in award channel");
+            _logger.LogDebug("Message ({messageId}) exists in award channel", message.Id);
 
             // TODO keep track if message was removed from award channels
             // so it's handled gracefully i.e. not throw an error
@@ -120,6 +126,12 @@ public class AwardMessageService
         if (message == null)
         {
             _logger.LogDebug("Could not resolve message");
+            return;
+        }
+
+        if (message.Author is null)
+        {
+            _logger.LogDebug("Could not resolve message author");
             return;
         }
 
@@ -379,20 +391,18 @@ public class AwardMessageService
         {
             DiscordEmoji cookieEmoji = DiscordEmoji.FromUnicode(EmojiMap.Cookie);
 
-            IReadOnlyList<DiscordUser>? cookieReactionUsers = await message.GetReactionsAsync(cookieEmoji);
+            List<DiscordUser> cookieReactionUsers =
+                await message.GetReactionsAsync(cookieEmoji).ToListAsync();
 
-            if (cookieReactionUsers != null)
-            {
-                var skipAuthor = false;
-
+            // ReSharper disable once RedundantAssignment
+            var skipAuthor = false;
 #if DEBUG
-                skipAuthor = true;
+            skipAuthor = true;
 #endif
-                awardReactionCount = (uint)cookieReactionUsers
-                    .Select(u => u.Id)
-                    .Distinct()
-                    .Count(x => skipAuthor || x != messageAuthor.Id);
-            }
+            awardReactionCount = (uint)cookieReactionUsers
+                .Select(u => u.Id)
+                .Distinct()
+                .Count(x => skipAuthor || x != messageAuthor.Id);
         }
         catch (Exception ex)
         {

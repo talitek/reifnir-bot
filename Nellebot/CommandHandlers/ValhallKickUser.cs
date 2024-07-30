@@ -11,7 +11,7 @@ using Nellebot.Utils;
 namespace Nellebot.CommandHandlers;
 
 public record ValhallKickUserCommand(CommandContext Ctx, DiscordMember Member, string Reason)
-    : BotCommandV2Command(Ctx);
+    : BotCommandCommand(Ctx);
 
 public class ValhallKickUserHandler : IRequestHandler<ValhallKickUserCommand>
 {

@@ -40,9 +40,9 @@ public record BotSlashCommand : ICommand
     public SlashCommandContext Ctx { get; }
 }
 
-public record BotCommandV2Command : ICommand
+public record BotCommandCommand : ICommand
 {
-    protected BotCommandV2Command(CommandContext ctx)
+    protected BotCommandCommand(CommandContext ctx)
     {
         Ctx = ctx;
     }

@@ -25,7 +25,7 @@ public class TrustedMemberModule
     }
 
     [BaseCommandCheck]
-    [RequireTrustedMemberV2]
+    [RequireTrustedMember]
     [Command("vkick")]
     public async Task ValhallKick(CommandContext ctx, DiscordMember member, [RemainingText] string reason)
     {
@@ -33,7 +33,7 @@ public class TrustedMemberModule
     }
 
     [BaseCommandCheck]
-    [RequireTrustedMemberV2]
+    [RequireTrustedMember]
     [Command("list-award-channels")]
     public async Task ListCookieChannels(CommandContext ctx)
     {

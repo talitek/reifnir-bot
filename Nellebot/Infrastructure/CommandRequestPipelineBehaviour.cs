@@ -32,7 +32,7 @@ public class CommandRequestPipelineBehaviour<TRequest, TResponse> : IPipelineBeh
         {
             return await next().ConfigureAwait(false);
         }
-        catch (Exception ex) when (request is BotCommandV2Command commandCommand)
+        catch (Exception ex) when (request is BotCommandCommand commandCommand)
         {
             await HandeCommandCommandException(commandCommand, ex);
             return default!;
@@ -48,11 +48,12 @@ public class CommandRequestPipelineBehaviour<TRequest, TResponse> : IPipelineBeh
     {
         _discordErrorLogger.LogError(ex.Message);
 
-        _logger.LogError(ex, nameof(HandeCommandCommandException));
+        _logger.LogError(ex, nameof(HandleRequestException));
     }
 
-    private async Task HandeCommandCommandException(BotCommandV2Command request, Exception ex)
+    private async Task HandeCommandCommandException(BotCommandCommand request, Exception ex)
     {
+        // TODO respond with ephemeral message if possible
         CommandContext ctx = request.Ctx;
 
         await ctx.RespondAsync(ex.Message);

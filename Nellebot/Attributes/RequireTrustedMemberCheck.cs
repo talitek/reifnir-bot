@@ -11,9 +11,9 @@ namespace Nellebot.Attributes;
 /// <summary>
 ///     Reject commands coming from DM or from other guild (if it exists).
 /// </summary>
-public class RequireTrustedMemberCheck : IContextCheck<RequireTrustedMemberV2Attribute>
+public class RequireTrustedMemberCheck : IContextCheck<RequireTrustedMemberAttribute>
 {
-    public ValueTask<string?> ExecuteCheckAsync(RequireTrustedMemberV2Attribute v2Attribute, CommandContext ctx)
+    public ValueTask<string?> ExecuteCheckAsync(RequireTrustedMemberAttribute attribute, CommandContext ctx)
     {
         var authorizationService = ctx.Client.ServiceProvider.GetRequiredService<AuthorizationService>();
 
@@ -28,4 +28,4 @@ public class RequireTrustedMemberCheck : IContextCheck<RequireTrustedMemberV2Att
 }
 
 // ReSharper disable once ClassNeverInstantiated.Global
-public class RequireTrustedMemberV2Attribute : ContextCheckAttribute;
+public class RequireTrustedMemberAttribute : ContextCheckAttribute;

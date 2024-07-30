@@ -11,7 +11,7 @@ using Nellebot.Infrastructure;
 
 namespace Nellebot.CommandHandlers.MessageTemplates;
 
-public record AddGoodbyeMessageCommand(CommandContext Ctx, string Message) : BotCommandV2Command(Ctx);
+public record AddGoodbyeMessageCommand(CommandContext Ctx, string Message) : BotCommandCommand(Ctx);
 
 public class AddGoodbyeMessageHandler : IRequestHandler<AddGoodbyeMessageCommand>
 {

@@ -9,7 +9,7 @@ using Nellebot.Services;
 
 namespace Nellebot.CommandHandlers;
 
-public record PopulateMessagesCommand : BotCommandV2Command
+public record PopulateMessagesCommand : BotCommandCommand
 {
     public PopulateMessagesCommand(CommandContext ctx)
         : base(ctx)

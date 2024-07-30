@@ -14,7 +14,7 @@ using Nellebot.Services.Ordbok;
 
 namespace Nellebot.CommandHandlers.Ordbok;
 
-public record RebuildArticleStoreCommand : BotCommandV2Command
+public record RebuildArticleStoreCommand : BotCommandCommand
 {
     public RebuildArticleStoreCommand(CommandContext ctx)
         : base(ctx)

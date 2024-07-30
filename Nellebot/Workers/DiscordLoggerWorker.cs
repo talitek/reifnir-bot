@@ -32,32 +32,27 @@ public class DiscordLoggerWorker : BackgroundService
     {
         try
         {
-            await foreach (BaseDiscordLogItem? logItem in _channel.Reader.ReadAllAsync(stoppingToken))
+            await foreach (BaseDiscordLogItem logItem in _channel.Reader.ReadAllAsync(stoppingToken))
             {
-                if (logItem == null) continue;
+                DiscordChannel logChannel = await ResolverLogChannel(logItem.DiscordGuildId, logItem.DiscordChannelId);
 
-                DiscordChannel? logChannel = await ResolverLogChannel(logItem.DiscordGuildId, logItem.DiscordChannelId);
-
-                if (logChannel != null)
+                try
                 {
-                    try
+                    switch (logItem)
                     {
-                        switch (logItem)
-                        {
-                            case DiscordLogItem<string> discordLogItem:
-                                await logChannel.SendMessageAsync(discordLogItem.Message);
-                                break;
-                            case DiscordLogItem<DiscordEmbed> discordEmbedLogItem:
-                                await logChannel.SendMessageAsync(discordEmbedLogItem.Message);
-                                break;
-                            default:
-                                throw new NotImplementedException();
-                        }
+                        case DiscordLogItem<string> discordLogItem:
+                            await logChannel.SendMessageAsync(discordLogItem.Message);
+                            break;
+                        case DiscordLogItem<DiscordEmbed> discordEmbedLogItem:
+                            await logChannel.SendMessageAsync(discordEmbedLogItem.Message);
+                            break;
+                        default:
+                            throw new NotImplementedException();
                     }
-                    catch (Exception ex)
-                    {
-                        await LogLoggingFailure(ex, logItem.DiscordGuildId);
-                    }
+                }
+                catch (Exception ex)
+                {
+                    await LogLoggingFailure(ex, logItem.DiscordGuildId);
                 }
 
                 _logger.LogDebug(
@@ -67,7 +62,7 @@ public class DiscordLoggerWorker : BackgroundService
         }
         catch (TaskCanceledException)
         {
-            _logger.LogDebug("{Worker} execution is being cancelled", nameof(RequestQueueWorker));
+            _logger.LogDebug("{Worker} execution is being cancelled", nameof(DiscordLoggerWorker));
         }
         catch (Exception ex)
         {

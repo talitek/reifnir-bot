@@ -13,7 +13,7 @@ using Nellebot.Services;
 
 namespace Nellebot.CommandHandlers.MessageTemplates;
 
-public record DeleteGoodbyeMessageCommand(CommandContext Ctx, string Id) : BotCommandV2Command(Ctx);
+public record DeleteGoodbyeMessageCommand(CommandContext Ctx, string Id) : BotCommandCommand(Ctx);
 
 public class DeleteGoodbyeMessageHandler : IRequestHandler<DeleteGoodbyeMessageCommand>
 {

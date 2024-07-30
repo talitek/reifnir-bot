@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 
 namespace Nellebot.CommandHandlers;
 
-public record AddMissingMemberRolesCommand : BotCommandV2Command
+public record AddMissingMemberRolesCommand : BotCommandCommand
 {
     public AddMissingMemberRolesCommand(CommandContext ctx)
         : base(ctx)

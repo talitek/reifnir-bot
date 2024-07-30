@@ -114,7 +114,7 @@ public class CommandEventHandler
                 {
                     errorMessage = "I do not care for DM commands.";
                 }
-                else if (contextCheckAttribute is RequirePermissionsAttribute or RequireTrustedMemberV2Attribute)
+                else if (contextCheckAttribute is RequirePermissionsAttribute or RequireTrustedMemberAttribute)
                 {
                     errorMessage = "You do not have permission to do that.";
                 }

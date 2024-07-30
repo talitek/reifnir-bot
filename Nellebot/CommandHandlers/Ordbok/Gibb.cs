@@ -10,7 +10,7 @@ using Nellebot.Services.Ordbok;
 
 namespace Nellebot.CommandHandlers.Ordbok;
 
-public record GibbCommand : BotCommandV2Command
+public record GibbCommand : BotCommandCommand
 {
     public GibbCommand(CommandContext ctx)
         : base(ctx)
