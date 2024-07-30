@@ -1,24 +1,45 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus.Entities;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Nellebot.Jobs;
+using Quartz;
 
 namespace Nellebot.NotificationHandlers;
 
 public class MemberRoleIntegrityHandler : INotificationHandler<GuildMemberUpdatedNotification>
 {
+    private readonly ILogger<MemberRoleIntegrityHandler> _logger;
+    private readonly ISchedulerFactory _schedulerFactory;
     private readonly BotOptions _options;
 
-    public MemberRoleIntegrityHandler(IOptions<BotOptions> options)
+    public MemberRoleIntegrityHandler(
+        ILogger<MemberRoleIntegrityHandler> logger,
+        IOptions<BotOptions> options,
+        ISchedulerFactory schedulerFactory)
     {
+        _logger = logger;
+        _schedulerFactory = schedulerFactory;
         _options = options.Value;
     }
 
     public async Task Handle(GuildMemberUpdatedNotification notification, CancellationToken cancellationToken)
     {
+        IScheduler scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
+        IReadOnlyCollection<IJobExecutionContext> jobs = await scheduler.GetCurrentlyExecutingJobs(cancellationToken);
+        bool roleMaintenanceIsRunning = jobs.Any(j => Equals(j.JobDetail.Key, RoleMaintenanceJob.Key));
+
+        if (roleMaintenanceIsRunning)
+        {
+            _logger.LogDebug("Role maintenance job is currently running, skipping role integrity check");
+            return;
+        }
+
         bool memberRolesChanged = notification.EventArgs.RolesBefore.Count != notification.EventArgs.RolesAfter.Count;
 
         if (!memberRolesChanged) return;
