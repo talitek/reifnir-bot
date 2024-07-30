@@ -15,6 +15,7 @@ using Nellebot.Services.Loggers;
 using Nellebot.Services.Ordbok;
 using Nellebot.Utils;
 using Nellebot.Workers;
+using Quartz;
 
 namespace Nellebot;
 
@@ -68,6 +69,8 @@ public class Program
                     services.AddDbContext(configuration);
 
                     services.AddDiscordClient(configuration);
+
+                    _ = services.AddJobScheduler(configuration);
                 })
             .UseSystemd();
     }

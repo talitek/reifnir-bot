@@ -7,28 +7,31 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02339" />
-        <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02339" />
-        <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02339" />
-        <PackageReference Include="MediatR" Version="12.3.0" />
-        <PackageReference Include="Microsoft.AspNetCore.DataProtection.Abstractions" Version="8.0.7" />
-        <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="8.0.7" />
-        <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="8.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
-        <PackageReference Include="PuppeteerSharp" Version="10.1.4" />
-        <PackageReference Include="Scriban" Version="5.10.0" />
+        <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02339"/>
+        <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02339"/>
+        <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02339"/>
+        <PackageReference Include="MediatR" Version="12.3.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.Abstractions" Version="8.0.7"/>
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="8.0.7"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="8.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4"/>
+        <PackageReference Include="PuppeteerSharp" Version="10.1.4"/>
+        <PackageReference Include="Quartz" Version="3.11.0"/>
+        <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.11.0"/>
+        <PackageReference Include="Quartz.Extensions.Hosting" Version="3.11.0"/>
+        <PackageReference Include="Scriban" Version="5.10.0"/>
         <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="ZooIds" Version="0.1.0" />
+        <PackageReference Include="ZooIds" Version="0.1.0"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Nellebot.Common\Nellebot.Common.csproj" />
-        <ProjectReference Include="..\Nellebot.Data\Nellebot.Data.csproj" />
+        <ProjectReference Include="..\Nellebot.Common\Nellebot.Common.csproj"/>
+        <ProjectReference Include="..\Nellebot.Data\Nellebot.Data.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
