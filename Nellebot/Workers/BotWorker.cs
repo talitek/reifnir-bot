@@ -40,7 +40,7 @@ public class BotWorker : IHostedService
 
         ConfigureInteractivity();
 
-        await RegisterCommands();
+        RegisterCommands();
 
         await ConnectToGateway();
     }
@@ -61,7 +61,7 @@ public class BotWorker : IHostedService
         await _client.ConnectAsync(activity);
     }
 
-    private async Task RegisterCommands()
+    private void RegisterCommands()
     {
         ulong guildId = _options.GuildId;
 
@@ -83,7 +83,7 @@ public class BotWorker : IHostedService
                 PrefixResolver = new DefaultPrefixResolver(false, commandPrefix).ResolvePrefixAsync,
             });
 
-        await commands.AddProcessorsAsync(textCommandProcessor);
+        commands.AddProcessor(textCommandProcessor);
 
         commands.AddChecks(typeof(Program).Assembly);
     }
