@@ -54,12 +54,6 @@ public class AdminModule
         }
     }
 
-    [Command("add-missing-members")]
-    public Task AddMissingMemberRoles(CommandContext ctx)
-    {
-        return _commandQueue.Writer.WriteAsync(new AddMissingMemberRolesCommand(ctx)).AsTask();
-    }
-
     [Command("set-greeting-message")]
     public Task SetGreetingMessage(CommandContext ctx, [RemainingText] string message)
     {
@@ -107,5 +101,11 @@ public class AdminModule
     public Task RebuildOrbok(CommandContext ctx)
     {
         return _commandQueue.Writer.WriteAsync(new RebuildArticleStoreCommand(ctx)).AsTask();
+    }
+
+    [Command("run-job")]
+    public Task RunJob(CommandContext ctx, string jobName)
+    {
+        return _commandQueue.Writer.WriteAsync(new RunJobCommand(ctx, jobName)).AsTask();
     }
 }
