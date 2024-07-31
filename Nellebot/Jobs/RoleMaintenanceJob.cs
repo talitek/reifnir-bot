@@ -8,6 +8,7 @@ using DSharpPlus;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Options;
 using Nellebot.Services.Loggers;
+using Nellebot.Utils;
 using Quartz;
 
 namespace Nellebot.Jobs;
@@ -42,6 +43,12 @@ public class RoleMaintenanceJob : IJob
 
             DiscordGuild guild = _client.Guilds[guildId];
 
+            _discordLogger.LogExtendedActivityMessage("Downloading guild members.");
+
+            List<DiscordMember> allMembers = await guild.GetAllMembersAsync(cancellationToken).ToListAsync();
+
+            _discordLogger.LogExtendedActivityMessage($"Downloaded {allMembers.Count} guild members.");
+
             DiscordRole? memberRole = guild.Roles[memberRoleId];
             DiscordRole? ghostRole = guild.Roles[ghostRoleId];
 
@@ -55,13 +62,13 @@ public class RoleMaintenanceJob : IJob
                 throw new ConfigurationErrorsException($"Could not find ghost role with id {ghostRoleId}");
             }
 
-            await AddMissingMemberRoles(guild, memberRoleIds, memberRole, cancellationToken);
+            await AddMissingMemberRoles(allMembers, memberRoleIds, memberRole, cancellationToken);
 
-            await RemoveUnneededMemberRoles(guild, memberRoleIds, memberRole, cancellationToken);
+            await RemoveUnneededMemberRoles(allMembers, memberRoleIds, memberRole, cancellationToken);
 
-            await AddMissingGhostRoles(guild, ghostRole, cancellationToken);
+            await AddMissingGhostRoles(allMembers, ghostRole, cancellationToken);
 
-            await RemoveUnneededGhostRoles(guild, ghostRole, cancellationToken);
+            await RemoveUnneededGhostRoles(allMembers, ghostRole, cancellationToken);
 
             _discordLogger.LogExtendedActivityMessage($"Job finished: {Key}");
         }
@@ -72,13 +79,12 @@ public class RoleMaintenanceJob : IJob
     }
 
     private async Task AddMissingMemberRoles(
-        DiscordGuild guild,
+        List<DiscordMember> allMembers,
         ulong[] memberRoleIds,
         DiscordRole memberRole,
         CancellationToken cancellationToken)
     {
-        List<DiscordMember> missingMemberRoleMembers = guild.Members
-            .Select(m => m.Value)
+        List<DiscordMember> missingMemberRoleMembers = allMembers
             .Where(m => m.Roles.All(r => r.Id != memberRole.Id))
             .Where(m => m.Roles.Any(r => memberRoleIds.Contains(r.Id)))
             .ToList();
@@ -101,13 +107,12 @@ public class RoleMaintenanceJob : IJob
     }
 
     private async Task RemoveUnneededMemberRoles(
-        DiscordGuild guild,
+        List<DiscordMember> allMembers,
         ulong[] memberRoleIds,
         DiscordRole memberRole,
         CancellationToken cancellationToken)
     {
-        List<DiscordMember> memberRoleCandidates = guild.Members
-            .Select(m => m.Value)
+        List<DiscordMember> memberRoleCandidates = allMembers
             .Where(
                 m => !m.Roles.Any(r => memberRoleIds.Contains(r.Id))
                      && m.Roles.Any(r => r.Id == memberRole.Id))
@@ -131,12 +136,11 @@ public class RoleMaintenanceJob : IJob
     }
 
     private async Task AddMissingGhostRoles(
-        DiscordGuild guild,
+        List<DiscordMember> allMembers,
         DiscordRole ghostRole,
         CancellationToken cancellationToken)
     {
-        List<DiscordMember> ghostRoleCandidates = guild.Members
-            .Select(r => r.Value)
+        List<DiscordMember> ghostRoleCandidates = allMembers
             .Where(m => !m.Roles.Any())
             .ToList();
 
@@ -158,12 +162,11 @@ public class RoleMaintenanceJob : IJob
     }
 
     private async Task RemoveUnneededGhostRoles(
-        DiscordGuild guild,
+        List<DiscordMember> allMembers,
         DiscordRole ghostRole,
         CancellationToken cancellationToken)
     {
-        List<DiscordMember> ghostRoleCandidates = guild.Members
-            .Select(r => r.Value)
+        List<DiscordMember> ghostRoleCandidates = allMembers
             .Where(m => m.Roles.Any(r => r.Id == ghostRole.Id) && m.Roles.Count() > 1)
             .ToList();
 

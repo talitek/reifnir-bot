@@ -18,7 +18,7 @@ public static class JobSchedulerProvider
                 config.AddJob<RoleMaintenanceJob>(j => j.WithIdentity(RoleMaintenanceJob.Key).StoreDurably());
 
                 // Run at startup
-                config.AddTrigger(t => t.ForJob(RoleMaintenanceJob.Key).StartNow());
+                // config.AddTrigger(t => t.ForJob(RoleMaintenanceJob.Key).StartNow());
 
                 // Run every 6 hours starting at midnight
                 config.AddTrigger(t => t.ForJob(RoleMaintenanceJob.Key).WithCronSchedule("0 0 0/6 ? * * *"));
