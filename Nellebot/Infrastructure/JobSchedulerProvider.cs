@@ -15,13 +15,31 @@ public static class JobSchedulerProvider
             {
                 config.SchedulerName = "DefaultScheduler";
 
-                config.AddJob<RoleMaintenanceJob>(j => j.WithIdentity(RoleMaintenanceJob.Key).StoreDurably());
+                config.ScheduleJob<RoleMaintenanceJob>(
+                    t =>
+                    {
+                        t.ForJob(RoleMaintenanceJob.Key)
+                            .WithCronSchedule("0 0 0/6 ? * * *")
+                            .WithDescription("Run every 6 hours starting at midnight");
+                    },
+                    j =>
+                    {
+                        j.WithIdentity(RoleMaintenanceJob.Key)
+                            .WithDescription("Perform role maintenance tasks");
+                    });
 
-                // Run at startup
-                // config.AddTrigger(t => t.ForJob(RoleMaintenanceJob.Key).StartNow());
-
-                // Run every 6 hours starting at midnight
-                config.AddTrigger(t => t.ForJob(RoleMaintenanceJob.Key).WithCronSchedule("0 0 0/6 ? * * *"));
+                config.ScheduleJob<ModmailCleanupJob>(
+                    t =>
+                    {
+                        t.ForJob(ModmailCleanupJob.Key)
+                            .WithSimpleSchedule(s => s.WithIntervalInMinutes(10).RepeatForever())
+                            .WithDescription("Run every 10 minutes");
+                    },
+                    j =>
+                    {
+                        j.WithIdentity(ModmailCleanupJob.Key)
+                            .WithDescription("Close inactive modmail tickets");
+                    });
             });
 
         services.AddQuartzHostedService(
@@ -30,11 +48,8 @@ public static class JobSchedulerProvider
                 opts.AwaitApplicationStarted = true;
                 opts.WaitForJobsToComplete = true;
 
-                // Give the bot time to start up before running the jobs
+                // Give the bot some time to start up before running the jobs
                 opts.StartDelay = TimeSpan.FromSeconds(30);
-#if DEBUG
-                opts.StartDelay = TimeSpan.FromSeconds(5);
-#endif
             });
 
         return services;

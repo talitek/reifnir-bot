@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlus.Commands;
-using DSharpPlus.Entities;
 using MediatR;
-using Microsoft.Extensions.Options;
 using Nellebot.Jobs;
 using Quartz;
 
@@ -28,6 +24,7 @@ public class RunJobCommandHandler : IRequestHandler<RunJobCommand>
     private static readonly JobKey[] RunnableJobs =
     [
         RoleMaintenanceJob.Key,
+        ModmailCleanupJob.Key,
     ];
 
     private readonly ISchedulerFactory _schedulerFactory;
@@ -40,18 +37,19 @@ public class RunJobCommandHandler : IRequestHandler<RunJobCommand>
     public async Task Handle(RunJobCommand request, CancellationToken cancellationToken)
     {
         CommandContext ctx = request.Ctx;
-        string jobName = request.JobKeyName;
 
-        if (!RunnableJobs.Select(k => k.Name).Contains(jobName))
+        JobKey? jobKey = RunnableJobs.FirstOrDefault(k => k.Name == request.JobKeyName);
+
+        if (jobKey is null)
         {
-            await ctx.RespondAsync("Unknown job name: {jobName}");
+            await ctx.RespondAsync($"Unknown job name: {request.JobKeyName}");
             return;
         }
 
         IScheduler scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
 
-        await scheduler.TriggerJob(RoleMaintenanceJob.Key, cancellationToken);
+        await scheduler.TriggerJob(jobKey, cancellationToken);
 
-        await ctx.RespondAsync($"Job triggered: {jobName}");
+        await ctx.RespondAsync($"Job triggered: {jobKey}");
     }
 }

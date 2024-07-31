@@ -32,7 +32,7 @@ public class CloseInactiveModmailTicketHandler : IRequestHandler<CloseInactiveMo
 
         await _modmailTicketRepo.CloseTicket(ticket, cancellationToken);
 
-        var ticketClosureMessage = "This ticket has been closed due to inactivity.";
+        const string ticketClosureMessage = "This ticket has been closed due to inactivity.";
 
         await threadChannel.SendMessageAsync(ticketClosureMessage);
     }

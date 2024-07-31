@@ -15,7 +15,6 @@ using Nellebot.Services.Loggers;
 using Nellebot.Services.Ordbok;
 using Nellebot.Utils;
 using Nellebot.Workers;
-using Quartz;
 
 namespace Nellebot;
 
@@ -126,6 +125,5 @@ public class Program
         services.AddHostedService<CommandParallelQueueWorker>();
         services.AddHostedService<EventQueueWorker>();
         services.AddHostedService<DiscordLoggerWorker>();
-        services.AddHostedService<ModmailCleanupWorker>();
     }
 }

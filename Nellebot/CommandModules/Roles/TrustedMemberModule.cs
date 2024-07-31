@@ -24,6 +24,7 @@ public class TrustedMemberModule
         _options = options.Value;
     }
 
+    // TODO register as menu command
     [BaseCommandCheck]
     [RequireTrustedMember]
     [Command("vkick")]
