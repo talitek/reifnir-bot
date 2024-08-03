@@ -1,19 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ArgumentModifiers;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
-using MediatR;
 using Nellebot.Attributes;
 using Nellebot.CommandHandlers;
-using Nellebot.CommandHandlers.Modmail;
 using Nellebot.CommandHandlers.Ordbok;
 using Nellebot.Common.Extensions;
-using Nellebot.Common.Models.Modmail;
-using Nellebot.Data.Repositories;
 using Nellebot.Utils;
 using Nellebot.Workers;
 
@@ -25,17 +20,10 @@ namespace Nellebot.CommandModules;
 public class AdminModule
 {
     private readonly CommandQueueChannel _commandQueue;
-    private readonly IMediator _mediator;
-    private readonly ModmailTicketRepository _modmailTicketRepo;
 
-    public AdminModule(
-        CommandQueueChannel commandQueue,
-        ModmailTicketRepository modmailTicketRepo,
-        IMediator mediator)
+    public AdminModule(CommandQueueChannel commandQueue)
     {
         _commandQueue = commandQueue;
-        _modmailTicketRepo = modmailTicketRepo;
-        _mediator = mediator;
     }
 
     [Command("nickname")]
@@ -52,12 +40,6 @@ public class AdminModule
         {
             await slashCtx.RespondAsync("Nickname changed", true);
         }
-    }
-
-    [Command("add-missing-members")]
-    public Task AddMissingMemberRoles(CommandContext ctx)
-    {
-        return _commandQueue.Writer.WriteAsync(new AddMissingMemberRolesCommand(ctx)).AsTask();
     }
 
     [Command("set-greeting-message")]
@@ -90,22 +72,15 @@ public class AdminModule
         await ctx.RespondAsync($"Deleted {messagesToDelete.Count} messages");
     }
 
-    [Command("modmail-close-all")]
-    public async Task CloseAll(CommandContext ctx)
-    {
-        List<ModmailTicket> expiredTickets = await _modmailTicketRepo.GetOpenExpiredTickets(TimeSpan.FromSeconds(1));
-
-        foreach (ModmailTicket ticket in expiredTickets)
-        {
-            await _mediator.Send(new CloseInactiveModmailTicketCommand(ticket));
-        }
-
-        await ctx.Channel.SendMessageAsync($"Closed {expiredTickets.Count} tickets");
-    }
-
     [Command("rebuild-ordbok")]
-    public Task RebuildOrbok(CommandContext ctx)
+    public Task RebuildOrdbok(CommandContext ctx)
     {
         return _commandQueue.Writer.WriteAsync(new RebuildArticleStoreCommand(ctx)).AsTask();
+    }
+
+    [Command("run-job")]
+    public Task RunJob(CommandContext ctx, string jobName)
+    {
+        return _commandQueue.Writer.WriteAsync(new RunJobCommand(ctx, jobName)).AsTask();
     }
 }

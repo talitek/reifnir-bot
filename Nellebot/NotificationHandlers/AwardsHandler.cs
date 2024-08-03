@@ -73,9 +73,10 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
         MessageReactionRemovedEventArgs eventArgs = notification.EventArgs;
         DiscordChannel channel = eventArgs.Channel;
         DiscordMessage message = eventArgs.Message;
+        DiscordUser user = eventArgs.User;
         DiscordEmoji emoji = eventArgs.Emoji;
 
-        if (channel.IsPrivate) return;
+        if (!ShouldHandleReaction(channel, user)) return;
 
         bool isAwardEmoji = emoji.Name == EmojiMap.Cookie;
 
@@ -102,6 +103,20 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
         await _awardMessageService.HandleAwardMessageUpdated(message);
     }
 
+    /// <summary>
+    ///     Don't care about private messages
+    ///     Don't care about bot reactions.
+    /// </summary>
+    private static bool ShouldHandleReaction(DiscordChannel? channel, DiscordUser? author)
+    {
+        // This seems to happen because of the newly introduced Threads feature
+        if (author is null) return false;
+
+        if (author.IsBot || (author.IsSystem ?? false)) return false;
+
+        return !channel?.IsPrivate ?? false;
+    }
+
     private bool IsAwardAllowedChannel(DiscordChannel channel)
     {
         if (channel.IsThread) channel = channel.Parent;
@@ -124,19 +139,5 @@ public class AwardsHandler : INotificationHandler<MessageReactionAddedNotificati
         ulong awardChannelId = _options.AwardChannelId;
 
         return channel.Id == awardChannelId;
-    }
-
-    /// <summary>
-    ///     Don't care about about private messages
-    ///     Don't care about bot reactions.
-    /// </summary>
-    private bool ShouldHandleReaction(DiscordChannel channel, DiscordUser? author)
-    {
-        // This seems to happen because of the newly introduced Threads feature
-        if (author is null) return false;
-
-        if (author.IsBot || (author.IsSystem ?? false)) return false;
-
-        return !channel.IsPrivate;
     }
 }

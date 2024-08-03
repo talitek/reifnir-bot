@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using DSharpPlus.Clients;
 using DSharpPlus.Net.Gateway;
 using Nellebot.NotificationHandlers;
+using Nellebot.Services.Loggers;
 using Nellebot.Workers;
 
 namespace Nellebot.Infrastructure;
@@ -11,15 +12,18 @@ namespace Nellebot.Infrastructure;
 public class NoWayGateway : IGatewayController
 {
     private readonly EventQueueChannel _eventQueue;
+    private readonly DiscordLogger _discordLogger;
 
-    public NoWayGateway(EventQueueChannel eventQueue)
+    public NoWayGateway(EventQueueChannel eventQueue, DiscordLogger discordLogger)
     {
         _eventQueue = eventQueue;
+        _discordLogger = discordLogger;
     }
 
-    public ValueTask ZombiedAsync(IGatewayClient client)
+    public async ValueTask ZombiedAsync(IGatewayClient client)
     {
-        return ValueTask.CompletedTask;
+        _discordLogger.LogExtendedActivityMessage("Connection to gateway zombied. Reconnecting...");
+        await client.ReconnectAsync();
     }
 
     public async Task HeartbeatedAsync(IGatewayClient client)

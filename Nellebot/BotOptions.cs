@@ -54,6 +54,8 @@ public class BotOptions
 
     public ulong[] MemberRoleIds { get; init; } = [];
 
+    public ulong GhostRoleId { get; init; }
+
     /// <summary>
     ///     Gets a value indicating whether feature flag for populating message refs on Ready event.
     /// </summary>

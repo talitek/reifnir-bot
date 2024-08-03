@@ -68,8 +68,9 @@ public class Program
                     services.AddDbContext(configuration);
 
                     services.AddDiscordClient(configuration);
-                })
-            .UseSystemd();
+
+                    _ = services.AddJobScheduler(configuration);
+                });
     }
 
     private static void AddRepositories(IServiceCollection services)
@@ -123,6 +124,5 @@ public class Program
         services.AddHostedService<CommandParallelQueueWorker>();
         services.AddHostedService<EventQueueWorker>();
         services.AddHostedService<DiscordLoggerWorker>();
-        services.AddHostedService<ModmailCleanupWorker>();
     }
 }
