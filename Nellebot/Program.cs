@@ -70,8 +70,7 @@ public class Program
                     services.AddDiscordClient(configuration);
 
                     _ = services.AddJobScheduler(configuration);
-                })
-            .UseSystemd();
+                });
     }
 
     private static void AddRepositories(IServiceCollection services)
