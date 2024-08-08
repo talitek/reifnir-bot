@@ -17,6 +17,7 @@ public class ModmailCleanupJob : IJob
     public static readonly JobKey Key = new("modmail-cleanup", "default");
 
     private readonly DiscordLogger _discordLogger;
+    private readonly IDiscordErrorLogger _discordErrorLogger;
     private readonly ModmailTicketRepository _modmailTicketRepo;
     private readonly IMediator _mediator;
     private readonly BotOptions _options;
@@ -24,11 +25,13 @@ public class ModmailCleanupJob : IJob
     public ModmailCleanupJob(
         IOptions<BotOptions> options,
         DiscordLogger discordLogger,
+        IDiscordErrorLogger discordErrorLogger,
         ModmailTicketRepository modmailTicketRepo,
         IMediator mediator)
     {
         _options = options.Value;
         _discordLogger = discordLogger;
+        _discordErrorLogger = discordErrorLogger;
         _modmailTicketRepo = modmailTicketRepo;
         _mediator = mediator;
     }
@@ -48,9 +51,10 @@ public class ModmailCleanupJob : IJob
                 await _mediator.Send(new CloseInactiveModmailTicketCommand(ticket), cancellationToken);
             }
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            throw new JobExecutionException(e);
+            _discordErrorLogger.LogError(ex, ex.Message);
+            throw new JobExecutionException(ex);
         }
     }
 }

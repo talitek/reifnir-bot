@@ -19,12 +19,18 @@ public class RoleMaintenanceJob : IJob
 
     private readonly DiscordClient _client;
     private readonly DiscordLogger _discordLogger;
+    private readonly IDiscordErrorLogger _discordErrorLogger;
     private readonly BotOptions _options;
 
-    public RoleMaintenanceJob(IOptions<BotOptions> options, DiscordClient client, DiscordLogger discordLogger)
+    public RoleMaintenanceJob(
+        IOptions<BotOptions> options,
+        DiscordClient client,
+        DiscordLogger discordLogger,
+        IDiscordErrorLogger discordErrorLogger)
     {
         _client = client;
         _discordLogger = discordLogger;
+        _discordErrorLogger = discordErrorLogger;
         _options = options.Value;
     }
 
@@ -72,9 +78,10 @@ public class RoleMaintenanceJob : IJob
 
             _discordLogger.LogExtendedActivityMessage($"Job finished: {Key}");
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            throw new JobExecutionException(e);
+            _discordErrorLogger.LogError(ex, ex.Message);
+            throw new JobExecutionException(ex);
         }
     }
 
