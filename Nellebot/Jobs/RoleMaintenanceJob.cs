@@ -55,18 +55,12 @@ public class RoleMaintenanceJob : IJob
 
             _discordLogger.LogExtendedActivityMessage($"Downloaded {allMembers.Count} guild members.");
 
-            DiscordRole? memberRole = guild.Roles[memberRoleId];
-            DiscordRole? ghostRole = guild.Roles[ghostRoleId];
-
-            if (memberRole is null)
-            {
-                throw new ConfigurationErrorsException($"Could not find member role with id {memberRoleId}");
-            }
-
-            if (ghostRole is null)
-            {
-                throw new ConfigurationErrorsException($"Could not find ghost role with id {ghostRoleId}");
-            }
+            DiscordRole memberRole = guild.Roles[memberRoleId]
+                                     ?? throw new ConfigurationErrorsException(
+                                         $"Could not find member role with id {memberRoleId}");
+            DiscordRole ghostRole = guild.Roles[ghostRoleId]
+                                    ?? throw new ConfigurationErrorsException(
+                                        $"Could not find ghost role with id {ghostRoleId}");
 
             await AddMissingMemberRoles(allMembers, memberRoleIds, memberRole, cancellationToken);
 

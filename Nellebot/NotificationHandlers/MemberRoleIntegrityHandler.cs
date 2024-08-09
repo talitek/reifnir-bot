@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -46,17 +47,28 @@ public class MemberRoleIntegrityHandler : INotificationHandler<GuildMemberUpdate
 
         ulong[] memberRoleIds = _options.MemberRoleIds;
         ulong memberRoleId = _options.MemberRoleId;
+        ulong ghostRoleId = _options.GhostRoleId;
 
         DiscordMember? member = notification.EventArgs.Member;
 
         if (member is null) throw new Exception(nameof(member));
 
-        DiscordRole? memberRole = notification.EventArgs.Guild.Roles[memberRoleId];
+        DiscordGuild guild = notification.EventArgs.Guild;
 
-        if (memberRole is null)
-        {
-            throw new ArgumentException($"Could not find role with id {memberRoleId}");
-        }
+        await EnsureMemberRole(guild, memberRoleId, member, memberRoleIds);
+
+        await EnsureGhostRole(guild, ghostRoleId, member);
+    }
+
+    private static async Task EnsureMemberRole(
+        DiscordGuild guild,
+        ulong memberRoleId,
+        DiscordMember member,
+        ulong[] memberRoleIds)
+    {
+        DiscordRole memberRole = guild.Roles[memberRoleId]
+                                 ?? throw new ConfigurationErrorsException(
+                                     $"Could not find member role with id {memberRoleId}");
 
         bool userShouldHaveMemberRole = member.Roles.Any(r => memberRoleIds.Contains(r.Id));
         bool userHasMemberRole = member.Roles.Any(r => r.Id == memberRoleId);
@@ -68,6 +80,29 @@ public class MemberRoleIntegrityHandler : INotificationHandler<GuildMemberUpdate
         else if (!userShouldHaveMemberRole && userHasMemberRole)
         {
             await member.RevokeRoleAsync(memberRole);
+        }
+    }
+
+    private static async Task EnsureGhostRole(DiscordGuild guild, ulong ghostRoleId, DiscordMember member)
+    {
+        DiscordRole ghostRole = guild.Roles[ghostRoleId]
+                                ?? throw new ConfigurationErrorsException(
+                                    $"Could not find ghost role with id {ghostRoleId}");
+
+        bool userHasNoRoles = !member.Roles.Any();
+
+        if (userHasNoRoles)
+        {
+            await member.GrantRoleAsync(ghostRole);
+            return;
+        }
+
+        bool userHasGhostRole = member.Roles.Any(r => r.Id == ghostRoleId);
+        bool userHasAnyOtherRole = member.Roles.Any(r => r.Id != ghostRoleId);
+
+        if (userHasGhostRole && userHasAnyOtherRole)
+        {
+            await member.RevokeRoleAsync(ghostRole);
         }
     }
 }
