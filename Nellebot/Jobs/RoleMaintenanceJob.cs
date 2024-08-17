@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -56,11 +55,9 @@ public class RoleMaintenanceJob : IJob
             _discordLogger.LogExtendedActivityMessage($"Downloaded {allMembers.Count} guild members.");
 
             DiscordRole memberRole = guild.Roles[memberRoleId]
-                                     ?? throw new ConfigurationErrorsException(
-                                         $"Could not find member role with id {memberRoleId}");
+                                     ?? throw new Exception($"Could not find member role with id {memberRoleId}");
             DiscordRole ghostRole = guild.Roles[ghostRoleId]
-                                    ?? throw new ConfigurationErrorsException(
-                                        $"Could not find ghost role with id {ghostRoleId}");
+                                    ?? throw new Exception($"Could not find ghost role with id {ghostRoleId}");
 
             await AddMissingMemberRoles(allMembers, memberRoleIds, memberRole, cancellationToken);
 

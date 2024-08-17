@@ -67,8 +67,7 @@ public class MemberRoleIntegrityHandler : INotificationHandler<GuildMemberUpdate
         ulong[] memberRoleIds)
     {
         DiscordRole memberRole = guild.Roles[memberRoleId]
-                                 ?? throw new ConfigurationErrorsException(
-                                     $"Could not find member role with id {memberRoleId}");
+                                 ?? throw new Exception($"Could not find member role with id {memberRoleId}");
 
         bool userShouldHaveMemberRole = member.Roles.Any(r => memberRoleIds.Contains(r.Id));
         bool userHasMemberRole = member.Roles.Any(r => r.Id == memberRoleId);
@@ -86,8 +85,7 @@ public class MemberRoleIntegrityHandler : INotificationHandler<GuildMemberUpdate
     private static async Task EnsureGhostRole(DiscordGuild guild, ulong ghostRoleId, DiscordMember member)
     {
         DiscordRole ghostRole = guild.Roles[ghostRoleId]
-                                ?? throw new ConfigurationErrorsException(
-                                    $"Could not find ghost role with id {ghostRoleId}");
+                                ?? throw new Exception($"Could not find ghost role with id {ghostRoleId}");
 
         bool userHasNoRoles = !member.Roles.Any();
 
