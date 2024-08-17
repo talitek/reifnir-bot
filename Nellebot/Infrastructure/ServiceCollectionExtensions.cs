@@ -1,14 +1,29 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus;
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.ContextChecks;
+using DSharpPlus.Commands.EventArgs;
+using DSharpPlus.Commands.Exceptions;
+using DSharpPlus.Commands.Processors.SlashCommands;
+using DSharpPlus.Commands.Processors.TextCommands;
+using DSharpPlus.Commands.Processors.TextCommands.Parsing;
+using DSharpPlus.Entities;
 using DSharpPlus.Extensions;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Enums;
+using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.Net.Gateway;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Nellebot.Attributes;
 using Nellebot.Data;
 using Nellebot.NotificationHandlers;
+using Nellebot.Services.Loggers;
 using Nellebot.Workers;
 
 namespace Nellebot.Infrastructure;
@@ -27,7 +42,15 @@ public static class ServiceCollectionExtensions
 
         clientBuilder.SetLogLevel(logLevel);
 
+        clientBuilder.RegisterCommands(configuration);
+
         clientBuilder.RegisterEventHandlers();
+
+        clientBuilder.UseInteractivity(
+            new InteractivityConfiguration
+            {
+                PaginationBehaviour = PaginationBehaviour.Ignore,
+            });
 
         // This replacement has to happen after the DiscordClientBuilder.CreateDefault call
         // and before the DiscordClient is built.
@@ -51,6 +74,39 @@ public static class ServiceCollectionExtensions
             },
             ServiceLifetime.Transient,
             ServiceLifetime.Singleton);
+    }
+
+    private static void RegisterCommands(this DiscordClientBuilder builder, IConfiguration configuration)
+    {
+        var guildId = configuration.GetValue<ulong>("Nellebot:GuildId");
+        string commandPrefix = configuration.GetValue<string>("Nellebot:CommandPrefix")
+                               ?? throw new Exception("Command prefix not found");
+
+        var config = new CommandsConfiguration
+        {
+            UseDefaultCommandErrorHandler = false,
+        };
+
+        builder.UseCommands(
+            commands =>
+            {
+                commands.AddCommands(typeof(Program).Assembly, guildId);
+
+                var textCommandProcessor = new TextCommandProcessor(
+                    new TextCommandConfiguration()
+                    {
+                        IgnoreBots = true,
+                        PrefixResolver = new DefaultPrefixResolver(false, commandPrefix).ResolvePrefixAsync,
+                    });
+
+                commands.AddProcessor(textCommandProcessor);
+
+                commands.AddChecks(typeof(Program).Assembly);
+
+                commands.CommandExecuted += OnCommandExecuted;
+                commands.CommandErrored += OnCommandErrored;
+            },
+            config);
     }
 
     private static void RegisterEventHandlers(this DiscordClientBuilder builder)
@@ -117,5 +173,120 @@ public static class ServiceCollectionExtensions
     {
         var eventQueue = client.ServiceProvider.GetRequiredService<EventQueueChannel>();
         await eventQueue.Writer.WriteAsync(notification);
+    }
+
+    private static Task OnCommandExecuted(CommandsExtension sender, CommandExecutedEventArgs e)
+    {
+        IServiceProvider services = sender.Client.ServiceProvider;
+        var logger = services.GetRequiredService<ILogger<CommandsExtension>>();
+
+        CommandContext ctx = e.Context;
+        string user = ctx.Member?.DisplayName ?? ctx.User.Username;
+
+        switch (ctx)
+        {
+            case TextCommandContext textCtx:
+                DiscordMessage message = textCtx.Message;
+
+                string messageContent = message.Content;
+
+                logger.LogDebug("Text command: {user} -> {messageContent}", user, messageContent);
+                break;
+
+            case SlashCommandContext slashCtx:
+                // TODO implement a ToString method for Command that includes the command and its arguments
+                string commandName = slashCtx.Command.FullName;
+
+                logger.LogDebug("Slash command: {user} -> {commandName}", user, commandName);
+                break;
+
+            default:
+                logger.LogCritical("Unknown command context type");
+                break;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    ///     Try to find a suitable error message to return to the user.
+    ///     Log error to discord logger.
+    /// </summary>
+    /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
+    private static async Task OnCommandErrored(CommandsExtension sender, CommandErroredEventArgs e)
+    {
+        CommandContext ctx = e.Context;
+        Exception exception = e.Exception;
+
+        IServiceProvider services = sender.Client.ServiceProvider;
+
+        var logger = services.GetRequiredService<ILogger<CommandsExtension>>();
+        var discordErrorLogger = services.GetRequiredService<IDiscordErrorLogger>();
+        BotOptions options = services.GetRequiredService<IOptions<BotOptions>>().Value;
+
+        var errorMessage = string.Empty;
+        var appendHelpText = false;
+
+        string commandPrefix = options.CommandPrefix;
+        var commandHelpText = $"Type \"{commandPrefix}help\" to get some help.";
+
+        string message = ctx is TextCommandContext textCtx ? textCtx.Message.Content : string.Empty;
+
+        bool isChecksFailedException = exception is ChecksFailedException;
+        bool isUnknownCommandException = exception is CommandNotFoundException;
+
+        // TODO: If this isn't enough, create a custom exception class for validation errors
+        bool isPossiblyValidationException = exception is ArgumentException;
+
+        if (isUnknownCommandException)
+        {
+            errorMessage = "I do not recognize your command.";
+            appendHelpText = true;
+        }
+        else if (isChecksFailedException)
+        {
+            var checksFailedException = (ChecksFailedException)exception;
+
+            ContextCheckFailedData? failedCheck = checksFailedException.Errors.FirstOrDefault();
+
+            if (failedCheck is null)
+            {
+                errorMessage = "An unknown check failed.";
+            }
+            else
+            {
+                ContextCheckAttribute contextCheckAttribute = failedCheck.ContextCheckAttribute;
+
+                if (contextCheckAttribute is BaseCommandCheckAttribute)
+                {
+                    errorMessage = "I do not care for DM commands.";
+                }
+                else if (contextCheckAttribute is RequirePermissionsAttribute or RequireTrustedMemberAttribute)
+                {
+                    errorMessage = "You do not have permission to do that.";
+                }
+                else
+                {
+                    errorMessage = "Preexecution check failed.";
+                }
+            }
+        }
+        else if (isPossiblyValidationException)
+        {
+            errorMessage = $"{exception.Message}.";
+            appendHelpText = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(errorMessage))
+            errorMessage = "Something went wrong.";
+
+        if (appendHelpText)
+            errorMessage += $" {commandHelpText}";
+
+        await ctx.RespondAsync(errorMessage);
+
+        discordErrorLogger.LogCommandError(ctx, exception.ToString());
+
+        logger.LogWarning("Message: {message}\r\nCommand failed: {exception})", message, exception);
     }
 }

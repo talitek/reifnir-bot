@@ -6,7 +6,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Nellebot.CommandHandlers;
-using Nellebot.CommandModules;
 using Nellebot.Data.Repositories;
 using Nellebot.Infrastructure;
 using Nellebot.Services;
@@ -59,8 +58,6 @@ public class Program
 
                     AddChannels(services);
 
-                    AddBotEventHandlers(services);
-
                     AddInternalServices(services);
 
                     AddRepositories(services);
@@ -98,11 +95,6 @@ public class Program
         services.AddTransient<BotSettingsService>();
         services.AddTransient<MessageRefsService>();
         services.AddTransient<UserLogService>();
-    }
-
-    private static void AddBotEventHandlers(IServiceCollection services)
-    {
-        services.AddSingleton<CommandEventHandler>();
     }
 
     private static void AddChannels(IServiceCollection services)
