@@ -5,6 +5,12 @@ services:
     build:
       context: ..
       dockerfile: Nellebot/Dockerfile
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+    volumes:
+      - nellebot-keydata:/keydata
+      - ${USERPROFILE}/.certs:/home/app/.certs
+      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
     depends_on:
       - nellebot-pgsql
 
@@ -32,5 +38,6 @@ services:
       PGADMIN_DEFAULT_PASSWORD: hunter2
 
 volumes:
-  nellebot-pgdata:
+  nellebot-keydata: { }
+  nellebot-pgdata: { }
     

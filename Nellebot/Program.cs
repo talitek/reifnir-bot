@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Channels;
 using MediatR;
 using Microsoft.AspNetCore.DataProtection;
@@ -22,16 +24,23 @@ IServiceCollection services = builder.Services;
 
 services.Configure<BotOptions>(configuration.GetSection(BotOptions.OptionsKey));
 
-services.AddDataProtection()
+IDataProtectionBuilder dataProtectionBuilder = services.AddDataProtection()
     .SetApplicationName(nameof(Nellebot))
     .SetDefaultKeyLifetime(TimeSpan.FromDays(180));
+
+if (!builder.Environment.IsDevelopment())
+{
+    dataProtectionBuilder
+        .PersistKeysToFileSystem(new DirectoryInfo("/keydata"))
+        .ProtectKeysWithCertificate(new X509Certificate2("/home/app/.certs/protector.pfx", "hunter2"));
+}
 
 services.AddHttpClient<OrdbokHttpClient>();
 
 services.AddMediatR(
     cfg =>
     {
-        // cfg.RegisterServicesFromAssemblyContaining<Program>();
+        cfg.RegisterServicesFromAssemblyContaining<Program>();
         cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(CommandRequestPipelineBehaviour<,>));
     });
 services.AddTransient<NotificationPublisher>();
