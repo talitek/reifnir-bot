@@ -4,14 +4,15 @@ services:
   nellebot:
     build:
       context: ..
-      dockerfile: docker/Dockerfile
-    depends_on:
-      - nellebot-pgsql
+      dockerfile: docker-dev/Dockerfile
     environment:
       - DOTNET_ENVIRONMENT=Development
-    env_file:
-      - path: .env.local
-        required: false
+    env_file: .env.local
+    volumes:
+      - nellebot-keydata:/keydata
+      - ${USERPROFILE}/.nellebot-certs:/certs:ro
+    depends_on:
+      - nellebot-pgsql
 
   nellebot-pgsql:
     image: postgres:15.5
@@ -37,5 +38,7 @@ services:
       PGADMIN_DEFAULT_PASSWORD: hunter2
 
 volumes:
+  nellebot-keydata:
+    driver: local
   nellebot-pgdata:
-    
+    driver: local

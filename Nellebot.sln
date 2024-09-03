@@ -39,17 +39,22 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{FC77
 		.github\workflows\restart-v2.yml = .github\workflows\restart-v2.yml
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker", "docker", "{344E0A13-BEBF-41BD-8FA9-383A2FF6D18B}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker-dev", "docker-dev", "{344E0A13-BEBF-41BD-8FA9-383A2FF6D18B}"
 	ProjectSection(SolutionItems) = preProject
-		docker\docker-compose.yml = docker\docker-compose.yml
-		docker\Dockerfile = docker\Dockerfile
-		docker\prod-compose.yml = docker\prod-compose.yml
-		docker\Prod.Dockerfile = docker\Prod.Dockerfile
+		docker-dev\docker-compose.yml = docker-dev\docker-compose.yml
+		docker-dev\Dockerfile = docker-dev\Dockerfile
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{3D8B60A0-DABC-4041-AC19-69A89B7F4694}"
 	ProjectSection(SolutionItems) = preProject
 		scripts\nellebot-backup-db.sh = scripts\nellebot-backup-db.sh
+		scripts\generate-dev-protector-cert.ps1 = scripts\generate-dev-protector-cert.ps1
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker-prod", "docker-prod", "{3BADDC9E-EE12-498D-A715-890D6329735F}"
+	ProjectSection(SolutionItems) = preProject
+		docker-prod\docker-compose.yml = docker-prod\docker-compose.yml
+		docker-prod\Dockerfile = docker-prod\Dockerfile
 	EndProjectSection
 EndProject
 Global
@@ -91,6 +96,7 @@ Global
 		{FC777EE9-D32F-47D5-B92D-C28003971390} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
 		{344E0A13-BEBF-41BD-8FA9-383A2FF6D18B} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
 		{3D8B60A0-DABC-4041-AC19-69A89B7F4694} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
+		{3BADDC9E-EE12-498D-A715-890D6329735F} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {658B134A-CADB-4447-85A7-048070C93996}
