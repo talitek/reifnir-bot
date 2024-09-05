@@ -12,4 +12,3 @@ COPY . .
 RUN dotnet build "./Nellebot/Nellebot.csproj" -c $BUILD_CONFIGURATION --no-restore
 USER $APP_UID
 ENTRYPOINT ["dotnet", "run", "--project", "Nellebot/Nellebot.csproj", "--no-build"]
-#ENTRYPOINT ["/bin/bash", "-c", "tail -f /dev/null"]
