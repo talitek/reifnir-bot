@@ -10,3 +10,11 @@ services:
     environment:
       Nellebot__BotToken: $BOT_TOKEN
       Nellebot__ConnectionString: $DB_CONNECTION_STRING
+      Nellebot__ProtectorCertificatePassword: $PROTECTOR_CERT_PASSWORD
+    volumes:
+      - nellebot-keydata:/keydata
+      - ${HOME}/.certs:/certs:ro
+
+volumes:
+  nellebot-keydata:
+    driver: local
