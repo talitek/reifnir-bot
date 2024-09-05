@@ -12,7 +12,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: reifnir
   COMPOSE_PROJECT_NAME: nellebot
-  COMPOSE_FILE_NAME: prod-compose.yml
+  COMPOSE_FILE_PATH_SRC: docker-prod/docker-compose.yml
   DB_NAME: nellebot
   DB_BACKUP_SCRIPT: nellebot-backup-db.sh
   DB_MIGRATION_SCRIPT: database_migration.sql
@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           sparse-checkout: |
-            docker/${{ env.COMPOSE_FILE_NAME }}
+            ${{ env.COMPOSE_FILE_PATH_SRC }}
           sparse-checkout-cone-mode: false
 
       - name: Set up environment variables
@@ -57,7 +57,7 @@ jobs:
           username: ${{secrets.NELLEBOT_USER}}
           key: ${{secrets.NELLEBOT_KEY}}
           passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
-          source: "docker/${{ env.COMPOSE_FILE_NAME }}"
+          source: ${{ env.COMPOSE_FILE_PATH_SRC }}
           target: "$HOME/"
           strip_components: 1
           overwrite: true
@@ -69,6 +69,7 @@ jobs:
           GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           DB_CONNECTION_STRING: ${{secrets.DB_CONNECTION_STRING}}
           BOT_TOKEN: ${{secrets.BOT_TOKEN}}
+          PROTECTOR_CERT_PASSWORD: ${{secrets.PROTECTOR_CERT_PASSWORD}}
         with:
           host: ${{secrets.VPS_HOST}}
           port: ${{secrets.VPS_PORT}}
@@ -79,12 +80,8 @@ jobs:
           script_stop: true
           script: |
             FULL_IMAGE_NAME="$REGISTRY/$REPOSITORY_NAME/$IMAGE_NAME:$IMAGE_TAG"
-            FULL_IMAGE_NAME_PREVIOUS="$REGISTRY/$REPOSITORY_NAME/$IMAGE_NAME:$IMAGE_TAG-previous"
             
             MIGRATIONS_CONTAINER_NAME="$COMPOSE_PROJECT_NAME-migrations"
-            
-            # Tag the previous image with the previous tag, if it exists
-            docker image tag $FULL_IMAGE_NAME $FULL_IMAGE_NAME_PREVIOUS || true
             
             # Pull the image from the registry
             echo $GHCR_PASSWORD | docker login $REGISTRY -u $GHCR_USERNAME --password-stdin
@@ -115,7 +112,7 @@ jobs:
             docker compose -p $COMPOSE_PROJECT_NAME down || true
             
             # Start the new compose project
-            docker compose -p $COMPOSE_PROJECT_NAME -f "$HOME/$COMPOSE_FILE_NAME" up -d
+            docker compose -p $COMPOSE_PROJECT_NAME -f "$HOME/docker-compose.yml" up -d
             
             # Prune untagged images
             docker image prune -f
@@ -129,11 +126,12 @@ jobs:
             IMAGE_NAME,
             IMAGE_TAG,
             COMPOSE_PROJECT_NAME,
-            COMPOSE_FILE_NAME,
+            COMPOSE_FILE_PATH_SRC,
             DB_NAME,
             DB_BACKUP_SCRIPT,
             DB_MIGRATION_SCRIPT,
             GHCR_USERNAME,
             GHCR_PASSWORD,
             BOT_TOKEN,
-            DB_CONNECTION_STRING
+            DB_CONNECTION_STRING,
+            PROTECTOR_CERT_PASSWORD
