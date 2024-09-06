@@ -36,6 +36,7 @@ jobs:
           versionSpec: '6.x'
 
       - name: Execute GitVersion
+        id: gitversion
         uses: gittools/actions/gitversion/execute@v3.0.0
         with:
           useConfigFile: true
@@ -48,7 +49,7 @@ jobs:
       - name: Display GitVersion config
         uses: gittools/actions/gitversion/command@v3.0.0
         with:
-          useConfigFile: true
+          # useConfigFile: true
           arguments: '/showConfig'
 
       - name: Output the FullSemVer variable
@@ -56,31 +57,31 @@ jobs:
         with:
           arguments: '/showvariable FullSemVer'
 
-#      - name: Test
-#        run: dotnet test
-#
-#      - name: Log in to the Container registry
-#        uses: docker/login-action@v3
-#        with:
-#          registry: ${{ env.REGISTRY }}
-#          username: ${{ github.actor }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
-#
-#      - name: Extract metadata (tags, labels) for Docker
-#        id: meta
-#        uses: docker/metadata-action@v5.5.1
-#        with:
-#          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-#          tags: |
-#            # set latest tag for default branch
-#            type=raw,value=latest,enable={{is_default_branch}}
-#            type=ref,event=branch,enable=${{ github.ref != format('refs/heads/{0}', 'main') }}
-#
-#      - name: Build and push Docker image
-#        uses: docker/build-push-action@v5.1.0
-#        with:
-#          context: .
-#          file: ./docker-prod/Dockerfile
-#          push: true
-#          tags: ${{ steps.meta.outputs.tags }}
-#          labels: ${{ steps.meta.outputs.labels }}
+      - name: Test
+        run: dotnet test
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5.5.1
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch,enable=${{ github.ref != format('refs/heads/{0}', 'main') }}
+            type=raw,value=${{ steps.gitversion.outputs.semVer }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5.1.0
+        with:
+          context: .
+          file: ./docker-prod/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
