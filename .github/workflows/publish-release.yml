@@ -1,1 +1,4 @@
+name: Publish release
 
+on:
+  workflow_dispatch:
