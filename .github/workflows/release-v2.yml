@@ -29,111 +29,135 @@ jobs:
             ${{ env.COMPOSE_FILE_PATH_SRC }}
           sparse-checkout-cone-mode: false
 
-      - name: Set up environment variables
-        run: |
-          # Set the image tag based on the branch name. If the branch is main, use "latest".
-          # If the image tag is provided as an input, use that instead. 
-          if [ -z "$IMAGE_TAG_OVERRIDE" ]; then
-            if [ "$GITHUB_REF" = "refs/heads/main" ]; then
-              IMAGE_TAG=latest
-            else
-              IMAGE_TAG=$(echo "${GITHUB_REF#refs/heads/}" | tr '/' '-')
-            fi
-          else
-            IMAGE_TAG=$IMAGE_TAG_OVERRIDE
-          fi
-          echo "IMAGE_TAG=$IMAGE_TAG" >> "$GITHUB_ENV"
-
-          # Set the repository name to lowercase
-          REPOSITORY_NAME=$(echo $REPOSITORY_OWNER | tr '[:upper:]' '[:lower:]');
-          echo "REPOSITORY_NAME=$REPOSITORY_NAME" >> "$GITHUB_ENV"
-        env:
-          IMAGE_TAG_OVERRIDE: ${{ inputs.imageTag }}
-          REPOSITORY_OWNER: ${{ github.repository_owner }}
-
-      - name: Upload compose.yml
-        uses: appleboy/scp-action@v0.1.7
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v3.0.0
         with:
-          host: ${{secrets.VPS_HOST}}
-          port: ${{secrets.VPS_PORT}}
-          username: ${{secrets.NELLEBOT_USER}}
-          key: ${{secrets.NELLEBOT_KEY}}
-          passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
-          source: ${{ env.COMPOSE_FILE_PATH_SRC }}
-          target: "$HOME/"
-          strip_components: 1
-          overwrite: true
+          versionSpec: '6.x'
 
-      - name: Release
-        uses: appleboy/ssh-action@v1.0.3
-        env:
-          GHCR_USERNAME: ${{ github.actor }}
-          GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-          DB_CONNECTION_STRING: ${{secrets.DB_CONNECTION_STRING}}
-          BOT_TOKEN: ${{secrets.BOT_TOKEN}}
-          PROTECTOR_CERT_PASSWORD: ${{secrets.PROTECTOR_CERT_PASSWORD}}
+      - name: Execute GitVersion
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v3.0.0
         with:
-          host: ${{secrets.VPS_HOST}}
-          port: ${{secrets.VPS_PORT}}
-          username: ${{secrets.NELLEBOT_USER}}
-          key: ${{secrets.NELLEBOT_KEY}}
-          passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
-          debug: ${{vars.ACTIONS_RUNNER_DEBUG}}
-          script_stop: true
-          script: |
-            FULL_IMAGE_NAME="$REGISTRY/$REPOSITORY_NAME/$IMAGE_NAME:$IMAGE_TAG"
-            
-            MIGRATIONS_CONTAINER_NAME="$COMPOSE_PROJECT_NAME-migrations"
-            
-            # Pull the image from the registry
-            echo $GHCR_PASSWORD | docker login $REGISTRY -u $GHCR_USERNAME --password-stdin
-            docker pull $FULL_IMAGE_NAME
-            
-            # Create a temporary container to extract the migration files
-            docker create --name $MIGRATIONS_CONTAINER_NAME --add-host=host.docker.internal:$HOST_GATEWAY_IP $FULL_IMAGE_NAME
-            
-            # Extract the migration files into a temporary directory
-            TMP_MIGRATIONS_DIR=$(mktemp -d -t "$MIGRATIONS_CONTAINER_NAME-XXXXXX")
-            docker cp $MIGRATIONS_CONTAINER_NAME:/app/migrations/. $TMP_MIGRATIONS_DIR
-            
-            # Remove the temporary container
-            docker rm $MIGRATIONS_CONTAINER_NAME
-            
-            # Stop the running compose project, if it exists
-            docker compose -p $COMPOSE_PROJECT_NAME stop -t 30 || true
-            
-            # Copy the database backup script, if newer, to home directory and run it
-            cp -u "$TMP_MIGRATIONS_DIR/$DB_BACKUP_SCRIPT" ~
-            chmod +x "$HOME/$DB_BACKUP_SCRIPT"
-            "$HOME/$DB_BACKUP_SCRIPT"
-            
-            # Run the database migration script
-            psql -d $DB_NAME -q -f "$TMP_MIGRATIONS_DIR/$DB_MIGRATION_SCRIPT"
-            
-            # Take down the old compose project, if it exists
-            docker compose -p $COMPOSE_PROJECT_NAME down || true
-            
-            # Start the new compose project
-            docker compose -p $COMPOSE_PROJECT_NAME -f "$HOME/docker-compose.yml" up -d
-            
-            # Prune untagged images
-            docker image prune -f
-            
-            # Remove the temporary directory
-            rm -rf $TMP_MIGRATIONS_DIR
-          envs: >-
-            HOST_GATEWAY_IP,
-            REGISTRY,
-            REPOSITORY_NAME,
-            IMAGE_NAME,
-            IMAGE_TAG,
-            COMPOSE_PROJECT_NAME,
-            COMPOSE_FILE_PATH_SRC,
-            DB_NAME,
-            DB_BACKUP_SCRIPT,
-            DB_MIGRATION_SCRIPT,
-            GHCR_USERNAME,
-            GHCR_PASSWORD,
-            BOT_TOKEN,
-            DB_CONNECTION_STRING,
-            PROTECTOR_CERT_PASSWORD
+          useConfigFile: true
+
+      - name: Install GitReleaseManager
+        uses: gittools/actions/gitreleasemanager/setup@v3.0.0
+        with:
+          versionSpec: '0.18.x'
+
+      - uses: gittools/actions/gitreleasemanager/create@v3.0.0
+        name: Create release with GitReleaseManager
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: ${{ github.repository_owner }}
+          repository: ${{ github.repository }}
+          name: Release v${{ steps.gitversion.outputs.semVer }}
+      
+      # - name: Set up environment variables
+      #   run: |
+      #     # Set the image tag based on the branch name. If the branch is main, use "latest".
+      #     # If the image tag is provided as an input, use that instead. 
+      #     if [ -z "$IMAGE_TAG_OVERRIDE" ]; then
+      #       if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+      #         IMAGE_TAG=latest
+      #       else
+      #         IMAGE_TAG=$(echo "${GITHUB_REF#refs/heads/}" | tr '/' '-')
+      #       fi
+      #     else
+      #       IMAGE_TAG=$IMAGE_TAG_OVERRIDE
+      #     fi
+      #     echo "IMAGE_TAG=$IMAGE_TAG" >> "$GITHUB_ENV"
+      #
+      #     # Set the repository name to lowercase
+      #     REPOSITORY_NAME=$(echo $REPOSITORY_OWNER | tr '[:upper:]' '[:lower:]');
+      #     echo "REPOSITORY_NAME=$REPOSITORY_NAME" >> "$GITHUB_ENV"
+      #   env:
+      #     IMAGE_TAG_OVERRIDE: ${{ inputs.imageTag }}
+      #     REPOSITORY_OWNER: ${{ github.repository_owner }}
+      #
+      # - name: Upload compose.yml
+      #   uses: appleboy/scp-action@v0.1.7
+      #   with:
+      #     host: ${{secrets.VPS_HOST}}
+      #     port: ${{secrets.VPS_PORT}}
+      #     username: ${{secrets.NELLEBOT_USER}}
+      #     key: ${{secrets.NELLEBOT_KEY}}
+      #     passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
+      #     source: ${{ env.COMPOSE_FILE_PATH_SRC }}
+      #     target: "$HOME/"
+      #     strip_components: 1
+      #     overwrite: true
+      #
+      # - name: Release
+      #   uses: appleboy/ssh-action@v1.0.3
+      #   env:
+      #     GHCR_USERNAME: ${{ github.actor }}
+      #     GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      #     DB_CONNECTION_STRING: ${{secrets.DB_CONNECTION_STRING}}
+      #     BOT_TOKEN: ${{secrets.BOT_TOKEN}}
+      #     PROTECTOR_CERT_PASSWORD: ${{secrets.PROTECTOR_CERT_PASSWORD}}
+      #   with:
+      #     host: ${{secrets.VPS_HOST}}
+      #     port: ${{secrets.VPS_PORT}}
+      #     username: ${{secrets.NELLEBOT_USER}}
+      #     key: ${{secrets.NELLEBOT_KEY}}
+      #     passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
+      #     debug: ${{vars.ACTIONS_RUNNER_DEBUG}}
+      #     script_stop: true
+      #     script: |
+      #       FULL_IMAGE_NAME="$REGISTRY/$REPOSITORY_NAME/$IMAGE_NAME:$IMAGE_TAG"
+      #      
+      #       MIGRATIONS_CONTAINER_NAME="$COMPOSE_PROJECT_NAME-migrations"
+      #      
+      #       # Pull the image from the registry
+      #       echo $GHCR_PASSWORD | docker login $REGISTRY -u $GHCR_USERNAME --password-stdin
+      #       docker pull $FULL_IMAGE_NAME
+      #      
+      #       # Create a temporary container to extract the migration files
+      #       docker create --name $MIGRATIONS_CONTAINER_NAME --add-host=host.docker.internal:$HOST_GATEWAY_IP $FULL_IMAGE_NAME
+      #      
+      #       # Extract the migration files into a temporary directory
+      #       TMP_MIGRATIONS_DIR=$(mktemp -d -t "$MIGRATIONS_CONTAINER_NAME-XXXXXX")
+      #       docker cp $MIGRATIONS_CONTAINER_NAME:/app/migrations/. $TMP_MIGRATIONS_DIR
+      #      
+      #       # Remove the temporary container
+      #       docker rm $MIGRATIONS_CONTAINER_NAME
+      #      
+      #       # Stop the running compose project, if it exists
+      #       docker compose -p $COMPOSE_PROJECT_NAME stop -t 30 || true
+      #      
+      #       # Copy the database backup script, if newer, to home directory and run it
+      #       cp -u "$TMP_MIGRATIONS_DIR/$DB_BACKUP_SCRIPT" ~
+      #       chmod +x "$HOME/$DB_BACKUP_SCRIPT"
+      #       "$HOME/$DB_BACKUP_SCRIPT"
+      #      
+      #       # Run the database migration script
+      #       psql -d $DB_NAME -q -f "$TMP_MIGRATIONS_DIR/$DB_MIGRATION_SCRIPT"
+      #      
+      #       # Take down the old compose project, if it exists
+      #       docker compose -p $COMPOSE_PROJECT_NAME down || true
+      #      
+      #       # Start the new compose project
+      #       docker compose -p $COMPOSE_PROJECT_NAME -f "$HOME/docker-compose.yml" up -d
+      #      
+      #       # Prune untagged images
+      #       docker image prune -f
+      #      
+      #       # Remove the temporary directory
+      #       rm -rf $TMP_MIGRATIONS_DIR
+      #     envs: >-
+      #       HOST_GATEWAY_IP,
+      #       REGISTRY,
+      #       REPOSITORY_NAME,
+      #       IMAGE_NAME,
+      #       IMAGE_TAG,
+      #       COMPOSE_PROJECT_NAME,
+      #       COMPOSE_FILE_PATH_SRC,
+      #       DB_NAME,
+      #       DB_BACKUP_SCRIPT,
+      #       DB_MIGRATION_SCRIPT,
+      #       GHCR_USERNAME,
+      #       GHCR_PASSWORD,
+      #       BOT_TOKEN,
+      #       DB_CONNECTION_STRING,
+      #       PROTECTOR_CERT_PASSWORD

@@ -15,6 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Dotnet_cheatsheet.md = Dotnet_cheatsheet.md
 		Readme.md = Readme.md
 		GitVersion.yml = GitVersion.yml
+		GitReleaseManager.yml = GitReleaseManager.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nellebot.Data", "Nellebot.Data\Nellebot.Data.csproj", "{7AC0389F-E3F1-406D-BE35-A47F631922E5}"
@@ -38,6 +39,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{FC77
 		.github\dependabot.yml = .github\dependabot.yml
 		.github\workflows\release-v2.yml = .github\workflows\release-v2.yml
 		.github\workflows\restart-v2.yml = .github\workflows\restart-v2.yml
+		.github\release.yml = .github\release.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker-dev", "docker-dev", "{344E0A13-BEBF-41BD-8FA9-383A2FF6D18B}"
@@ -57,6 +59,21 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker-prod", "docker-prod"
 		docker-prod\docker-compose.yml = docker-prod\docker-compose.yml
 		docker-prod\Dockerfile = docker-prod\Dockerfile
 		docker-prod\docker-compose.local.yml = docker-prod\docker-compose.local.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".templates", ".templates", "{5E9F1419-9EEC-44DB-B2C7-880997AA4B32}"
+	ProjectSection(SolutionItems) = preProject
+		.templates\default\index.sbn = .templates\default\index.sbn
+		.templates\default\issue-details.sbn = .templates\default\issue-details.sbn
+		.templates\default\issue-note.sbn = .templates\default\issue-note.sbn
+		.templates\default\issues.sbn = .templates\default\issues.sbn
+		.templates\default\milestone.sbn = .templates\default\milestone.sbn
+		.templates\default\release-info.sbn = .templates\default\release-info.sbn
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "create", "create", "{02BD2451-4F62-4BD8-BC6F-3ADDC792DF67}"
+	ProjectSection(SolutionItems) = preProject
+		.templates\default\create\footer.sbn = .templates\default\create\footer.sbn
 	EndProjectSection
 EndProject
 Global
@@ -99,6 +116,8 @@ Global
 		{344E0A13-BEBF-41BD-8FA9-383A2FF6D18B} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
 		{3D8B60A0-DABC-4041-AC19-69A89B7F4694} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
 		{3BADDC9E-EE12-498D-A715-890D6329735F} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
+		{5E9F1419-9EEC-44DB-B2C7-880997AA4B32} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
+		{02BD2451-4F62-4BD8-BC6F-3ADDC792DF67} = {5E9F1419-9EEC-44DB-B2C7-880997AA4B32}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {658B134A-CADB-4447-85A7-048070C93996}
