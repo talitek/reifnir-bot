@@ -44,13 +44,19 @@ jobs:
         with:
           versionSpec: '0.18.x'
 
-      - uses: gittools/actions/gitreleasemanager/create@v3.0.0
+      - uses: selfdocumentingcode/gittools-actions-log/gitreleasemanager/create@v3.1.1
         name: Create release with GitReleaseManager
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           owner: ${{ github.repository_owner }}
-          repository: ${{ github.repository }}
-          name: Release v${{ steps.gitversion.outputs.semVer }}
+          repository: Reifnir
+          name: v${{ steps.gitversion.outputs.semVer }}
+          milestone: Future
+          logFilePath: './gitreleasemanager.log'
+      
+      # output contents of gitreleasemanager.log
+      - name: Output gitreleasemanager.log
+        run: cat ./gitreleasemanager.log
       
       # - name: Set up environment variables
       #   run: |
