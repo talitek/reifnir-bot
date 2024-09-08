@@ -40,6 +40,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{FC77
 		.github\workflows\release-v2.yml = .github\workflows\release-v2.yml
 		.github\workflows\restart-v2.yml = .github\workflows\restart-v2.yml
 		.github\release.yml = .github\release.yml
+		.github\workflows\pr-to-issue.yml = .github\workflows\pr-to-issue.yml
+		.github\workflows\publish-release.yml = .github\workflows\publish-release.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker-dev", "docker-dev", "{344E0A13-BEBF-41BD-8FA9-383A2FF6D18B}"
