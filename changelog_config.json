@@ -1,0 +1,25 @@
+{
+  "categories": [
+    {
+      "title": "## 🚀 Features",
+      "labels": [
+        "feature",
+        "feat"
+      ]
+    },
+    {
+      "title": "## 🐛 Fixes",
+      "labels": [
+        "fix",
+        "bug"
+      ]
+    },
+    {
+      "title": "## Other",
+      "labels": []
+    }
+  ],
+  "ignore_labels": [
+    "chore"
+  ]
+}

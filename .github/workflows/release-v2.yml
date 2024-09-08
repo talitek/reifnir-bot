@@ -39,24 +39,21 @@ jobs:
         with:
           useConfigFile: true
 
-      - name: Install GitReleaseManager
-        uses: gittools/actions/gitreleasemanager/setup@v3.0.0
+      - name: Build changelog
+        id: build-changelog
+        uses: mikepenz/release-changelog-builder-action@v5
         with:
-          versionSpec: '0.18.x'
-
-      - uses: selfdocumentingcode/gittools-actions-log/gitreleasemanager/create@v3.1.1
-        name: Create release with GitReleaseManager
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          configuration: ./changelog_config.json
+          mode: HYBRID
           owner: ${{ github.repository_owner }}
-          repository: Reifnir
-          name: v${{ steps.gitversion.outputs.semVer }}
-          milestone: Future
-          logFilePath: './gitreleasemanager.log'
-      
-      # output contents of gitreleasemanager.log
-      - name: Output gitreleasemanager.log
-        run: cat ./gitreleasemanager.log
+          repo: Reifnir
+          toTag: ${{ steps.gitversion.outputs.semVer }}
+          failOnError: true
+
+      - name: Create Release
+        uses: mikepenz/action-gh-release@v1
+        with:
+          body: ${{steps.build-changelog.outputs.changelog}}
       
       # - name: Set up environment variables
       #   run: |
