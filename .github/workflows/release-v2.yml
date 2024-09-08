@@ -51,7 +51,7 @@ jobs:
           owner: ${{ github.repository_owner }}
           repository: Reifnir
           name: v${{ steps.gitversion.outputs.semVer }}
-          # milestone: Future
+          milestone: Future
           logFilePath: './gitreleasemanager.log'
       
       # output contents of gitreleasemanager.log
