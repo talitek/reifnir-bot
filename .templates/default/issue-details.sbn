@@ -1,5 +1,0 @@
-__{{ issue_label }}__
-
-{{ for issue in issues.items[issue_label]
-    include 'issue-note'
-end }}

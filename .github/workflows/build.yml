@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -29,6 +29,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
 
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v3.0.0
@@ -41,19 +46,15 @@ jobs:
         with:
           useConfigFile: true
 
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
-
       - name: Display GitVersion config
         uses: gittools/actions/gitversion/command@v3.0.0
+        if: ${{ env.ACTIONS_RUNNER_DEBUG == 'true' }}
         with:
-          # useConfigFile: true
           arguments: '/showConfig'
 
       - name: Output the FullSemVer variable
         uses: gittools/actions/gitversion/command@v3.0.0
+        if: ${{ env.ACTIONS_RUNNER_DEBUG == 'true' }}
         with:
           arguments: '/showvariable FullSemVer'
 
@@ -85,3 +86,12 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+      
+      # Tag the commit with the version number
+      - name: Tag the commit with the version number
+        if: ${{ !env.ACT }}
+        run: |
+          git config --local user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --local user.name "${{ github.actor }}"
+          git tag -f ${{ steps.gitversion.outputs.semVer }}
+          git push origin --tags 
