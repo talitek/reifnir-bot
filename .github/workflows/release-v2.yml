@@ -6,6 +6,10 @@ on:
       imageTag:
         description: 'Docker image tag (default: latest for main or branch name for other branches)'
         required: false
+      createRelease:
+        description: 'Create a new release'
+        required: false
+        default: false
 
 permissions: write-all
 
@@ -20,63 +24,71 @@ env:
   DB_MIGRATION_SCRIPT: database_migration.sql
 
 jobs:
-  release:
+  setup:
     runs-on: ubuntu-latest
+    
+    outputs:
+      imageTag: ${{ steps.setup-vars.outputs.IMAGE_TAG }}
+      needsSemver: ${{ steps.setup-vars.outputs.NEEDS_SEMVER }}
+      repositoryOwnerLC: ${{ steps.setup-vars.outputs.REPOSITORY_OWNER_LC }}
+      repositoryName: ${{ steps.setup-vars.outputs.REPOSITORY_NAME }}
+    
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v3
 
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v3.0.0
-        with:
-          versionSpec: '6.x'
+      - name: Set up environment variables
+        id: setup-vars
+        run: |
+          BRANCH_NAME_DASH=$(echo "${GITHUB_REF#refs/heads/}" | tr '/' '-')
+          
+          # Set the image tag based on the branch name. If the branch is main, use "latest".
+          # If the image tag is provided as an input, use that instead. 
+          if [ -z "$IMAGE_TAG_OVERRIDE" ]; then
+            if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+              IMAGE_TAG=latest
+            else
+              IMAGE_TAG="$BRANCH_NAME_DASH"
+            fi
+          else
+            IMAGE_TAG="$IMAGE_TAG_OVERRIDE"
+          fi
+          echo "IMAGE_TAG=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+          
+          # If the image tag is "latest" or the branch name, flag it as needing semver.
+          if [ "$IMAGE_TAG" = "latest" ]; then
+              NEEDS_SEMVER=true
+          elif [ "$IMAGE_TAG" = "$BRANCH_NAME_DASH" ]; then
+              NEEDS_SEMVER=true
+          fi
+          echo "NEEDS_SEMVER: $NEEDS_SEMVER"
+          echo "NEEDS_SEMVER=$NEEDS_SEMVER" >> "$GITHUB_OUTPUT"
 
-      - name: Execute GitVersion
-        id: gitversion
-        uses: gittools/actions/gitversion/execute@v3.0.0
+          # Set the repository name to lowercase
+          REPOSITORY_OWNER_LC=$(echo $REPOSITORY_OWNER | tr '[:upper:]' '[:lower:]');
+          echo "REPOSITORY_OWNER_LC=$REPOSITORY_OWNER_LC" >> "$GITHUB_OUTPUT"
+          
+          # Extract the repository name from the repository env i.e. nelle/reifnir => reifnir
+          REPOSITORY_NAME=${REPOSITORY##*/}
+          echo "REPOSITORY_NAME=$REPOSITORY_NAME" >> "$GITHUB_OUTPUT"
+        env:
+          IMAGE_TAG_OVERRIDE: ${{ inputs.imageTag }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          REPOSITORY: ${{ github.repository }}
+  
+  release:
+    if: ${{ !inputs.createRelease }}
+    runs-on: ubuntu-latest
+    needs: setup
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
-          useConfigFile: true
-
-      - name: Build changelog
-        id: build-changelog
-        uses: mikepenz/release-changelog-builder-action@v5
-        with:
-          configuration: ./.config/changelog-builder.json
-          mode: HYBRID
-          owner: ${{ github.repository_owner }}
-          repo: Reifnir
-          failOnError: true
-
-      - name: Create Release
-        uses: mikepenz/action-gh-release@v1
-        with:
-          body: ${{steps.build-changelog.outputs.changelog}}
-          tag_name: ${{ steps.gitversion.outputs.semVer }}
+          sparse-checkout: |
+            ${{ env.COMPOSE_FILE_PATH_SRC }}
+          sparse-checkout-cone-mode: false
       
-      # - name: Set up environment variables
-      #   run: |
-      #     # Set the image tag based on the branch name. If the branch is main, use "latest".
-      #     # If the image tag is provided as an input, use that instead. 
-      #     if [ -z "$IMAGE_TAG_OVERRIDE" ]; then
-      #       if [ "$GITHUB_REF" = "refs/heads/main" ]; then
-      #         IMAGE_TAG=latest
-      #       else
-      #         IMAGE_TAG=$(echo "${GITHUB_REF#refs/heads/}" | tr '/' '-')
-      #       fi
-      #     else
-      #       IMAGE_TAG=$IMAGE_TAG_OVERRIDE
-      #     fi
-      #     echo "IMAGE_TAG=$IMAGE_TAG" >> "$GITHUB_ENV"
-      #
-      #     # Set the repository name to lowercase
-      #     REPOSITORY_NAME=$(echo $REPOSITORY_OWNER | tr '[:upper:]' '[:lower:]');
-      #     echo "REPOSITORY_NAME=$REPOSITORY_NAME" >> "$GITHUB_ENV"
-      #   env:
-      #     IMAGE_TAG_OVERRIDE: ${{ inputs.imageTag }}
-      #     REPOSITORY_OWNER: ${{ github.repository_owner }}
-      #
       # - name: Upload compose.yml
       #   uses: appleboy/scp-action@v0.1.7
       #   with:
@@ -107,7 +119,7 @@ jobs:
       #     debug: ${{vars.ACTIONS_RUNNER_DEBUG}}
       #     script_stop: true
       #     script: |
-      #       FULL_IMAGE_NAME="$REGISTRY/$REPOSITORY_NAME/$IMAGE_NAME:$IMAGE_TAG"
+      #       FULL_IMAGE_NAME="$REGISTRY/$REPOSITORY_OWNER_LC/$IMAGE_NAME:$IMAGE_TAG"
       #      
       #       MIGRATIONS_CONTAINER_NAME="$COMPOSE_PROJECT_NAME-migrations"
       #      
@@ -150,7 +162,7 @@ jobs:
       #     envs: >-
       #       HOST_GATEWAY_IP,
       #       REGISTRY,
-      #       REPOSITORY_NAME,
+      #       REPOSITORY_OWNER_LC,
       #       IMAGE_NAME,
       #       IMAGE_TAG,
       #       COMPOSE_PROJECT_NAME,
@@ -163,3 +175,109 @@ jobs:
       #       BOT_TOKEN,
       #       DB_CONNECTION_STRING,
       #       PROTECTOR_CERT_PASSWORD
+  
+  create-release:
+    if: ${{ inputs.createRelease }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+    needs: setup
+    env:
+      IMAGE_TAG: ${{ needs.setup.outputs.imageTag }}
+      NEEDS_SEMVER: ${{ needs.setup.outputs.needsSemver }}
+      REPOSITORY_OWNER_LC: ${{ needs.setup.outputs.repositoryOwnerLC }}
+      REPOSITORY_NAME: ${{ needs.setup.outputs.repositoryName }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: GitHub Packages Admin
+        id: package-info
+        uses: selfdocumentingcode/ghaction-package-admin-output@v1.1-beta2
+        with:
+          ghtoken: ${{ secrets.GITHUB_TOKEN }}
+          operation: listPackageVersions
+          org: ${{ github.repository_owner }}
+          package_type: container
+          package_name: ${{ env.REPOSITORY_NAME }}
+          include: metadata.container.tags[*] ${{ env.IMAGE_TAG }}
+          slice: __NONE__ 1 # get the first item only
+          
+          # Print the output of the package-info action
+          # - name: Print package-info output
+          #   run: |
+          #     echo $(jq --version)
+          #     echo "-----"
+          #     echo "$PACKAGE_INFO"
+          #     echo "-----"
+          #     echo "'"${{ steps.package-info.outputs.result_json_output }}"'"
+          #     echo "-----"
+          #     echo "now with jq"
+          #     echo "$PACKAGE_INFO" | jq .
+          #     echo "-----"
+          #     echo "$PACKAGE_INFO" | jq -r '.[0].metadata.container.tags | map(select(. != "${EXCLUDE_TAG}")) | .[0]'
+          #     #echo "-----"
+          #     #echo "${{ steps.package-info.outputs.result_json_output }}"
+          #   env:
+          #     PACKAGE_INFO: ${{ steps.package-info.outputs.result_json_output }}
+
+      - name: Get container tags
+        run: |
+          echo "IMAGE_TAG: $IMAGE_TAG"
+          echo "NEEDS_SEMVER: $NEEDS_SEMVER"
+          
+          TAG_LIST=$(echo "$PACKAGE_INFO" | jq -r '.[0].metadata.container.tags')
+          echo "TAG_LIST: $TAG_LIST"
+          
+          SHA_TAG=$(echo "$PACKAGE_INFO" | jq -r '.[0].metadata.container.tags | map(select(startswith("sha"))) | .[0]')
+          echo "SHA_TAG: $SHA_TAG"
+          
+          # Exclude "sha-" prefix from SHA_TAG
+          COMMIT_SHA=${SHA_TAG#"sha-"}
+          echo "COMMIT_SHA: $COMMIT_SHA"
+          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_ENV
+          
+          if [ "${NEEDS_SEMVER}" == "true" ]; then
+            SEMVER_TAG=$(echo "$PACKAGE_INFO" | jq -r '.[0].metadata.container.tags | map(select((startswith("sha") | not) and . != "${IMAGE_TAG}")) | .[0]')
+          else
+            SEMVER_TAG=${IMAGE_TAG}
+          fi
+          echo "SEMVER_TAG: $SEMVER_TAG"
+          echo "SEMVER_TAG=$SEMVER_TAG" >> $GITHUB_ENV
+        env:
+          PACKAGE_INFO: ${{ steps.package-info.outputs.result_json_output }}
+
+      - name: Build changelog PRs
+        id: build-changelog
+        uses: mikepenz/release-changelog-builder-action@v5
+        with:
+          configuration: ./.config/changelog-builder.json
+          mode: PR
+          owner: ${{ github.repository_owner }}
+          repo: ${{ env.REPOSITORY_NAME }}
+          toTag: ${{ env.COMMIT_SHA }}
+          fromTag: a8f8c09 # For testing
+          failOnError: true
+
+      # - name: Build changelog commits
+      #   id: build-changelog2
+      #   uses: mikepenz/release-changelog-builder-action@v5
+      #   with:
+      #     configuration: ./.config/changelog-builder.json
+      #     mode: COMMIT
+      #     owner: ${{ github.repository_owner }}
+      #     repo: ${{ env.REPOSITORY_NAME }}
+      #     toTag: ${{ env.COMMIT_SHA }}
+      #     fromTag: a8f8c09 # For testing
+      #     failOnError: true
+          
+      # - name: Create Release
+      #   uses: mikepenz/action-gh-release@v1
+      #   with:
+      #     body: ${{steps.build-changelog.outputs.changelog}}
+      #     draft: true
+      #     tag_name: ${{ env.SEMVER_TAG }}
+      #     target_commitish: ${{ env.COMMIT_SHA }}

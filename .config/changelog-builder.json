@@ -5,6 +5,14 @@
       "labels": [
         "feature",
         "feat"
+      ],
+      "empty_content": "No new features this time.",
+      "rules": [
+        {
+          "pattern": "^(feat|feature)/",
+          "flags": "i",
+          "on_property": "title"
+        }
       ]
     },
     {
@@ -12,14 +20,17 @@
       "labels": [
         "fix",
         "bug"
-      ]
+      ],
+      "empty_content": "No fixes. Only new bugs."
     },
     {
       "title": "## Other",
       "labels": []
     }
   ],
+  "pr_template": "- #{{TITLE}} (##{{NUMBER}})\n#{{BODY}}\n", 
   "ignore_labels": [
-    "chore"
+    "chore",
+    "dependencies"
   ]
 }
