@@ -234,66 +234,19 @@ jobs:
 
       - name: Build changelog PRs
         id: build-pr-changelog
-        uses: mikepenz/release-changelog-builder-action@v5
+        uses: selfdocumentingcode/pr-release-changelog-builder-action@1.0.0-beta6
         with:
-          configuration: ./.config/changelog-builder-prs.json
-          mode: PR
+          configuration: ./.config/changelog-builder.json
+          mode: HYBRID
           owner: ${{ github.repository_owner }}
           repo: ${{ env.REPOSITORY_NAME }}
           toTag: ${{ env.COMMIT_SHA }}
-          fromTag: a8f8c09 # For testing
           failOnError: true
-
-      - name: Build changelog commits
-        id: build-commit-changelog
-        uses: mikepenz/release-changelog-builder-action@v5
+      
+      - name: Create Release
+        uses: mikepenz/action-gh-release@v1
         with:
-          configuration: ./.config/changelog-builder-commits.json
-          mode: COMMIT
-          owner: ${{ github.repository_owner }}
-          repo: ${{ env.REPOSITORY_NAME }}
-          toTag: ${{ env.COMMIT_SHA }}
-          fromTag: e08fee1 # For testing
-          failOnError: true
-      
-      - name: Merge changelogs
-        id: merge-changelogs
-        run: |
-          echo "$PR_CHANGELOG"
-          echo "$COMMIT_CHANGELOG"
-          #MERGED_CHANGELOG=$(echo jq --raw-output --slurp '.[0] + .[1]' "$PR_CHANGELOG" "$COMMIT_CHANGELOG")
-          #MERGED_CHANGELOG=$(jq -n --argjson pr "$PR_CHANGELOG" --argjson commit "$COMMIT_CHANGELOG" '$pr * $commit')
-
-          MERGED_CHANGELOG=$(jq --null-input --argjson pr "$PR_CHANGELOG" --argjson commit "$COMMIT_CHANGELOG" '
-            reduce (($pr + $commit) | keys_unsorted[]) as $key
-              ({}; .[$key] += ($pr[$key] + $commit[$key]))
-          ')
-          echo "MERGED_CHANGELOG: $MERGED_CHANGELOG"
-
-          CHANGELOG_STRING=$(echo "$MERGED_CHANGELOG" | jq --raw-output '
-            to_entries | map("\(.key)\n\(.value | join("\n"))") | join("\n\n")
-          ')
-          echo "CHANGELOG_STRING: $CHANGELOG_STRING"
-        env:
-          PR_CHANGELOG: ${{steps.build-pr-changelog.outputs.categorized}}
-          COMMIT_CHANGELOG: ${{steps.build-commit-changelog.outputs.categorized}}
-          
-      # - name: Build changelog PRs
-      #   id: build-pr-changelog
-      #   uses: selfdocumentingcode/pr-release-changelog-builder-action@1.0.0-beta6
-      #   with:
-      #     configuration: ./.config/changelog-builder.json
-      #     mode: HYBRID
-      #     owner: ${{ github.repository_owner }}
-      #     repo: ${{ env.REPOSITORY_NAME }}
-      #     toTag: ${{ env.COMMIT_SHA }}
-      #     fromTag: e08fee1 # For testing
-      #     failOnError: true
-      
-      # - name: Create Release
-      #   uses: mikepenz/action-gh-release@v1
-      #   with:
-      #     body: ${{steps.build-changelog.outputs.changelog}}
-      #     draft: true
-      #     tag_name: ${{ env.SEMVER_TAG }}
-      #     target_commitish: ${{ env.COMMIT_SHA }}
+          body: ${{steps.build-changelog.outputs.changelog}}
+          draft: true
+          tag_name: ${{ env.SEMVER_TAG }}
+          target_commitish: ${{ env.COMMIT_SHA }}
