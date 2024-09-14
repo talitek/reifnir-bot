@@ -206,33 +206,15 @@ jobs:
           include: metadata.container.tags[*] ${{ env.IMAGE_TAG }}
           slice: __NONE__ 1 # get the first item only
           
-          # Print the output of the package-info action
-          # - name: Print package-info output
-          #   run: |
-          #     echo $(jq --version)
-          #     echo "-----"
-          #     echo "$PACKAGE_INFO"
-          #     echo "-----"
-          #     echo "'"${{ steps.package-info.outputs.result_json_output }}"'"
-          #     echo "-----"
-          #     echo "now with jq"
-          #     echo "$PACKAGE_INFO" | jq .
-          #     echo "-----"
-          #     echo "$PACKAGE_INFO" | jq -r '.[0].metadata.container.tags | map(select(. != "${EXCLUDE_TAG}")) | .[0]'
-          #     #echo "-----"
-          #     #echo "${{ steps.package-info.outputs.result_json_output }}"
-          #   env:
-          #     PACKAGE_INFO: ${{ steps.package-info.outputs.result_json_output }}
-
       - name: Get container tags
         run: |
           echo "IMAGE_TAG: $IMAGE_TAG"
           echo "NEEDS_SEMVER: $NEEDS_SEMVER"
           
-          TAG_LIST=$(echo "$PACKAGE_INFO" | jq -r '.[0].metadata.container.tags')
+          TAG_LIST=$(echo "$PACKAGE_INFO" | jq --raw-output '.[0].metadata.container.tags')
           echo "TAG_LIST: $TAG_LIST"
           
-          SHA_TAG=$(echo "$PACKAGE_INFO" | jq -r '.[0].metadata.container.tags | map(select(startswith("sha"))) | .[0]')
+          SHA_TAG=$(echo "$PACKAGE_INFO" | jq --raw-output '.[0].metadata.container.tags | map(select(startswith("sha"))) | .[0]')
           echo "SHA_TAG: $SHA_TAG"
           
           # Exclude "sha-" prefix from SHA_TAG
@@ -241,7 +223,7 @@ jobs:
           echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_ENV
           
           if [ "${NEEDS_SEMVER}" == "true" ]; then
-            SEMVER_TAG=$(echo "$PACKAGE_INFO" | jq -r '.[0].metadata.container.tags | map(select((startswith("sha") | not) and . != "${IMAGE_TAG}")) | .[0]')
+            SEMVER_TAG=$(echo "$PACKAGE_INFO" | jq --raw-output '.[0].metadata.container.tags | map(select((startswith("sha") | not) and . != "${IMAGE_TAG}")) | .[0]')
           else
             SEMVER_TAG=${IMAGE_TAG}
           fi
@@ -251,10 +233,10 @@ jobs:
           PACKAGE_INFO: ${{ steps.package-info.outputs.result_json_output }}
 
       - name: Build changelog PRs
-        id: build-changelog
+        id: build-pr-changelog
         uses: mikepenz/release-changelog-builder-action@v5
         with:
-          configuration: ./.config/changelog-builder.json
+          configuration: ./.config/changelog-builder-prs.json
           mode: PR
           owner: ${{ github.repository_owner }}
           repo: ${{ env.REPOSITORY_NAME }}
@@ -262,18 +244,52 @@ jobs:
           fromTag: a8f8c09 # For testing
           failOnError: true
 
-      # - name: Build changelog commits
-      #   id: build-changelog2
-      #   uses: mikepenz/release-changelog-builder-action@v5
+      - name: Build changelog commits
+        id: build-commit-changelog
+        uses: mikepenz/release-changelog-builder-action@v5
+        with:
+          configuration: ./.config/changelog-builder-commits.json
+          mode: COMMIT
+          owner: ${{ github.repository_owner }}
+          repo: ${{ env.REPOSITORY_NAME }}
+          toTag: ${{ env.COMMIT_SHA }}
+          fromTag: e08fee1 # For testing
+          failOnError: true
+      
+      - name: Merge changelogs
+        id: merge-changelogs
+        run: |
+          echo "$PR_CHANGELOG"
+          echo "$COMMIT_CHANGELOG"
+          #MERGED_CHANGELOG=$(echo jq --raw-output --slurp '.[0] + .[1]' "$PR_CHANGELOG" "$COMMIT_CHANGELOG")
+          #MERGED_CHANGELOG=$(jq -n --argjson pr "$PR_CHANGELOG" --argjson commit "$COMMIT_CHANGELOG" '$pr * $commit')
+
+          MERGED_CHANGELOG=$(jq --null-input --argjson pr "$PR_CHANGELOG" --argjson commit "$COMMIT_CHANGELOG" '
+            reduce (($pr + $commit) | keys_unsorted[]) as $key
+              ({}; .[$key] += ($pr[$key] + $commit[$key]))
+          ')
+          echo "MERGED_CHANGELOG: $MERGED_CHANGELOG"
+
+          CHANGELOG_STRING=$(echo "$MERGED_CHANGELOG" | jq --raw-output '
+            to_entries | map("\(.key)\n\(.value | join("\n"))") | join("\n\n")
+          ')
+          echo "CHANGELOG_STRING: $CHANGELOG_STRING"
+        env:
+          PR_CHANGELOG: ${{steps.build-pr-changelog.outputs.categorized}}
+          COMMIT_CHANGELOG: ${{steps.build-commit-changelog.outputs.categorized}}
+          
+      # - name: Build changelog PRs
+      #   id: build-pr-changelog
+      #   uses: selfdocumentingcode/pr-release-changelog-builder-action@1.0.0-beta6
       #   with:
       #     configuration: ./.config/changelog-builder.json
-      #     mode: COMMIT
+      #     mode: HYBRID
       #     owner: ${{ github.repository_owner }}
       #     repo: ${{ env.REPOSITORY_NAME }}
       #     toTag: ${{ env.COMMIT_SHA }}
-      #     fromTag: a8f8c09 # For testing
+      #     fromTag: e08fee1 # For testing
       #     failOnError: true
-          
+      
       # - name: Create Release
       #   uses: mikepenz/action-gh-release@v1
       #   with:

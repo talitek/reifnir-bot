@@ -19,35 +19,21 @@
     },
     {
       "title": "## ❓ Other changes",
-      "labels": [],
-      "mode": "PR"
+      "labels": [
+        "build",
+        "ci",
+        "test",
+        "docs"
+      ]
     }
   ],
-  "pr_template": "- #{{TITLE}} (##{{NUMBER}})",
-  "commit_template": "- #{{TITLE}}",
-  "ignore_labels": [
-    "chore",
-    "dependencies"
-  ],
+  "pr_template": "- #{{TITLE}}",
   "label_extractor": [
     {
       "pattern": "^(feat|feature|fix|bug|bugfix|build|ci|refactor|perf|test|style|docs|chore){1}(\\([\\w\\-\\.]+\\))?(!)?: ([\\w ])+",
       "target": "$1",
       "flags": "gui",
       "on_property": "title"
-    },
-    {
-      "pattern": "^(feat|feature|fix|bug|bugfix|build|ci|refactor|perf|test|style|docs|chore){1}\\/[\\w-]+[ :-]?([\\w ])+",
-      "target": "$1",
-      "flags": "gui",
-      "on_property": "title"
-    },
-    {
-      "pattern": "^(feat|feature|fix|bug|bugfix|build|ci|refactor|perf|test|style|docs|chore){1}\\/[\\w-]+",
-      "target": "$1",
-      "flags": "gui",
-      "on_property": "branch"
     }
-  ],
-  "categorized_include_empty_content": true
+  ]
 }

@@ -19,12 +19,10 @@
     },
     {
       "title": "## ❓ Other changes",
-      "labels": [],
-      "mode": "PR"
+      "labels": []
     }
   ],
-  "pr_template": "- #{{TITLE}} (##{{NUMBER}})",
-  "commit_template": "- #{{TITLE}}",
+  "pr_template": "- #{{TITLE}} (##{{NUMBER}})\n#{{BODY}}\n",
   "ignore_labels": [
     "chore",
     "dependencies"
@@ -48,6 +46,5 @@
       "flags": "gui",
       "on_property": "branch"
     }
-  ],
-  "categorized_include_empty_content": true
+  ]
 }
