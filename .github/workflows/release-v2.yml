@@ -6,13 +6,9 @@ on:
       imageTag:
         description: 'Docker image tag (default: latest for main or branch name for other branches)'
         required: false
-      createRelease:
-        description: 'Create a new release'
-        required: false
-        default: false
 
 permissions: write-all
-
+      
 env:
   HOST_GATEWAY_IP: "172.17.0.1"
   REGISTRY: ghcr.io
@@ -26,6 +22,7 @@ env:
 jobs:
   setup:
     runs-on: ubuntu-latest
+    permissions: write-all
     
     outputs:
       imageTag: ${{ steps.setup-vars.outputs.IMAGE_TAG }}
@@ -77,10 +74,11 @@ jobs:
           REPOSITORY: ${{ github.repository }}
   
   release:
-    if: ${{ !inputs.createRelease }}
     runs-on: ubuntu-latest
     needs: setup
-    
+    env:
+      IMAGE_TAG: ${{ needs.setup.outputs.imageTag }}
+      REPOSITORY_OWNER_LC: ${{ needs.setup.outputs.repositoryOwnerLC }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -89,100 +87,98 @@ jobs:
             ${{ env.COMPOSE_FILE_PATH_SRC }}
           sparse-checkout-cone-mode: false
       
-      # - name: Upload compose.yml
-      #   uses: appleboy/scp-action@v0.1.7
-      #   with:
-      #     host: ${{secrets.VPS_HOST}}
-      #     port: ${{secrets.VPS_PORT}}
-      #     username: ${{secrets.NELLEBOT_USER}}
-      #     key: ${{secrets.NELLEBOT_KEY}}
-      #     passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
-      #     source: ${{ env.COMPOSE_FILE_PATH_SRC }}
-      #     target: "$HOME/"
-      #     strip_components: 1
-      #     overwrite: true
-      #
-      # - name: Release
-      #   uses: appleboy/ssh-action@v1.0.3
-      #   env:
-      #     GHCR_USERNAME: ${{ github.actor }}
-      #     GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-      #     DB_CONNECTION_STRING: ${{secrets.DB_CONNECTION_STRING}}
-      #     BOT_TOKEN: ${{secrets.BOT_TOKEN}}
-      #     PROTECTOR_CERT_PASSWORD: ${{secrets.PROTECTOR_CERT_PASSWORD}}
-      #   with:
-      #     host: ${{secrets.VPS_HOST}}
-      #     port: ${{secrets.VPS_PORT}}
-      #     username: ${{secrets.NELLEBOT_USER}}
-      #     key: ${{secrets.NELLEBOT_KEY}}
-      #     passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
-      #     debug: ${{vars.ACTIONS_RUNNER_DEBUG}}
-      #     script_stop: true
-      #     script: |
-      #       FULL_IMAGE_NAME="$REGISTRY/$REPOSITORY_OWNER_LC/$IMAGE_NAME:$IMAGE_TAG"
-      #      
-      #       MIGRATIONS_CONTAINER_NAME="$COMPOSE_PROJECT_NAME-migrations"
-      #      
-      #       # Pull the image from the registry
-      #       echo $GHCR_PASSWORD | docker login $REGISTRY -u $GHCR_USERNAME --password-stdin
-      #       docker pull $FULL_IMAGE_NAME
-      #      
-      #       # Create a temporary container to extract the migration files
-      #       docker create --name $MIGRATIONS_CONTAINER_NAME --add-host=host.docker.internal:$HOST_GATEWAY_IP $FULL_IMAGE_NAME
-      #      
-      #       # Extract the migration files into a temporary directory
-      #       TMP_MIGRATIONS_DIR=$(mktemp -d -t "$MIGRATIONS_CONTAINER_NAME-XXXXXX")
-      #       docker cp $MIGRATIONS_CONTAINER_NAME:/app/migrations/. $TMP_MIGRATIONS_DIR
-      #      
-      #       # Remove the temporary container
-      #       docker rm $MIGRATIONS_CONTAINER_NAME
-      #      
-      #       # Stop the running compose project, if it exists
-      #       docker compose -p $COMPOSE_PROJECT_NAME stop -t 30 || true
-      #      
-      #       # Copy the database backup script, if newer, to home directory and run it
-      #       cp -u "$TMP_MIGRATIONS_DIR/$DB_BACKUP_SCRIPT" ~
-      #       chmod +x "$HOME/$DB_BACKUP_SCRIPT"
-      #       "$HOME/$DB_BACKUP_SCRIPT"
-      #      
-      #       # Run the database migration script
-      #       psql -d $DB_NAME -q -f "$TMP_MIGRATIONS_DIR/$DB_MIGRATION_SCRIPT"
-      #      
-      #       # Take down the old compose project, if it exists
-      #       docker compose -p $COMPOSE_PROJECT_NAME down || true
-      #      
-      #       # Start the new compose project
-      #       docker compose -p $COMPOSE_PROJECT_NAME -f "$HOME/docker-compose.yml" up -d
-      #      
-      #       # Prune untagged images
-      #       docker image prune -f
-      #      
-      #       # Remove the temporary directory
-      #       rm -rf $TMP_MIGRATIONS_DIR
-      #     envs: >-
-      #       HOST_GATEWAY_IP,
-      #       REGISTRY,
-      #       REPOSITORY_OWNER_LC,
-      #       IMAGE_NAME,
-      #       IMAGE_TAG,
-      #       COMPOSE_PROJECT_NAME,
-      #       COMPOSE_FILE_PATH_SRC,
-      #       DB_NAME,
-      #       DB_BACKUP_SCRIPT,
-      #       DB_MIGRATION_SCRIPT,
-      #       GHCR_USERNAME,
-      #       GHCR_PASSWORD,
-      #       BOT_TOKEN,
-      #       DB_CONNECTION_STRING,
-      #       PROTECTOR_CERT_PASSWORD
+      - name: Upload compose.yml
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{secrets.VPS_HOST}}
+          port: ${{secrets.VPS_PORT}}
+          username: ${{secrets.NELLEBOT_USER}}
+          key: ${{secrets.NELLEBOT_KEY}}
+          passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
+          source: ${{ env.COMPOSE_FILE_PATH_SRC }}
+          target: "$HOME/"
+          strip_components: 1
+          overwrite: true
+
+      - name: Release
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          DB_CONNECTION_STRING: ${{secrets.DB_CONNECTION_STRING}}
+          BOT_TOKEN: ${{secrets.BOT_TOKEN}}
+          PROTECTOR_CERT_PASSWORD: ${{secrets.PROTECTOR_CERT_PASSWORD}}
+        with:
+          host: ${{secrets.VPS_HOST}}
+          port: ${{secrets.VPS_PORT}}
+          username: ${{secrets.NELLEBOT_USER}}
+          key: ${{secrets.NELLEBOT_KEY}}
+          passphrase: ${{secrets.NELLEBOT_PASSPHRASE}}
+          debug: ${{vars.ACTIONS_RUNNER_DEBUG}}
+          script_stop: true
+          script: |
+            FULL_IMAGE_NAME="$REGISTRY/$REPOSITORY_OWNER_LC/$IMAGE_NAME:$IMAGE_TAG"
+            echo "Full image name: $FULL_IMAGE_NAME"
+
+            MIGRATIONS_CONTAINER_NAME="$COMPOSE_PROJECT_NAME-migrations"
+
+            # Pull the image from the registry
+            echo $GHCR_PASSWORD | docker login $REGISTRY -u $GHCR_USERNAME --password-stdin
+            docker pull $FULL_IMAGE_NAME
+
+            # Create a temporary container to extract the migration files
+            docker create --name $MIGRATIONS_CONTAINER_NAME --add-host=host.docker.internal:$HOST_GATEWAY_IP $FULL_IMAGE_NAME
+
+            # Extract the migration files into a temporary directory
+            TMP_MIGRATIONS_DIR=$(mktemp -d -t "$MIGRATIONS_CONTAINER_NAME-XXXXXX")
+            docker cp $MIGRATIONS_CONTAINER_NAME:/app/migrations/. $TMP_MIGRATIONS_DIR
+
+            # Remove the temporary container
+            docker rm $MIGRATIONS_CONTAINER_NAME
+
+            # Stop the running compose project, if it exists
+            docker compose -p $COMPOSE_PROJECT_NAME stop -t 30 || true
+
+            # Copy the database backup script, if newer, to home directory and run it
+            cp -u "$TMP_MIGRATIONS_DIR/$DB_BACKUP_SCRIPT" ~
+            chmod +x "$HOME/$DB_BACKUP_SCRIPT"
+            "$HOME/$DB_BACKUP_SCRIPT"
+
+            # Run the database migration script
+            psql -d $DB_NAME -q -f "$TMP_MIGRATIONS_DIR/$DB_MIGRATION_SCRIPT"
+
+            # Take down the old compose project, if it exists
+            docker compose -p $COMPOSE_PROJECT_NAME down || true
+
+            # Start the new compose project
+            docker compose -p $COMPOSE_PROJECT_NAME -f "$HOME/docker-compose.yml" up -d
+
+            # Prune untagged images
+            docker image prune -f
+
+            # Remove the temporary directory
+            rm -rf $TMP_MIGRATIONS_DIR
+          envs: >-
+            HOST_GATEWAY_IP,
+            REGISTRY,
+            REPOSITORY_OWNER_LC,
+            IMAGE_NAME,
+            IMAGE_TAG,
+            COMPOSE_PROJECT_NAME,
+            COMPOSE_FILE_PATH_SRC,
+            DB_NAME,
+            DB_BACKUP_SCRIPT,
+            DB_MIGRATION_SCRIPT,
+            GHCR_USERNAME,
+            GHCR_PASSWORD,
+            BOT_TOKEN,
+            DB_CONNECTION_STRING,
+            PROTECTOR_CERT_PASSWORD
   
   create-release:
-    if: ${{ inputs.createRelease }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: read
-    needs: setup
+    permissions: write-all
+    needs: [setup, release]
     env:
       IMAGE_TAG: ${{ needs.setup.outputs.imageTag }}
       NEEDS_SEMVER: ${{ needs.setup.outputs.needsSemver }}
@@ -242,11 +238,38 @@ jobs:
           repo: ${{ env.REPOSITORY_NAME }}
           toTag: ${{ env.COMMIT_SHA }}
           failOnError: true
+
+      - name: Check if commit exists on current branch
+        id: check_commit
+        run: |
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          echo "BRANCH_NAME: $BRANCH_NAME"
+
+          if git branch --contains "$COMMIT_SHA" | grep -q "$BRANCH_NAME"; then
+            echo "Commit $COMMIT_SHA exists on branch $BRANCH_NAME."
+            echo "::set-output name=commit_exists::true"
+          else
+            echo "Commit $COMMIT_SHA does not exist on the current branch."
+            exit 1
+          fi
+        env:
+          COMMIT_SHA: ${{ env.COMMIT_SHA }}
+      
+      # - name: Create Release
+      #   uses: mikepenz/action-gh-release@v1
+      #   with:
+      #     body: ${{steps.build-changelog.outputs.changelog}}
+      #     draft: true
+      #     tag_name: ${{ env.SEMVER_TAG }}
+      #     target_commitish: ${{ env.COMMIT_SHA }}
+      #     token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Create Release
-        uses: mikepenz/action-gh-release@v1
-        with:
-          body: ${{steps.build-changelog.outputs.changelog}}
-          draft: true
-          tag_name: ${{ env.SEMVER_TAG }}
-          target_commitish: ${{ env.COMMIT_SHA }}
+        run: | 
+          gh release create ${{ env.SEMVER_TAG }} \
+          --target ${{ env.COMMIT_SHA }} \
+          --title ${{ env.SEMVER_TAG }} \
+          --notes "${{steps.build-pr-changelog.outputs.changelog}}" \
+          --draft 
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
