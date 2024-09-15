@@ -177,7 +177,6 @@ jobs:
   
   create-release:
     runs-on: ubuntu-latest
-    permissions: write-all
     needs: [setup, release]
     env:
       IMAGE_TAG: ${{ needs.setup.outputs.imageTag }}
