@@ -5,18 +5,6 @@ VisualStudioVersion = 17.1.32328.378
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nellebot", "Nellebot\Nellebot.csproj", "{C072EE01-ABD9-4876-A9C7-E80FD757D911}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{46E6985D-7B94-42DC-BD41-45D45FA78A66}"
-	ProjectSection(SolutionItems) = preProject
-		.dockerignore = .dockerignore
-		.editorconfig = .editorconfig
-		.gitattributes = .gitattributes
-		.gitignore = .gitignore
-		Directory.Build.props = Directory.Build.props
-		Dotnet_cheatsheet.md = Dotnet_cheatsheet.md
-		Readme.md = Readme.md
-		GitVersion.yml = GitVersion.yml
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nellebot.Data", "Nellebot.Data\Nellebot.Data.csproj", "{7AC0389F-E3F1-406D-BE35-A47F631922E5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nellebot.Common", "Nellebot.Common\Nellebot.Common.csproj", "{BB76810F-584A-446C-8D20-48FB0682835A}"
@@ -25,39 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nellebot.Data.Migrations", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nellebot.Tests", "Nellebot.Tests\Nellebot.Tests.csproj", "{B391AD0D-0EF3-4657-966D-57712930C29D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".config", ".config", "{A2815C0B-D2FE-4A3F-B530-14066C63F89B}"
-	ProjectSection(SolutionItems) = preProject
-		.config\dotnet-tools.json = .config\dotnet-tools.json
-	EndProjectSection
-EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-vs", "docker-vs\docker-vs.dcproj", "{1C87D106-289C-47ED-BA6C-46C220DCD1F4}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{FC777EE9-D32F-47D5-B92D-C28003971390}"
-	ProjectSection(SolutionItems) = preProject
-		.github\workflows\build.yml = .github\workflows\build.yml
-		.github\dependabot.yml = .github\dependabot.yml
-		.github\workflows\release-v2.yml = .github\workflows\release-v2.yml
-		.github\workflows\restart-v2.yml = .github\workflows\restart-v2.yml
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker-dev", "docker-dev", "{344E0A13-BEBF-41BD-8FA9-383A2FF6D18B}"
-	ProjectSection(SolutionItems) = preProject
-		docker-dev\docker-compose.yml = docker-dev\docker-compose.yml
-		docker-dev\Dockerfile = docker-dev\Dockerfile
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{3D8B60A0-DABC-4041-AC19-69A89B7F4694}"
-	ProjectSection(SolutionItems) = preProject
-		scripts\nellebot-backup-db.sh = scripts\nellebot-backup-db.sh
-		scripts\generate-dev-protector-cert.ps1 = scripts\generate-dev-protector-cert.ps1
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker-prod", "docker-prod", "{3BADDC9E-EE12-498D-A715-890D6329735F}"
-	ProjectSection(SolutionItems) = preProject
-		docker-prod\docker-compose.yml = docker-prod\docker-compose.yml
-		docker-prod\Dockerfile = docker-prod\Dockerfile
-		docker-prod\docker-compose.local.yml = docker-prod\docker-compose.local.yml
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -94,11 +50,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{A2815C0B-D2FE-4A3F-B530-14066C63F89B} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
-		{FC777EE9-D32F-47D5-B92D-C28003971390} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
-		{344E0A13-BEBF-41BD-8FA9-383A2FF6D18B} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
-		{3D8B60A0-DABC-4041-AC19-69A89B7F4694} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
-		{3BADDC9E-EE12-498D-A715-890D6329735F} = {46E6985D-7B94-42DC-BD41-45D45FA78A66}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {658B134A-CADB-4447-85A7-048070C93996}

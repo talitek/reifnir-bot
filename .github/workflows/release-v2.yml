@@ -7,8 +7,6 @@ on:
         description: 'Docker image tag (default: latest for main or branch name for other branches)'
         required: false
 
-permissions: write-all
-
 env:
   HOST_GATEWAY_IP: "172.17.0.1"
   REGISTRY: ghcr.io
@@ -20,37 +18,76 @@ env:
   DB_MIGRATION_SCRIPT: database_migration.sql
 
 jobs:
-  release:
+  setup:
     runs-on: ubuntu-latest
+    
+    outputs:
+      imageTag: ${{ steps.setup-vars.outputs.IMAGE_TAG }}
+      needsSemver: ${{ steps.setup-vars.outputs.NEEDS_SEMVER }}
+      repositoryOwnerLC: ${{ steps.setup-vars.outputs.REPOSITORY_OWNER_LC }}
+      repositoryName: ${{ steps.setup-vars.outputs.REPOSITORY_NAME }}
+    
     steps:
-      - uses: actions/checkout@v3
-        with:
-          sparse-checkout: |
-            ${{ env.COMPOSE_FILE_PATH_SRC }}
-          sparse-checkout-cone-mode: false
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Set up environment variables
+        id: setup-vars
         run: |
+          BRANCH_NAME_DASH=$(echo "${GITHUB_REF#refs/heads/}" | tr '/' '-')
+          
           # Set the image tag based on the branch name. If the branch is main, use "latest".
           # If the image tag is provided as an input, use that instead. 
           if [ -z "$IMAGE_TAG_OVERRIDE" ]; then
             if [ "$GITHUB_REF" = "refs/heads/main" ]; then
               IMAGE_TAG=latest
             else
-              IMAGE_TAG=$(echo "${GITHUB_REF#refs/heads/}" | tr '/' '-')
+              IMAGE_TAG="$BRANCH_NAME_DASH"
             fi
           else
-            IMAGE_TAG=$IMAGE_TAG_OVERRIDE
+            IMAGE_TAG="$IMAGE_TAG_OVERRIDE"
           fi
-          echo "IMAGE_TAG=$IMAGE_TAG" >> "$GITHUB_ENV"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+          
+          # If the image tag is "latest" or the branch name, flag it as needing semver.
+          if [ "$IMAGE_TAG" = "latest" ]; then
+              NEEDS_SEMVER=true
+          elif [ "$IMAGE_TAG" = "$BRANCH_NAME_DASH" ]; then
+              NEEDS_SEMVER=true
+          fi
+          echo "NEEDS_SEMVER: $NEEDS_SEMVER"
+          echo "NEEDS_SEMVER=$NEEDS_SEMVER" >> "$GITHUB_OUTPUT"
 
           # Set the repository name to lowercase
-          REPOSITORY_NAME=$(echo $REPOSITORY_OWNER | tr '[:upper:]' '[:lower:]');
-          echo "REPOSITORY_NAME=$REPOSITORY_NAME" >> "$GITHUB_ENV"
+          REPOSITORY_OWNER_LC=$(echo $REPOSITORY_OWNER | tr '[:upper:]' '[:lower:]');
+          echo "REPOSITORY_OWNER_LC=$REPOSITORY_OWNER_LC" >> "$GITHUB_OUTPUT"
+          
+          # Extract the repository name from the repository env i.e. nelle/reifnir => reifnir
+          REPOSITORY_NAME=${REPOSITORY##*/}
+          echo "REPOSITORY_NAME=$REPOSITORY_NAME" >> "$GITHUB_OUTPUT"
         env:
           IMAGE_TAG_OVERRIDE: ${{ inputs.imageTag }}
           REPOSITORY_OWNER: ${{ github.repository_owner }}
-
+          REPOSITORY: ${{ github.repository }}
+  
+  release:
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.act }} # skip during local actions testing
+    permissions:
+      contents: read
+      packages: write
+    needs: setup
+    env:
+      IMAGE_TAG: ${{ needs.setup.outputs.imageTag }}
+      REPOSITORY_OWNER_LC: ${{ needs.setup.outputs.repositoryOwnerLC }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          sparse-checkout: |
+            ${{ env.COMPOSE_FILE_PATH_SRC }}
+          sparse-checkout-cone-mode: false
+      
       - name: Upload compose.yml
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -81,50 +118,51 @@ jobs:
           debug: ${{vars.ACTIONS_RUNNER_DEBUG}}
           script_stop: true
           script: |
-            FULL_IMAGE_NAME="$REGISTRY/$REPOSITORY_NAME/$IMAGE_NAME:$IMAGE_TAG"
-            
+            FULL_IMAGE_NAME="$REGISTRY/$REPOSITORY_OWNER_LC/$IMAGE_NAME:$IMAGE_TAG"
+            echo "Full image name: $FULL_IMAGE_NAME"
+
             MIGRATIONS_CONTAINER_NAME="$COMPOSE_PROJECT_NAME-migrations"
-            
+
             # Pull the image from the registry
             echo $GHCR_PASSWORD | docker login $REGISTRY -u $GHCR_USERNAME --password-stdin
             docker pull $FULL_IMAGE_NAME
-            
+
             # Create a temporary container to extract the migration files
             docker create --name $MIGRATIONS_CONTAINER_NAME --add-host=host.docker.internal:$HOST_GATEWAY_IP $FULL_IMAGE_NAME
-            
+
             # Extract the migration files into a temporary directory
             TMP_MIGRATIONS_DIR=$(mktemp -d -t "$MIGRATIONS_CONTAINER_NAME-XXXXXX")
             docker cp $MIGRATIONS_CONTAINER_NAME:/app/migrations/. $TMP_MIGRATIONS_DIR
-            
+
             # Remove the temporary container
             docker rm $MIGRATIONS_CONTAINER_NAME
-            
+
             # Stop the running compose project, if it exists
             docker compose -p $COMPOSE_PROJECT_NAME stop -t 30 || true
-            
+
             # Copy the database backup script, if newer, to home directory and run it
             cp -u "$TMP_MIGRATIONS_DIR/$DB_BACKUP_SCRIPT" ~
             chmod +x "$HOME/$DB_BACKUP_SCRIPT"
             "$HOME/$DB_BACKUP_SCRIPT"
-            
+
             # Run the database migration script
             psql -d $DB_NAME -q -f "$TMP_MIGRATIONS_DIR/$DB_MIGRATION_SCRIPT"
-            
+
             # Take down the old compose project, if it exists
             docker compose -p $COMPOSE_PROJECT_NAME down || true
-            
+
             # Start the new compose project
             docker compose -p $COMPOSE_PROJECT_NAME -f "$HOME/docker-compose.yml" up -d
-            
+
             # Prune untagged images
             docker image prune -f
-            
+
             # Remove the temporary directory
             rm -rf $TMP_MIGRATIONS_DIR
           envs: >-
             HOST_GATEWAY_IP,
             REGISTRY,
-            REPOSITORY_NAME,
+            REPOSITORY_OWNER_LC,
             IMAGE_NAME,
             IMAGE_TAG,
             COMPOSE_PROJECT_NAME,
@@ -137,3 +175,116 @@ jobs:
             BOT_TOKEN,
             DB_CONNECTION_STRING,
             PROTECTOR_CERT_PASSWORD
+  
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: read
+      contents: read
+    needs: [setup, release]
+    env:
+      IMAGE_TAG: ${{ needs.setup.outputs.imageTag }}
+      NEEDS_SEMVER: ${{ needs.setup.outputs.needsSemver }}
+      REPOSITORY_OWNER_LC: ${{ needs.setup.outputs.repositoryOwnerLC }}
+      REPOSITORY_NAME: ${{ needs.setup.outputs.repositoryName }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: GitHub Packages Admin
+        id: package-info
+        uses: selfdocumentingcode/ghaction-package-admin-output@v1.1-beta2
+        with:
+          ghtoken: ${{ github.token }}
+          operation: listPackageVersions
+          org: ${{ github.repository_owner }}
+          package_type: container
+          package_name: ${{ env.REPOSITORY_NAME }}
+          include: metadata.container.tags[*] ${{ env.IMAGE_TAG }}
+          slice: __NONE__ 1 # get the first item only
+          
+      - name: Get container tags
+        run: |
+          echo "IMAGE_TAG: $IMAGE_TAG"
+          echo "NEEDS_SEMVER: $NEEDS_SEMVER"
+          
+          TAG_LIST=$(echo "$PACKAGE_INFO" | jq --raw-output '.[0].metadata.container.tags')
+          echo "TAG_LIST: $TAG_LIST"
+          
+          SHA_TAG=$(echo "$PACKAGE_INFO" | jq --raw-output '.[0].metadata.container.tags | map(select(startswith("sha"))) | .[0]')
+          echo "SHA_TAG: $SHA_TAG"
+          
+          # Exclude "sha-" prefix from SHA_TAG
+          COMMIT_SHA=${SHA_TAG#"sha-"}
+          echo "COMMIT_SHA: $COMMIT_SHA"
+          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_ENV
+          
+          if [ "${NEEDS_SEMVER}" == "true" ]; then
+            SEMVER_TAG=$(echo "$PACKAGE_INFO" | jq --raw-output '.[0].metadata.container.tags | map(select((startswith("sha") | not) and . != "${IMAGE_TAG}")) | .[0]')
+          else
+            SEMVER_TAG=${IMAGE_TAG}
+          fi
+          echo "SEMVER_TAG: $SEMVER_TAG"
+          echo "SEMVER_TAG=$SEMVER_TAG" >> $GITHUB_ENV
+        env:
+          PACKAGE_INFO: ${{ steps.package-info.outputs.result_json_output }}
+
+      - name: Build changelog PRs
+        id: build-pr-changelog
+        uses: selfdocumentingcode/pr-release-changelog-builder-action@1.0.0-beta6
+        with:
+          configuration: ./.config/changelog-builder.json
+          mode: HYBRID
+          owner: ${{ github.repository_owner }}
+          repo: ${{ env.REPOSITORY_NAME }}
+          toTag: ${{ env.COMMIT_SHA }}
+          failOnError: true
+
+      - name: Check if commit exists on current branch
+        id: check_commit
+        run: |
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          echo "BRANCH_NAME: $BRANCH_NAME"
+
+          if git branch --contains "$COMMIT_SHA" | grep -q "$BRANCH_NAME"; then
+            echo "Commit $COMMIT_SHA exists on branch $BRANCH_NAME."
+          else
+            echo "Commit $COMMIT_SHA does not exist on $BRANCH_NAME."
+            exit 1
+          fi
+        env:
+          COMMIT_SHA: ${{ env.COMMIT_SHA }}
+      
+      - name: Install gh cli
+        if: ${{ github.event.act }} # only for local actions testing
+        run: |
+          (type -p wget >/dev/null || (sudo apt update && sudo apt-get install wget -y)) \
+              && sudo mkdir -p -m 755 /etc/apt/keyrings \
+              && wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+              && sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+              && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+              && sudo apt update -q \
+              && sudo apt install gh -y
+          
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          
+      - name: Create Release
+        run: | 
+          gh release create $SEMVER_TAG \
+          --target $COMMIT_SHA \
+          --title $SEMVER_TAG \
+          --notes "$NOTES" \
+          --draft \
+          --repo $REPOSITORY
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPOSITORY: ${{ github.repository }}
+          SEMVER_TAG: ${{ env.SEMVER_TAG }}
+          COMMIT_SHA: ${{ env.COMMIT_SHA }}
+          NOTES: ${{steps.build-pr-changelog.outputs.changelog}}
