@@ -87,12 +87,3 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-      
-      # Tag the commit with the version number
-      # - name: Tag the commit with the version number
-      #   if: ${{ !env.ACT }}
-      #   run: |
-      #     git config --local user.email "${{ github.actor }}@users.noreply.github.com"
-      #     git config --local user.name "${{ github.actor }}"
-      #     git tag -f ${{ steps.gitversion.outputs.semVer }}
-      #     git push origin --tags 
