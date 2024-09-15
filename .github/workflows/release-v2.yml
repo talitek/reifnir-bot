@@ -7,8 +7,6 @@ on:
         description: 'Docker image tag (default: latest for main or branch name for other branches)'
         required: false
 
-permissions: write-all
-      
 env:
   HOST_GATEWAY_IP: "172.17.0.1"
   REGISTRY: ghcr.io
@@ -22,7 +20,6 @@ env:
 jobs:
   setup:
     runs-on: ubuntu-latest
-    permissions: write-all
     
     outputs:
       imageTag: ${{ steps.setup-vars.outputs.IMAGE_TAG }}
@@ -75,6 +72,10 @@ jobs:
   
   release:
     runs-on: ubuntu-latest
+    if: ${{ !github.event.act }} # skip during local actions testing
+    permissions:
+      contents: read
+      packages: write
     needs: setup
     env:
       IMAGE_TAG: ${{ needs.setup.outputs.imageTag }}
@@ -177,6 +178,9 @@ jobs:
   
   create-release:
     runs-on: ubuntu-latest
+    permissions:
+      packages: read
+      contents: read
     needs: [setup, release]
     env:
       IMAGE_TAG: ${{ needs.setup.outputs.imageTag }}
@@ -193,7 +197,7 @@ jobs:
         id: package-info
         uses: selfdocumentingcode/ghaction-package-admin-output@v1.1-beta2
         with:
-          ghtoken: ${{ secrets.GITHUB_TOKEN }}
+          ghtoken: ${{ github.token }}
           operation: listPackageVersions
           org: ${{ github.repository_owner }}
           package_type: container
@@ -246,29 +250,41 @@ jobs:
 
           if git branch --contains "$COMMIT_SHA" | grep -q "$BRANCH_NAME"; then
             echo "Commit $COMMIT_SHA exists on branch $BRANCH_NAME."
-            echo "::set-output name=commit_exists::true"
           else
-            echo "Commit $COMMIT_SHA does not exist on the current branch."
+            echo "Commit $COMMIT_SHA does not exist on $BRANCH_NAME."
             exit 1
           fi
         env:
           COMMIT_SHA: ${{ env.COMMIT_SHA }}
       
-      # - name: Create Release
-      #   uses: mikepenz/action-gh-release@v1
-      #   with:
-      #     body: ${{steps.build-changelog.outputs.changelog}}
-      #     draft: true
-      #     tag_name: ${{ env.SEMVER_TAG }}
-      #     target_commitish: ${{ env.COMMIT_SHA }}
-      #     token: ${{ secrets.GITHUB_TOKEN }}
-      
+      - name: Install gh cli
+        if: ${{ github.event.act }} # only for local actions testing
+        run: |
+          (type -p wget >/dev/null || (sudo apt update && sudo apt-get install wget -y)) \
+              && sudo mkdir -p -m 755 /etc/apt/keyrings \
+              && wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+              && sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+              && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+              && sudo apt update -q \
+              && sudo apt install gh -y
+          
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          
       - name: Create Release
         run: | 
-          gh release create ${{ env.SEMVER_TAG }} \
-          --target ${{ env.COMMIT_SHA }} \
-          --title ${{ env.SEMVER_TAG }} \
-          --notes "${{steps.build-pr-changelog.outputs.changelog}}" \
-          --draft 
+          gh release create $SEMVER_TAG \
+          --target $COMMIT_SHA \
+          --title $SEMVER_TAG \
+          --notes "$NOTES" \
+          --draft \
+          --repo $REPOSITORY
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPOSITORY: ${{ github.repository }}
+          SEMVER_TAG: ${{ env.SEMVER_TAG }}
+          COMMIT_SHA: ${{ env.COMMIT_SHA }}
+          NOTES: ${{steps.build-pr-changelog.outputs.changelog}}
