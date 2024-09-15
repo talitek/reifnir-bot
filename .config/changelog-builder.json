@@ -31,7 +31,7 @@
   ],
   "label_extractor": [
     {
-      "pattern": "^(feat|feature|fix|bug|bugfix|build|ci|refactor|perf|test|style|docs|chore){1}(\\([\\w\\-\\.]+\\))?(!)?: ([\\w ])+",
+      "pattern": "^(feat|feature|fix|bug|bugfix|build|ci|refactor|perf|test|style|docs|chore){1}(\\([\\w\\-\\.]+\\))?(!)?: ?([\\w ])+",
       "target": "$1",
       "flags": "gui",
       "on_property": "title"
