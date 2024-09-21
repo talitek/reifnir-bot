@@ -1,2 +1,8 @@
 workflow: GitHubFlow/v1
-mode: ContinuousDelivery
+major-version-bump-message: "^(build|chore|ci|docs|feat|feature|fix|bug|bugfix|perf|refactor|revert|style|test)(\\([\\w\\s-,/\\\\]*\\))?(!:|:.*\\n\\n((.+\\n)+\\n)?BREAKING CHANGE:\\s.+)"
+minor-version-bump-message: "^(feat|feature)(\\([\\w\\s-,/\\\\]*\\))?:"
+patch-version-bump-message: "^(fix|bug|bugfix|perf)(\\([\\w\\s-,/\\\\]*\\))?:"
+branches:
+  feature:
+    mode: ContinuousDelivery
+    increment: Minor
