@@ -195,7 +195,7 @@ jobs:
 
       - name: GitHub Packages Admin
         id: package-info
-        uses: selfdocumentingcode/ghaction-package-admin-output@v1.1-beta2
+        uses: selfdocumentingcode/ghaction-package-admin@v1.1
         with:
           ghtoken: ${{ github.token }}
           operation: listPackageVersions
