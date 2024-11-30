@@ -88,7 +88,7 @@ public static class ServiceCollectionExtensions
         };
 
         builder.UseCommands(
-            commands =>
+            (_, commands) =>
             {
                 commands.AddCommands(typeof(Program).Assembly, guildId);
 
