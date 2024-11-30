@@ -34,6 +34,12 @@ public class NoWayGateway : IGatewayController
         await _eventQueue.Writer.WriteAsync(new ClientHeartbeatNotification(heartbeatTimestamp, ping));
     }
 
+    public Task ResumeAttemptedAsync(IGatewayClient client)
+    {
+        _discordLogger.LogExtendedActivityMessage("Resume attempted.");
+        return Task.CompletedTask;
+    }
+
     public Task ReconnectRequestedAsync(IGatewayClient client)
     {
         _discordLogger.LogExtendedActivityMessage("Reconnect requested.");
